@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.14
+
+- Collapsed leading, trailing, and duplicate manual separators when adjacent
+  widgets render empty.
+- Rendered manual separators without inserting extra automatic plain separators.
+- Added `preserveColors` support for custom command widgets and preserved it
+  during `ccstatusline` settings import.
+
 ## 0.2.13
 
 - Improved Jujutsu workspace lookup to select the active working copy.

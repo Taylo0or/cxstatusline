@@ -1,5 +1,5 @@
 import { THEMES } from "./constants.js";
-import { renderWidget, SPACER } from "./widgets.js";
+import { renderWidget, resolveWidgetType, SPACER } from "./widgets.js";
 import { truncateEnd, truncateMiddle, visibleLength } from "./util.js";
 
 export function renderStatusLine(context, options = {}) {
@@ -17,8 +17,9 @@ export function renderStatusLine(context, options = {}) {
 
   const theme = THEMES[options.theme || config.theme] || THEMES.powerline;
   const widgets = Array.isArray(config.widgets) ? config.widgets : [];
-  const rendered = widgets.map((widget, index) => {
+  const rendered = collapseSeparators(widgets.map((widget, index) => {
     const rawWidget = typeof widget === "string" ? { type: widget } : widget;
+    const resolvedType = resolveWidgetType(rawWidget.type);
     const text = renderWidget(widget, context);
     if (!text && config.hideEmpty !== false) return null;
     const segmentTheme = theme.segments[index % theme.segments.length];
@@ -28,9 +29,11 @@ export function renderStatusLine(context, options = {}) {
       fg: rawWidget.fg || rawWidget.color || segmentTheme.fg,
       bg: rawWidget.bg || rawWidget.background || segmentTheme.bg,
       pad: rawWidget.pad,
-      spacer: text === SPACER
+      spacer: text === SPACER,
+      separator: resolvedType === "separator",
+      preserveColors: Boolean(rawWidget.preserveColors)
     };
-  }).filter(Boolean);
+  }).filter(Boolean));
 
   if (options.format === "json") {
     return JSON.stringify({ segments: rendered, theme: theme.name });
@@ -53,14 +56,26 @@ export function renderStatusLine(context, options = {}) {
 function renderPlain(segments, separator, width) {
   const spacerIndex = segments.findIndex((segment) => segment.spacer);
   if (spacerIndex === -1 || width <= 0) {
-    return segments.filter((segment) => !segment.spacer).map((segment) => segment.text).filter(Boolean).join(separator);
+    return renderPlainSegments(segments, separator);
   }
 
-  const left = segments.slice(0, spacerIndex).filter((segment) => !segment.spacer).map((segment) => segment.text).filter(Boolean).join(separator);
-  const right = segments.slice(spacerIndex + 1).filter((segment) => !segment.spacer).map((segment) => segment.text).filter(Boolean).join(separator);
+  const left = renderPlainSegments(segments.slice(0, spacerIndex), separator);
+  const right = renderPlainSegments(segments.slice(spacerIndex + 1), separator);
   const gap = Math.max(1, width - visibleLength(left) - visibleLength(right));
   const output = `${left}${" ".repeat(gap)}${right}`;
   return visibleLength(output) > width ? truncateEnd(output, width) : output;
+}
+
+function renderPlainSegments(segments, separator) {
+  const parts = [];
+  for (const segment of segments.filter((item) => !item.spacer && item.text)) {
+    const previous = parts.at(-1);
+    if (parts.length > 0 && !segment.separator && !previous?.separator) {
+      parts.push({ text: separator, separator: true });
+    }
+    parts.push(segment);
+  }
+  return parts.map((segment) => segment.text).join("");
 }
 
 function renderPowerline(segments, theme, color, width, config = {}) {
@@ -84,7 +99,11 @@ function renderPowerline(segments, theme, color, width, config = {}) {
     }
 
     if (index === 0 && startCap) parts.push(fg(current.bg), startCap, reset());
-    parts.push(bg(current.bg), fg(current.fg), ` ${current.text} `);
+    if (current.preserveColors) {
+      parts.push(reset(), ` ${current.text} `);
+    } else {
+      parts.push(bg(current.bg), fg(current.fg), ` ${current.text} `);
+    }
     if (next) {
       parts.push(bg(next.bg), fg(current.bg), arrow);
     } else {
@@ -96,6 +115,16 @@ function renderPowerline(segments, theme, color, width, config = {}) {
     const padding = Math.max(0, width - visibleLength(output));
     return `${output}${" ".repeat(padding)}`;
   }
+  return output;
+}
+
+function collapseSeparators(segments) {
+  const output = [];
+  for (const segment of segments) {
+    if (segment.separator && (output.length === 0 || output.at(-1)?.separator)) continue;
+    output.push(segment);
+  }
+  while (output.at(-1)?.separator) output.pop();
   return output;
 }
 

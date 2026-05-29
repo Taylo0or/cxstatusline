@@ -18,6 +18,7 @@ test("converts ccstatusline settings into cxstatusline config", () => {
         { type: "model", color: "cyan" },
         { type: "separator" },
         { type: "git-branch", color: "magenta" },
+        { type: "custom-command", command: "printf ok", preserveColors: true },
         { type: "tokens-total", rawValue: true },
         { type: "current-working-dir", metadata: { segments: "2", fish: "true" } }
       ],
@@ -38,11 +39,13 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[0][1].type, "separator");
   assert.equal(config.lines[0][1].text, " :: ");
   assert.equal(config.lines[0][2].type, "gitBranch");
-  assert.equal(config.lines[0][3].type, "tokens");
-  assert.equal(config.lines[0][3].label, "");
-  assert.equal(config.lines[0][4].type, "cwd");
-  assert.equal(config.lines[0][4].segments, 2);
-  assert.equal(config.lines[0][4].fish, true);
+  assert.equal(config.lines[0][3].type, "command");
+  assert.equal(config.lines[0][3].preserveColors, true);
+  assert.equal(config.lines[0][4].type, "tokens");
+  assert.equal(config.lines[0][4].label, "");
+  assert.equal(config.lines[0][5].type, "cwd");
+  assert.equal(config.lines[0][5].segments, 2);
+  assert.equal(config.lines[0][5].fish, true);
   assert.equal(config.lines[1][0].type, "spacer");
   assert.equal(config.lines[1][1].type, "blockResetTimer");
   assert.equal(config.lines[1][1].fg, "#eab308");

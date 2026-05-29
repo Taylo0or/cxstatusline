@@ -99,7 +99,7 @@ test("supports per-widget color overrides", () => {
     },
     state: {},
     git: { isRepo: false },
-    cwd: "/tmp/project",
+    cwd: process.cwd(),
     codexConfig: {}
   });
 
@@ -160,4 +160,65 @@ test("supports multiple powerline caps and Unicode codepoint caps", () => {
   }, { color: false });
 
   assert.equal(output, "<[ a   b ]!");
+});
+
+test("collapses manual separators around empty widgets", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      mode: "plain",
+      widgets: [
+        { type: "separator", text: " :: " },
+        { type: "text", text: "left" },
+        { type: "separator", text: " :: " },
+        { type: "text", text: "" },
+        { type: "separator", text: " :: " },
+        { type: "text", text: "right" },
+        { type: "separator", text: " :: " }
+      ]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { format: "plain" });
+
+  assert.equal(output, "left :: right");
+});
+
+test("uses manual separators without adding automatic plain separators", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      mode: "plain",
+      widgets: [
+        { type: "text", text: "left" },
+        { type: "separator", text: " <> " },
+        { type: "text", text: "right" }
+      ]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { format: "plain" });
+
+  assert.equal(output, "left <> right");
+});
+
+test("preserves custom command ANSI colors when requested", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      widgets: [
+        { type: "command", command: "printf '\\033[31mhot\\033[0m'", preserveColors: true }
+      ]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: process.cwd(),
+    codexConfig: {}
+  });
+
+  assert.match(output, /\x1b\[31mhot\x1b\[0m/);
 });

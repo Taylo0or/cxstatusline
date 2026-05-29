@@ -30,8 +30,9 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   context bars, cached/cache-read/cache-write tokens, five-hour block timer,
   reset timers with timestamp/time zone modes, and local weekly timer.
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
-  links, flexible spacers/right alignment, path abbreviation, per-widget color
-  overrides, custom command output, configurable Powerline separators/caps,
+  links, flexible spacers/right alignment, manual separator collapse, path
+  abbreviation, per-widget color overrides, custom command output with optional
+  ANSI color preservation, configurable Powerline separators/caps,
   multi-cap/codepoint Powerline caps, width truncation, and JSON or plain
   output.
 - `ccstatusline` widget-name aliases for common kebab-case types such as

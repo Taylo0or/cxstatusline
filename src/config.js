@@ -138,7 +138,7 @@ function convertCcstatuslineWidget(widget, settings) {
   const output = { type };
 
   if (widget.rawValue || settings.minimalistMode) output.label = "";
-  for (const key of ["text", "symbol", "command", "href", "url", "timeout", "width"]) {
+  for (const key of ["text", "symbol", "command", "href", "url", "timeout", "width", "preserveColors"]) {
     if (widget[key] !== undefined) output[key] = widget[key];
   }
 

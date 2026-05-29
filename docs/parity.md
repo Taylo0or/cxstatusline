@@ -12,7 +12,7 @@ equivalent data or extension points.
 - Custom Powerline separators and caps, including multiple caps and Unicode
   codepoint input.
 - Built-in themes and per-widget foreground/background overrides.
-- Multi-line rendering.
+- Multi-line rendering with manual separator collapse around empty widgets.
 - Flexible spacer/right-aligned plain rendering.
 - Width truncation and explicit width override through `CXSTATUSLINE_WIDTH` or
   the `CCSTATUSLINE_WIDTH` compatibility alias.
@@ -24,7 +24,8 @@ equivalent data or extension points.
   separator and flex-separator compatibility.
 - `ccstatusline` settings import for lines, minimalist mode, separators, Git
   cache TTL, Powerline options, common widget metadata, and named colors.
-- Custom text, custom symbol, custom command, and OSC8 link widgets.
+- Custom text, custom symbol, custom command with optional ANSI preservation,
+  and OSC8 link widgets.
 - Git branch, SHA, status, clean/dirty, staged, unstaged, untracked, conflicts,
   ahead/behind, insertions, deletions, origin, upstream owner/repo, fork status,
   worktree, clickable branch links, and GitHub/GitLab PR/MR widgets.
