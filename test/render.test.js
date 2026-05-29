@@ -162,6 +162,38 @@ test("supports multiple powerline caps and Unicode codepoint caps", () => {
   assert.equal(output, "<[ a   b ]!");
 });
 
+test("supports multiple powerline separators", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      powerline: { separators: [">", "*"], endCap: "!" },
+      widgets: [{ type: "text", text: "a" }, { type: "text", text: "b" }, { type: "text", text: "c" }]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  });
+
+  assert.equal(stripAnsi(output), " a > b * c !");
+});
+
+test("supports inverted powerline separator backgrounds", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      powerline: { separators: [">"], separatorInvertBackground: [true] },
+      widgets: [{ type: "text", text: "a" }, { type: "text", text: "b" }]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  });
+
+  assert.match(output, /\x1b\[48;2;56;189;248m\x1b\[38;2;74;222;128m>/);
+});
+
 test("collapses manual separators around empty widgets", () => {
   const output = renderStatusLine({
     config: {

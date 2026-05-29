@@ -33,7 +33,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   links, flexible spacers/right alignment, manual separator collapse, path
   abbreviation, per-widget color overrides, custom command output with optional
   ANSI color preservation, configurable Powerline separators/caps,
-  multi-cap/codepoint Powerline caps, multi-line Powerline auto-alignment and
+  multi-separator and inverted Powerline separator support,
+  multi-cap/codepoint Powerline caps, multi-line Powerline auto-alignment,
   theme continuation, width truncation, and JSON or plain output.
 - `ccstatusline` widget-name aliases for common kebab-case types such as
   `git-branch`, `tokens-total`, `current-working-dir`, `git-pr`,

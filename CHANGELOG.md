@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.16
+
+- Added Powerline separator arrays with boundary-specific separators that reuse
+  the final configured separator for longer lines.
+- Added Powerline `separatorInvertBackground` rendering and preserved the flag
+  array during `ccstatusline` settings import.
+
 ## 0.2.15
 
 - Added multi-line Powerline auto-alignment with `powerline.autoAlign`.

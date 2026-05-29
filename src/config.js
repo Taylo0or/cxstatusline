@@ -102,6 +102,10 @@ export function convertCcstatuslineSettings(settings, base = DEFAULT_CONFIG) {
     output.powerline = {
       ...(output.powerline || {}),
       separator: Array.isArray(powerline.separators) && powerline.separators.length ? powerline.separators[0] : output.powerline?.separator,
+      separators: Array.isArray(powerline.separators) ? powerline.separators : output.powerline?.separators,
+      separatorInvertBackground: Array.isArray(powerline.separatorInvertBackground)
+        ? powerline.separatorInvertBackground.map(Boolean)
+        : output.powerline?.separatorInvertBackground,
       startCaps: Array.isArray(powerline.startCaps) ? powerline.startCaps : output.powerline?.startCaps,
       endCaps: Array.isArray(powerline.endCaps) ? powerline.endCaps : output.powerline?.endCaps,
       autoAlign: Boolean(powerline.autoAlign),

@@ -114,9 +114,11 @@ function renderPlainSegments(segments, separator) {
 
 function renderPowerline(segments, theme, color, width, config = {}, alignWidths = null) {
   if (!segments.length) return "";
-  const arrow = firstCap(config.powerline?.separator, config.powerlineSeparator, "\uE0B0");
+  const separators = powerlineSeparators(config);
+  const invertSeparators = powerlineInvertFlags(config);
+  const defaultEndCap = itemAtOrLast(separators, separators.length - 1, "\uE0B0");
   const startCap = caps(config.powerline?.startCaps, config.powerline?.startCap, config.powerlineStartCaps, config.powerlineStartCap).join("");
-  const endCap = caps(config.powerline?.endCaps, config.powerline?.endCap, config.powerlineEndCaps, config.powerlineEndCap, arrow).join("");
+  const endCap = caps(config.powerline?.endCaps, config.powerline?.endCap, config.powerlineEndCaps, config.powerlineEndCap, defaultEndCap).join("");
   const fallbackSeparator = " ";
   const parts = [];
   const visibleSegments = segments.filter((segment) => !segment.spacer);
@@ -140,7 +142,11 @@ function renderPowerline(segments, theme, color, width, config = {}, alignWidths
       parts.push(bg(current.bg), fg(current.fg), ` ${text} `);
     }
     if (next) {
-      parts.push(bg(next.bg), fg(current.bg), arrow);
+      const separator = itemAtOrLast(separators, index, "\uE0B0");
+      const inverted = itemAtOrLast(invertSeparators, index, false);
+      const separatorBg = inverted ? current.bg : next.bg;
+      const separatorFg = inverted ? next.bg : current.bg;
+      parts.push(bg(separatorBg), fg(separatorFg), separator);
     } else {
       parts.push(reset(), fg(current.bg), endCap, reset());
     }
@@ -224,12 +230,32 @@ function rgb(hex) {
   ];
 }
 
-function firstCap(...values) {
+function powerlineSeparators(config = {}) {
+  const configured = capList(config.powerline?.separators, config.powerlineSeparators);
+  if (configured.length > 0) return configured;
+  return caps(config.powerline?.separator, config.powerlineSeparator, "\uE0B0");
+}
+
+function powerlineInvertFlags(config = {}) {
+  const configured = Array.isArray(config.powerline?.separatorInvertBackground)
+    ? config.powerline.separatorInvertBackground
+    : Array.isArray(config.powerlineSeparatorInvertBackground)
+      ? config.powerlineSeparatorInvertBackground
+      : [];
+  return configured.map(Boolean);
+}
+
+function itemAtOrLast(items, index, fallback) {
+  if (!items.length) return fallback;
+  return items[Math.min(index, items.length - 1)] ?? fallback;
+}
+
+function capList(...values) {
   for (const value of values) {
-    const [cap] = caps(value);
-    if (cap) return cap;
+    if (Array.isArray(value) && value.length) return value.map(formatCap).filter(Boolean);
+    if (typeof value === "string" && value) return [formatCap(value)].filter(Boolean);
   }
-  return "";
+  return [];
 }
 
 function caps(...values) {

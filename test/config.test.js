@@ -9,7 +9,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
     gitCacheTtlSeconds: 7,
     powerline: {
       enabled: true,
-      separators: ["U+E0B0"],
+      separators: ["U+E0B0", ">"],
+      separatorInvertBackground: [false, true],
       startCaps: ["["],
       endCaps: ["]"],
       autoAlign: true,
@@ -35,7 +36,11 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.separator, " :: ");
   assert.equal(config.gitCacheTtlMs, 7000);
   assert.equal(config.mode, "powerline");
+  assert.equal(config.powerline.separator, "U+E0B0");
+  assert.deepEqual(config.powerline.separators, ["U+E0B0", ">"]);
+  assert.deepEqual(config.powerline.separatorInvertBackground, [false, true]);
   assert.deepEqual(config.powerline.startCaps, ["["]);
+  assert.deepEqual(config.powerline.endCaps, ["]"]);
   assert.equal(config.powerline.autoAlign, true);
   assert.equal(config.powerline.continueThemeAcrossLines, true);
   assert.equal(config.lines[0][0].type, "model");

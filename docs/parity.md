@@ -9,8 +9,8 @@ equivalent data or extension points.
 - Codex hook collector and external renderer for tmux, Starship, SketchyBar,
   prompts, and command runners.
 - Powerline and plain renderers.
-- Custom Powerline separators and caps, including multiple caps and Unicode
-  codepoint input.
+- Custom Powerline separators and caps, including multiple separators, inverted
+  separator backgrounds, multiple caps, and Unicode codepoint input.
 - Built-in themes and per-widget foreground/background overrides.
 - Multi-line rendering with manual separator collapse around empty widgets,
   Powerline auto-alignment, and optional theme continuation across lines.
