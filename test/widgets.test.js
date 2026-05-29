@@ -211,6 +211,22 @@ test("renders Git root dir IDE links from metadata", () => {
   assert.equal(stripAnsi(windows), "my repo#1");
 });
 
+test("renders upstream-style Context Bar display metadata", () => {
+  const context = {
+    config: {},
+    state: { usage: { contextUsed: 30_000, contextWindow: 200_000 } },
+    git: { isRepo: false },
+    codexConfig: {}
+  };
+
+  assert.equal(renderWidget({ type: "contextBar" }, context), "[##--------] 15%");
+  assert.equal(renderWidget({ type: "contextBar", metadata: { display: "progress-short" }, style: "ascii", width: 10 }, context), "Context: [##--------] 30k/200k (15%)");
+  assert.equal(renderWidget({ type: "contextBar", metadata: { display: "progress" }, label: "", style: "ascii", width: 10 }, context), "[##--------] 30k/200k (15%)");
+  assert.equal(renderWidget({ type: "contextBar", metadata: { display: "slider" } }, context), "Context: \u2593\u2593\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591 30k/200k (15%)");
+  assert.equal(renderWidget({ type: "contextBar", metadata: { display: "slider-only" } }, context), "Context: \u2593\u2593\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591");
+  assert.equal(renderWidget({ type: "contextBar", rawValue: true, style: "ascii", width: 10 }, context), "[##--------] 30k/200k (15%)");
+});
+
 test("formats paths with home abbreviation, segments, and fish mode", () => {
   assert.equal(formatPath("/Users/luke/AlphaPay/ca-parent", { segments: 2, home: false }), "/.../AlphaPay/ca-parent");
   assert.equal(formatPath("/Users/luke/AlphaPay/ca-parent", { fish: true, home: false }), "/U/l/A/ca-parent");

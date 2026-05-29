@@ -373,9 +373,10 @@ export const widgetRegistry = {
     render: ({ state, widget }) => {
       const { used, window, remaining } = contextNumbers(state.usage || {});
       if (!used || !window) return "";
-      const width = Number(widget.width || 10);
       const value = widget.mode === "remaining" ? remaining : used;
       const percent = (value / window) * 100;
+      if (contextBarDetailedMode(widget)) return renderContextBarDisplay(percent, used, window, widget);
+      const width = Number(widget.width || 10);
       if (usageDisplayMode(widget)) return renderPercentDisplay(percent, widget);
       return renderBar(percent / 100, width, widget.style);
     }
@@ -974,6 +975,42 @@ function renderPercentDisplay(percent, widget = {}) {
   return `${Math.round(displayPercent)}%`;
 }
 
+function renderContextBarDisplay(percent, used, total, widget = {}) {
+  const display = contextBarDetailedMode(widget);
+  const clamped = clampPercent(percent);
+  const displayPercent = metadataFlag(widget, "invert") === true ? 100 - clamped : clamped;
+  const raw = widget.rawValue || widget.label !== undefined;
+  const detail = `${contextK(used)}/${contextK(total)} (${Math.round(displayPercent)}%)`;
+  let output = "";
+
+  if (display === "slider" || display === "slider-only") {
+    const slider = renderSlider(displayPercent, Number(widget.width || 10), usageCursorPercent(widget, displayPercent));
+    output = display === "slider-only" ? slider : `${slider} ${detail}`;
+  } else {
+    const width = Number(widget.width || (display === "progress" ? 32 : 16));
+    const bar = renderProgressBar(displayPercent, width, widget.style || widget.barStyle, {
+      cursor: usageCursorPercent(widget, displayPercent),
+      showPercent: false
+    });
+    output = `${bar} ${detail}`;
+  }
+
+  return raw ? output : `Context: ${output}`;
+}
+
+function contextBarDetailedMode(widget = {}) {
+  const value = metadataValue(widget, "display");
+  const raw = widget.rawValue || widget.label === "";
+  const configured = value !== undefined ? value : raw ? "progress-short" : "";
+  const mode = String(configured || "").trim();
+  if (["progress", "progress-short", "slider", "slider-only"].includes(mode)) return mode;
+  return value !== undefined || raw ? "progress-short" : "";
+}
+
+function contextK(value) {
+  return `${Math.round(Number(value || 0) / 1000)}k`;
+}
+
 function usageDisplayMode(widget = {}) {
   const mode = String(metadataValue(widget, "display") || widget.display || "").trim();
   return ["progress", "progress-short", "slider", "slider-only"].includes(mode) ? mode : "";
@@ -1184,7 +1221,8 @@ function renderProgressBar(percent, width, style, options = {}) {
   for (let index = 0; index < safeWidth; index += 1) {
     body += index === cursor ? chars.cursor : index < filled ? chars.full : chars.empty;
   }
-  return `${chars.left}${body}${chars.right} ${formatPercent(clamped, options.decimals ?? 0)}`;
+  const bar = `${chars.left}${body}${chars.right}`;
+  return options.showPercent === false ? bar : `${bar} ${formatPercent(clamped, options.decimals ?? 0)}`;
 }
 
 function renderSlider(percent, width, cursorPercent = null) {

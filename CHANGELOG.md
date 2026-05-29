@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.44
+
+- Added upstream-compatible Context Bar `metadata.display` detail rendering for
+  progress, progress-short, slider, and slider-only modes.
+- Supported raw Context Bar rendering without the `Context:` prefix while
+  preserving the existing compact bar default.
+
 ## 0.2.43
 
 - Added upstream-compatible Git Worktree rendering with the `𖠰` icon,
