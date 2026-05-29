@@ -247,11 +247,17 @@ function benchCommand(args) {
     last = renderStatusLine({ config, state, cwd, git, codexConfig }, { format: flags.format || "plain", width: flags.width || 120 });
   }
   const elapsed = performance.now() - start;
+  const avgMs = elapsed / iterations;
+  const maxAvgMs = flags["max-avg-ms"] || flags.maxAvgMs;
+  if (maxAvgMs && avgMs > Number(maxAvgMs)) {
+    process.exitCode = 1;
+  }
   console.log(JSON.stringify({
     iterations,
     totalMs: Number(elapsed.toFixed(3)),
-    avgMs: Number((elapsed / iterations).toFixed(3)),
-    chars: last.length
+    avgMs: Number(avgMs.toFixed(3)),
+    chars: last.length,
+    threshold: maxAvgMs ? { maxAvgMs: Number(maxAvgMs), passed: avgMs <= Number(maxAvgMs) } : null
   }, null, 2));
 }
 
@@ -269,7 +275,7 @@ Usage:
   cxstatusline presets
   cxstatusline native-items
   cxstatusline themes
-  cxstatusline bench [--iterations 500]
+  cxstatusline bench [--iterations 500] [--max-avg-ms 5]
   cxstatusline doctor
   cxstatusline reset
 

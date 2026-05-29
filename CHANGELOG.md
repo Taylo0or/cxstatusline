@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.3
+
+- Added richer GitHub/GitLab pull request and merge request metadata widgets.
+- Added benchmark threshold support with `--max-avg-ms`.
+
 ## 0.2.2
 
 - Added uninstall support for native Codex footer, tmux, and Starship config.

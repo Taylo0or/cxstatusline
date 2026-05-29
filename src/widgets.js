@@ -324,9 +324,45 @@ export const widgetRegistry = {
     description: "Current GitHub pull request or GitLab merge request when gh/glab is available",
     render: ({ git, cwd }) => {
       if (!git.isRepo) return "";
-      const item = findPullRequest(cwd || git.root);
+      const item = getPullRequestInfo(cwd || git.root);
       if (!item) return "";
       return item.url ? osc8(item.url, item.label) : item.label;
+    }
+  },
+  gitPullRequestState: {
+    description: "Current pull request or merge request state",
+    render: ({ git, cwd }) => {
+      if (!git.isRepo) return "";
+      return getPullRequestInfo(cwd || git.root)?.state || "";
+    }
+  },
+  gitPullRequestReview: {
+    description: "Current GitHub pull request review decision",
+    render: ({ git, cwd }) => {
+      if (!git.isRepo) return "";
+      return getPullRequestInfo(cwd || git.root)?.reviewDecision || "";
+    }
+  },
+  gitPullRequestStats: {
+    description: "Current pull request or merge request file/addition/deletion stats",
+    render: ({ git, cwd }) => {
+      if (!git.isRepo) return "";
+      const item = getPullRequestInfo(cwd || git.root);
+      if (!item) return "";
+      const parts = [];
+      if (item.changedFiles) parts.push(`${item.changedFiles} files`);
+      if (item.additions) parts.push(`+${item.additions}`);
+      if (item.deletions) parts.push(`-${item.deletions}`);
+      return parts.join(" ");
+    }
+  },
+  gitPullRequestBranches: {
+    description: "Current pull request or merge request head and base branches",
+    render: ({ git, cwd }) => {
+      if (!git.isRepo) return "";
+      const item = getPullRequestInfo(cwd || git.root);
+      if (!item?.headRefName || !item?.baseRefName) return "";
+      return `${item.headRefName} -> ${item.baseRefName}`;
     }
   }
 };
@@ -435,25 +471,77 @@ function osc8(url, text) {
   return `\x1b]8;;${String(url).replace(/\x1b/g, "")}\x1b\\${text}\x1b]8;;\x1b\\`;
 }
 
-function findPullRequest(cwd) {
-  const gh = run("gh", ["pr", "view", "--json", "number,title,url", "--template", "{{.number}}\t{{.title}}\t{{.url}}"], { cwd, timeout: 1500 });
+export function getPullRequestInfo(cwd) {
+  const gh = run("gh", ["pr", "view", "--json", "number,title,url,state,isDraft,reviewDecision,headRefName,baseRefName,changedFiles,additions,deletions,comments,commits"], { cwd, timeout: 1500 });
   if (gh.ok && gh.stdout.trim()) {
-    const [number, title, url] = gh.stdout.trim().split("\t");
-    return { label: `PR #${number}${title ? ` ${title}` : ""}`, url };
+    try {
+      return parseGithubPullRequest(JSON.parse(gh.stdout));
+    } catch {
+      return null;
+    }
   }
 
   const glab = run("glab", ["mr", "view", "--output", "json"], { cwd, timeout: 1500 });
   if (glab.ok && glab.stdout.trim()) {
     try {
-      const parsed = JSON.parse(glab.stdout);
-      const iid = parsed.iid || parsed.id || parsed.reference;
-      const title = parsed.title || "";
-      const url = parsed.web_url || parsed.webUrl || parsed.url || "";
-      return { label: `MR !${iid}${title ? ` ${title}` : ""}`, url };
+      return parseGitlabMergeRequest(JSON.parse(glab.stdout));
     } catch {
       return null;
     }
   }
 
   return null;
+}
+
+export function parseGithubPullRequest(parsed) {
+  const number = parsed.number;
+  const title = parsed.title || "";
+  const state = parsed.isDraft ? "DRAFT" : parsed.state || "";
+  const label = `PR #${number}${title ? ` ${title}` : ""}`;
+  return {
+    provider: "github",
+    number,
+    title,
+    label,
+    url: parsed.url || "",
+    state,
+    reviewDecision: parsed.reviewDecision || "",
+    headRefName: parsed.headRefName || "",
+    baseRefName: parsed.baseRefName || "",
+    changedFiles: Number(parsed.changedFiles || 0),
+    additions: Number(parsed.additions || 0),
+    deletions: Number(parsed.deletions || 0),
+    comments: countMaybeArray(parsed.comments),
+    commits: countMaybeArray(parsed.commits)
+  };
+}
+
+export function parseGitlabMergeRequest(parsed) {
+  const iid = parsed.iid || parsed.id || parsed.reference || "";
+  const title = parsed.title || "";
+  const stats = parsed.diff_stats || parsed.diffStats || {};
+  const label = `MR !${iid}${title ? ` ${title}` : ""}`;
+  return {
+    provider: "gitlab",
+    number: iid,
+    title,
+    label,
+    url: parsed.web_url || parsed.webUrl || parsed.url || "",
+    state: parsed.state || parsed.merge_status || parsed.mergeStatus || "",
+    reviewDecision: parsed.approved ? "APPROVED" : "",
+    headRefName: parsed.source_branch || parsed.sourceBranch || "",
+    baseRefName: parsed.target_branch || parsed.targetBranch || "",
+    changedFiles: Number(parsed.changes_count || parsed.changesCount || stats.files || 0),
+    additions: Number(parsed.additions || stats.additions || 0),
+    deletions: Number(parsed.deletions || stats.deletions || 0),
+    comments: countMaybeArray(parsed.notes || parsed.discussions),
+    commits: countMaybeArray(parsed.commits)
+  };
+}
+
+function countMaybeArray(value) {
+  if (Array.isArray(value)) return value.length;
+  if (value && typeof value === "object" && Array.isArray(value.nodes)) return value.nodes.length;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
 }

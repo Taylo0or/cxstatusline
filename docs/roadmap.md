@@ -14,6 +14,7 @@ while staying honest about Codex's current extension points.
 - Git branch, SHA, status, ahead/behind, and diff widgets.
 - Git origin owner/repo, upstream, worktree, PR/MR detection, and clickable
   branch widgets.
+- Rich GitHub/GitLab PR/MR state, review, branch, and diff-stat widgets.
 - Model, reasoning, service tier, permission, sandbox, session, event, run-state,
   compaction, duration, memory, token, context, block timer, weekly timer, cost,
   and custom text widgets.
@@ -37,8 +38,7 @@ while staying honest about Codex's current extension points.
 ## Next
 
 - Richer full-screen TUI configuration editor.
-- GitHub/GitLab PR/MR richer status metadata.
-- Runtime benchmark suite with threshold assertions.
+- Runtime benchmark suite with broader scenarios.
 - npm publish credentials setup.
 
 ## Waiting On Codex Support

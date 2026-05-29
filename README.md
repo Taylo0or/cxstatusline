@@ -18,7 +18,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 - Codex native footer installer for all currently known built-in status items.
 - Git widgets: branch, SHA, staged/unstaged/untracked/conflict counts,
   ahead/behind, insertions, deletions, origin owner/repo, upstream, worktree
-  mode, and clickable GitHub/GitLab branch links.
+  mode, clickable GitHub/GitLab branch links, and PR/MR metadata through
+  `gh`/`glab` when available.
 - Codex/session widgets: model, reasoning effort, service tier, permission mode,
   sandbox mode, session id, run state, last event, last tool, compaction count,
   duration, and best-effort token/context/cost metrics when Codex exposes them
@@ -200,7 +201,7 @@ cxstatusline widgets
 cxstatusline presets
 cxstatusline native-items
 cxstatusline themes
-cxstatusline bench [--iterations 500]
+cxstatusline bench [--iterations 500] [--max-avg-ms 5]
 cxstatusline doctor
 cxstatusline reset
 ```
