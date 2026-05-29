@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.43
+
+- Added upstream-compatible Git Worktree rendering with the `𖠰` icon,
+  `main` default, `rawValue` support, and `hideNoGit` empty-state metadata.
+- Parsed linked Git worktree names from `git rev-parse --git-dir`, including
+  nested and Windows-style worktree paths.
+
 ## 0.2.42
 
 - Added upstream-compatible Skills widget `metadata.mode`,

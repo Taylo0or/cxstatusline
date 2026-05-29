@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { basename, join } from "node:path";
 import { tmpdir } from "node:os";
-import { getGitInfo, parsePorcelainStatus, parseShortStat, parseRemote } from "../src/git.js";
+import { getGitInfo, parsePorcelainStatus, parseShortStat, parseRemote, parseWorktreeName } from "../src/git.js";
 
 test("parses porcelain branch and file status counts", () => {
   const status = parsePorcelainStatus(`## main...origin/main [ahead 2, behind 1]
@@ -52,6 +52,14 @@ test("parses common GitHub and GitLab remote URLs", () => {
   });
 });
 
+test("parses git worktree names from git dirs", () => {
+  assert.equal(parseWorktreeName(".git", "/tmp/main"), "main");
+  assert.equal(parseWorktreeName("/repo/.git/worktrees/feature-a", "/tmp/feature-a"), "feature-a");
+  assert.equal(parseWorktreeName("/repo/.git/worktrees/team/feature-a", "/tmp/feature-a"), "team/feature-a");
+  assert.equal(parseWorktreeName("C:\\repo\\.git\\worktrees\\feature-a", "C:\\wt\\feature-a"), "feature-a");
+  assert.equal(parseWorktreeName("/repo/worktrees/team/feature-a", "/tmp/feature-a"), "team/feature-a");
+});
+
 test("reports upstream remote and fork status", () => {
   const dir = mkdtempSync(join(tmpdir(), "cxstatusline-upstream-"));
   process.env.CXSTATUSLINE_CACHE_DIR = mkdtempSync(join(tmpdir(), "cxstatusline-cache-"));
@@ -85,6 +93,29 @@ test("uses the tracking remote when no literal upstream remote exists", () => {
   assert.equal(info.upstream, "origin/main");
   assert.equal(info.upstreamRemote.ownerRepo, "user/fork");
   assert.equal(info.isFork, false);
+});
+
+test("reports regular and linked worktree metadata", () => {
+  const dir = mkdtempSync(join(tmpdir(), "cxstatusline-worktree-main-"));
+  const linked = mkdtempSync(join(tmpdir(), "cxstatusline-worktree-linked-"));
+  rmSync(linked, { recursive: true, force: true });
+  process.env.CXSTATUSLINE_CACHE_DIR = mkdtempSync(join(tmpdir(), "cxstatusline-cache-"));
+  execFileSync("git", ["init", "-b", "main"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["config", "user.name", "Test User"], { cwd: dir, stdio: "ignore" });
+  writeFileSync(join(dir, "README.md"), "# test\n");
+  execFileSync("git", ["add", "README.md"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["commit", "-m", "init"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["worktree", "add", "-b", "feature", linked], { cwd: dir, stdio: "ignore" });
+
+  const main = getGitInfo(dir, { ttlMs: 0 });
+  const worktree = getGitInfo(linked, { ttlMs: 0 });
+
+  assert.equal(main.worktree.linked, false);
+  assert.equal(main.worktree.name, "main");
+  assert.equal(worktree.worktree.linked, true);
+  assert.equal(worktree.worktree.name, basename(linked));
+  assert.equal(worktree.worktree.branch, "feature");
 });
 
 test("caches git info within the configured TTL", () => {

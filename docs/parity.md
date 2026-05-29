@@ -45,10 +45,11 @@ equivalent data or extension points.
   compatibility.
 - Git branch, SHA, status, clean/dirty, staged, unstaged, untracked, conflicts,
   ahead/behind, insertions, deletions, origin, upstream owner/repo, tracking
-  remote fallback, fork status, worktree, clickable branch and remote
-  owner/repo links, Git root directory IDE links for VS Code and Cursor, remote
-  and non-Git empty-state hiding, `ownerOnlyWhenFork`, `hideWhenNotFork`, and
-  GitHub/GitLab PR/MR widgets with combined status/title/raw display controls.
+  remote fallback, fork status, upstream-style worktree icon/raw/no-git
+  rendering, clickable branch and remote owner/repo links, Git root directory
+  IDE links for VS Code and Cursor, remote and non-Git empty-state hiding,
+  `ownerOnlyWhenFork`, `hideWhenNotFork`, and GitHub/GitLab PR/MR widgets with
+  combined status/title/raw display controls.
 - Persistent Git cache with TTL plus `.git/HEAD` and `.git/index`
   invalidation.
 - Current directory path abbreviation, segment limiting, fish-style path

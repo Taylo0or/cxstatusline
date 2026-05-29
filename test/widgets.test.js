@@ -138,6 +138,27 @@ test("renders Git fork status raw values and hideWhenNotFork metadata", () => {
   assert.equal(renderWidget({ type: "gitIsFork", metadata: { hideWhenNotFork: "true" } }, base), "");
 });
 
+test("renders Git worktree values with upstream icon and no-git metadata", () => {
+  const regular = {
+    config: {},
+    state: {},
+    codexConfig: {},
+    git: { isRepo: true, worktree: { linked: false, name: "repo" } }
+  };
+  const linked = {
+    ...regular,
+    git: { isRepo: true, worktree: { linked: true, name: "feature/wt" } }
+  };
+  const noGit = { ...regular, git: { isRepo: false } };
+
+  assert.equal(renderWidget({ type: "gitWorktree" }, regular), "\u{16830} main");
+  assert.equal(renderWidget({ type: "gitWorktree", rawValue: true }, regular), "main");
+  assert.equal(renderWidget({ type: "gitWorktree" }, linked), "\u{16830} feature/wt");
+  assert.equal(renderWidget({ type: "gitWorktree", label: "" }, linked), "feature/wt");
+  assert.equal(renderWidget({ type: "gitWorktree" }, noGit), "\u{16830} no git");
+  assert.equal(renderWidget({ type: "gitWorktree", metadata: { hideNoGit: "true" } }, noGit), "");
+});
+
 test("renders Jujutsu no-repo empty states and hideNoJj metadata", () => {
   const context = {
     config: {},

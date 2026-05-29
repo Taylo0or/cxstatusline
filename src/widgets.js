@@ -21,6 +21,7 @@ const STATUS_DOT_OFF = "\u25CB";
 const JJ_BOOKMARK_ICON = "\u{1F516}";
 const JJ_WORKSPACE_ICON = "\u25C6";
 const JJ_REVISION_ICON = "\uF1FA";
+const WORKTREE_ICON = "\u{16830}";
 
 const WIDGET_ALIASES = {
   "current-working-dir": "cwd",
@@ -278,10 +279,7 @@ export const widgetRegistry = {
   },
   gitWorktree: {
     description: "Current Git worktree name when in a linked worktree",
-    render: ({ git, widget }) => {
-      if (!git.isRepo) return gitNoGit(widget, "no git");
-      return git.worktree?.linked ? git.worktree?.name || "worktree" : "";
-    }
+    render: ({ git, widget }) => formatGitWorktree(git, widget)
   },
   gitWorktreeName: {
     description: "Current worktree directory name",
@@ -1306,6 +1304,12 @@ function renderRemoteValue(remote, text, widget, emptyText) {
   if (!text) return metadataFlag(widget, "hideNoRemote") ? "" : emptyText;
   if (!metadataFlag(widget, "linkToRepo")) return text;
   return osc8(repoWebUrl(remote), text) || text;
+}
+
+function formatGitWorktree(git, widget = {}) {
+  if (!git.isRepo) return gitNoGit(widget, `${WORKTREE_ICON} no git`);
+  const value = git.worktree?.linked ? git.worktree?.name || "worktree" : "main";
+  return widget.rawValue || widget.label !== undefined ? value : `${WORKTREE_ICON} ${value}`;
 }
 
 function gitNoGit(widget, text = "(no git)") {

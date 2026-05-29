@@ -18,10 +18,11 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 - Codex native footer installer for all currently known built-in status items.
 - Git widgets: branch, SHA, staged/unstaged/untracked/conflict counts,
   ahead/behind, insertions, deletions, origin owner/repo, upstream, worktree
-  mode/branch, fork status, clickable Git branch and remote owner/repo links
-  for GitHub, GitLab, and compatible self-hosted remotes, IDE links for Git
-  root directories, upstream tracking-remote fallback, empty-state controls for
-  non-Git and remote widgets, `hideWhenNotFork` fork visibility controls, and
+  icon/main/raw rendering, mode/branch, fork status, clickable Git branch and
+  remote owner/repo links for GitHub, GitLab, and compatible self-hosted
+  remotes, IDE links for Git root directories, upstream tracking-remote
+  fallback, empty-state controls for non-Git and remote widgets,
+  `hideWhenNotFork` fork visibility controls, and
   PR/MR metadata through `gh`/`glab` when available, including combined
   status/title display controls.
 - Codex/session widgets: model, reasoning effort, service tier, permission mode,

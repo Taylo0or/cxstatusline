@@ -14,10 +14,11 @@ while staying honest about Codex's current extension points.
   widget, separator, terminal width, global formatting, Powerline separator,
   and Powerline alignment flags.
 - Git branch, SHA, status, ahead/behind, and diff widgets.
-- Git origin owner/repo, upstream owner/repo, fork status, worktree, PR/MR
-  detection, clickable branch widgets, clickable Git remote owner/repo widgets,
-  Git root directory IDE links, upstream tracking-remote fallback, remote
-  and non-Git empty-state hiding, `ownerOnlyWhenFork`, and `hideWhenNotFork`.
+- Git origin owner/repo, upstream owner/repo, fork status, upstream-style
+  worktree icon/raw/no-git rendering, PR/MR detection, clickable branch widgets,
+  clickable Git remote owner/repo widgets, Git root directory IDE links,
+  upstream tracking-remote fallback, remote and non-Git empty-state hiding,
+  `ownerOnlyWhenFork`, and `hideWhenNotFork`.
 - Rich GitHub/GitLab PR/MR state, review, branch, diff-stat, and combined
   status/title display widgets.
 - Model, reasoning, service tier, permission, sandbox, session, event, run-state,

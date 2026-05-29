@@ -30,6 +30,10 @@ export function getGitInfo(cwd = process.cwd(), options = {}) {
   const origin = parseRemote(originResult.stdout.trim());
   const gitDir = gitDirResult.stdout.trim();
   const commonDir = commonDirResult.stdout.trim();
+  const worktreeName = parseWorktreeName(gitDir, root);
+  const normalizedGitDir = gitDir.replace(/\\/g, "/");
+  const normalizedCommonDir = commonDir.replace(/\\/g, "/");
+  const linkedWorktree = Boolean(gitDir && commonDir && normalizedGitDir !== normalizedCommonDir && worktreeName !== "main");
   const branch = branchResult.stdout.trim() || "(detached)";
   const upstream = upstreamResult.ok ? upstreamResult.stdout.trim() : "";
   const upstreamRemote = parseRemote(resolveUpstreamRemoteUrl(upstream, upstreamRemoteResult, remotesResult, root));
@@ -45,8 +49,8 @@ export function getGitInfo(cwd = process.cwd(), options = {}) {
     upstreamRemote,
     isFork: Boolean(origin.ownerRepo && upstreamRemote.ownerRepo && origin.ownerRepo !== upstreamRemote.ownerRepo),
     worktree: {
-      linked: Boolean(gitDir && commonDir && gitDir !== commonDir && !gitDir.endsWith("/.git")),
-      name: basename(root),
+      linked: linkedWorktree,
+      name: worktreeName,
       branch,
       originalBranch: upstream ? upstream.replace(/^[^/]+\//, "") : ""
     },
@@ -78,6 +82,28 @@ function trackingRemoteName(upstream, remoteOutput) {
 
 function git(args, cwd) {
   return run("git", ["--no-optional-locks", ...args], { cwd, timeout: 1200 });
+}
+
+export function parseWorktreeName(gitDir, root = "") {
+  const normalizedGitDir = String(gitDir || "").trim().replace(/\\/g, "/");
+  if (!normalizedGitDir) return basename(root) || "main";
+  if (normalizedGitDir.endsWith("/.git") || normalizedGitDir === ".git") return "main";
+
+  const repoMarker = ".git/worktrees/";
+  const repoMarkerIndex = normalizedGitDir.lastIndexOf(repoMarker);
+  if (repoMarkerIndex !== -1) {
+    const worktree = normalizedGitDir.slice(repoMarkerIndex + repoMarker.length);
+    return worktree || basename(root) || "worktree";
+  }
+
+  const bareMarker = "/worktrees/";
+  const bareMarkerIndex = normalizedGitDir.lastIndexOf(bareMarker);
+  if (bareMarkerIndex !== -1) {
+    const worktree = normalizedGitDir.slice(bareMarkerIndex + bareMarker.length);
+    return worktree || basename(root) || "worktree";
+  }
+
+  return basename(root) || "main";
 }
 
 export function parsePorcelainStatus(output) {
