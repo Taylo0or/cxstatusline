@@ -32,8 +32,9 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
   links, flexible spacers/right alignment, manual separator collapse, path
   abbreviation, default padding/separator controls, inherited separator colors,
-  global bold and color overrides, per-widget color overrides, custom command
-  output with optional ANSI color preservation, configurable Powerline separators/caps,
+  global bold and color overrides, widget merge/no-padding modes, per-widget
+  color overrides, custom command output with optional ANSI color preservation,
+  configurable Powerline separators/caps,
   multi-separator and inverted Powerline separator support,
   multi-cap/codepoint Powerline caps, multi-line Powerline auto-alignment,
   theme continuation, terminal width modes, width truncation, and JSON or plain

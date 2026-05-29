@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.20
+
+- Added Powerline widget merge support so `merge: true` suppresses the next
+  Powerline separator and `merge: "no-padding"` also removes adjoining padding.
+- Preserved `merge` and per-widget `bold` settings during `ccstatusline`
+  settings import.
+
 ## 0.2.19
 
 - Added ccstatusline-style terminal width modes with `flexMode` values

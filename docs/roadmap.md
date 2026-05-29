@@ -34,7 +34,8 @@ while staying honest about Codex's current extension points.
   backgrounds, and multi-cap/codepoint caps.
 - Flexible spacer/right alignment.
 - Global default padding/separators, inherited separator colors, global bold and
-  color overrides, no-padding plain merges, and per-widget color overrides.
+  color overrides, plain/Powerline widget merges including no-padding mode, and
+  per-widget color overrides.
 - Terminal width modes, compact thresholds, width truncation, and
   `CXSTATUSLINE_WIDTH`/`CCSTATUSLINE_WIDTH` overrides.
 - Path abbreviation and fish-style path shortening.

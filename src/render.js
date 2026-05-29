@@ -205,29 +205,32 @@ function renderPowerline(segments, theme, color, width, config = {}, alignWidths
 
   for (let index = 0; index < visibleSegments.length; index += 1) {
     const current = visibleSegments[index];
+    const previous = visibleSegments[index - 1];
     const next = visibleSegments[index + 1];
     const text = alignPowerlineText(current, alignWidths);
+    const paddedText = powerlineText(text, current, previous, next);
+    const needsSeparator = Boolean(next && !current.merge);
     if (!color) {
       if (index === 0 && startCap) parts.push(startCap);
-      parts.push(` ${text} `);
-      if (next) parts.push(fallbackSeparator);
-      else if (endCap) parts.push(endCap);
+      parts.push(paddedText);
+      if (needsSeparator) parts.push(fallbackSeparator);
+      else if (!next && endCap) parts.push(endCap);
       continue;
     }
 
     if (index === 0 && startCap) parts.push(fg(current.bg), startCap, reset());
     if (current.preserveColors) {
-      parts.push(reset(), ` ${text} `);
+      parts.push(reset(), paddedText);
     } else {
-      parts.push(bg(current.bg), fg(current.fg), ` ${text} `);
+      parts.push(bg(current.bg), fg(current.fg), paddedText);
     }
-    if (next) {
+    if (needsSeparator) {
       const separator = itemAtOrLast(separators, index, "\uE0B0");
       const inverted = itemAtOrLast(invertSeparators, index, false);
       const separatorBg = inverted ? current.bg : next.bg;
       const separatorFg = inverted ? next.bg : current.bg;
       parts.push(bg(separatorBg), fg(separatorFg), separator);
-    } else {
+    } else if (!next) {
       parts.push(reset(), fg(current.bg), endCap, reset());
     }
   }
@@ -237,6 +240,12 @@ function renderPowerline(segments, theme, color, width, config = {}, alignWidths
     return `${output}${" ".repeat(padding)}`;
   }
   return output;
+}
+
+function powerlineText(text, current, previous, next) {
+  const leading = previous?.merge === "no-padding" ? "" : " ";
+  const trailing = current.merge === "no-padding" && next ? "" : " ";
+  return `${leading}${text}${trailing}`;
 }
 
 function collapseSeparators(segments) {

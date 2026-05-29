@@ -284,6 +284,45 @@ test("supports inverted powerline separator backgrounds", () => {
   assert.match(output, /\x1b\[48;2;56;189;248m\x1b\[38;2;74;222;128m>/);
 });
 
+test("supports powerline merge mode without separators", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      powerline: { separator: ">", endCap: "!" },
+      widgets: [
+        { type: "text", text: "a", merge: true },
+        { type: "text", text: "b" },
+        { type: "text", text: "c" }
+      ]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  });
+
+  assert.equal(stripAnsi(output), " a  b > c !");
+});
+
+test("supports powerline no-padding merge mode", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      powerline: { separator: ">", endCap: "!" },
+      widgets: [
+        { type: "text", text: "a", merge: "no-padding" },
+        { type: "text", text: "b" }
+      ]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  });
+
+  assert.equal(stripAnsi(output), " ab !");
+});
+
 test("collapses manual separators around empty widgets", () => {
   const output = renderStatusLine({
     config: {

@@ -12,8 +12,8 @@ equivalent data or extension points.
 - Custom Powerline separators and caps, including multiple separators, inverted
   separator backgrounds, multiple caps, and Unicode codepoint input.
 - Built-in themes, global plain formatting overrides, inherited separator
-  colors, no-padding plain merges, and per-widget foreground/background
-  overrides.
+  colors, plain/Powerline widget merges including no-padding mode, and
+  per-widget foreground/background overrides.
 - Multi-line rendering with manual separator collapse around empty widgets,
   Powerline auto-alignment, and optional theme continuation across lines.
 - Flexible spacer/right-aligned plain rendering.
@@ -29,8 +29,8 @@ equivalent data or extension points.
 - `ccstatusline` kebab-case widget aliases for migrated widget lists, including
   separator and flex-separator compatibility.
 - `ccstatusline` settings import for lines, minimalist mode, terminal width
-  options, global formatting, separators, Git cache TTL, Powerline options,
-  common widget metadata, and named colors.
+  options, global formatting, widget merge/bold flags, separators, Git cache
+  TTL, Powerline options, common widget metadata, and named colors.
 - Custom text, custom symbol, custom command with optional ANSI preservation,
   and OSC8 link widgets.
 - Git branch, SHA, status, clean/dirty, staged, unstaged, untracked, conflicts,

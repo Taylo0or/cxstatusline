@@ -25,7 +25,7 @@ test("converts ccstatusline settings into cxstatusline config", () => {
     },
     lines: [
       [
-        { type: "model", color: "cyan" },
+        { type: "model", color: "cyan", merge: "no-padding", bold: true },
         { type: "separator" },
         { type: "git-branch", color: "magenta" },
         { type: "custom-command", command: "printf ok", preserveColors: true },
@@ -60,6 +60,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.powerline.continueThemeAcrossLines, true);
   assert.equal(config.lines[0][0].type, "model");
   assert.equal(config.lines[0][0].fg, "#0891b2");
+  assert.equal(config.lines[0][0].merge, "no-padding");
+  assert.equal(config.lines[0][0].bold, true);
   assert.equal(config.lines[0][1].type, "separator");
   assert.equal(config.lines[0][1].text, " :: ");
   assert.equal(config.lines[0][2].type, "gitBranch");
