@@ -37,8 +37,9 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 - `ccstatusline` widget-name aliases for common kebab-case types such as
   `git-branch`, `tokens-total`, `current-working-dir`, `git-pr`,
   `weekly-sonnet-usage`, `separator`, and `flex-separator`.
-- Basic Jujutsu widgets for root, workspace, revision, description, bookmarks,
-  changed files, insertions, and deletions.
+- Jujutsu widgets for root, active workspace, revision, description,
+  bookmarks, bookmark count, changed files, insertion/deletion summary,
+  combined stats, insertions, and deletions.
 - Presets for compact, dense, Git-focused, usage-focused, no-font,
   right-aligned, and multi-line layouts.
 - tmux and Starship integration snippets, with optional `--write` install.

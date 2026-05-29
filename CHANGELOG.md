@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.13
+
+- Improved Jujutsu workspace lookup to select the active working copy.
+- Improved Jujutsu bookmarks to use bookmark heads and render cleaned
+  comma-separated bookmark lists.
+- Changed `jjChanges` to match ccstatusline-style insertion/deletion summaries.
+- Added `jjChangedFiles`, `jjStats`, and `jjBookmarkCount` widgets.
+- Added Jujutsu bookmark and change summary parser coverage.
+
 ## 0.2.12
 
 - Added reset timer display modes for duration, timestamp, ISO timestamp,

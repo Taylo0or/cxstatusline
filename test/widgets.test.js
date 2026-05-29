@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatPath, formatResetTimer, inferContextWindow, parseGithubPullRequest, parseGitlabMergeRequest, parseJjStat, renderWidget, resolveWidgetType } from "../src/widgets.js";
+import { formatJjChangeSummary, formatPath, formatResetTimer, inferContextWindow, parseGithubPullRequest, parseGitlabMergeRequest, parseJjBookmarks, parseJjStat, renderWidget, resolveWidgetType } from "../src/widgets.js";
 import { stripAnsi } from "../src/util.js";
 
 test("infers context windows from model suffixes", () => {
@@ -183,4 +183,16 @@ test("parses Jujutsu diff stats", () => {
     insertions: 12,
     deletions: 3
   });
+  assert.deepEqual(parseJjStat(" file.txt | 8 +++++---\n1 file changed, 5 insertions(+), 3 deletions(-)"), {
+    files: 1,
+    insertions: 5,
+    deletions: 3
+  });
+});
+
+test("parses Jujutsu bookmarks and formats change summaries", () => {
+  assert.deepEqual(parseJjBookmarks("main feature-branch\nrelease"), ["main", "feature-branch", "release"]);
+  assert.deepEqual(parseJjBookmarks(""), []);
+  assert.equal(formatJjChangeSummary({ insertions: 12, deletions: 3 }), "(+12,-3)");
+  assert.equal(formatJjChangeSummary({}), "(+0,-0)");
 });

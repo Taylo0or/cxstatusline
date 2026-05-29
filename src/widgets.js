@@ -626,7 +626,10 @@ export const widgetRegistry = {
   },
   jjWorkspace: {
     description: "Current Jujutsu workspace name",
-    render: ({ cwd }) => jj(["workspace", "list", "--template", "name"], cwd)
+    render: ({ cwd }) => {
+      const output = jjOutput(["workspace", "list", "--template", "if(target.current_working_copy(), name ++ \"\\n\")"], cwd);
+      return output ? output.split(/\r?\n/).map((line) => line.trim()).find(Boolean) || "" : "";
+    }
   },
   jjRevision: {
     description: "Current Jujutsu revision id",
@@ -634,11 +637,15 @@ export const widgetRegistry = {
   },
   jjDescription: {
     description: "Current Jujutsu change description",
-    render: ({ cwd }) => jj(["log", "-r", "@", "--no-graph", "-T", "description.first_line()"], cwd)
+    render: ({ cwd }) => {
+      const output = jjOutput(["log", "-r", "@", "--no-graph", "-T", "description.first_line()"], cwd, { allowEmpty: true });
+      if (output === null) return "";
+      return output.trim() || "(no description)";
+    }
   },
   jjBookmarks: {
     description: "Current Jujutsu bookmarks",
-    render: ({ cwd }) => jj(["log", "-r", "@", "--no-graph", "-T", "bookmarks"], cwd)
+    render: ({ cwd }) => parseJjBookmarks(jjOutput(["log", "--no-graph", "-r", "heads(::@ & bookmarks())", "--template", "bookmarks"], cwd)).join(", ")
   },
   jjRootDir: {
     description: "Current Jujutsu root directory name",
@@ -648,10 +655,35 @@ export const widgetRegistry = {
     }
   },
   jjChanges: {
+    description: "Current Jujutsu insertion/deletion summary",
+    render: ({ cwd }) => {
+      const output = jjOutput(["diff", "--stat"], cwd, { allowEmpty: true });
+      if (output === null) return "";
+      return formatJjChangeSummary(parseJjStat(output));
+    }
+  },
+  jjChangedFiles: {
     description: "Current Jujutsu changed file count",
     render: ({ cwd }) => {
-      const stat = parseJjStat(jj(["diff", "--stat"], cwd));
-      return stat.files ? String(stat.files) : "";
+      const output = jjOutput(["diff", "--stat"], cwd, { allowEmpty: true });
+      if (output === null) return "";
+      return String(parseJjStat(output).files);
+    }
+  },
+  jjStats: {
+    description: "Current Jujutsu file, insertion, and deletion stats",
+    render: ({ cwd }) => {
+      const output = jjOutput(["diff", "--stat"], cwd, { allowEmpty: true });
+      if (output === null) return "";
+      const stat = parseJjStat(output);
+      return `${stat.files} files +${stat.insertions} -${stat.deletions}`;
+    }
+  },
+  jjBookmarkCount: {
+    description: "Current Jujutsu bookmark count",
+    render: ({ cwd }) => {
+      const bookmarks = parseJjBookmarks(jjOutput(["log", "--no-graph", "-r", "heads(::@ & bookmarks())", "--template", "bookmarks"], cwd));
+      return bookmarks.length ? String(bookmarks.length) : "";
     }
   },
   jjInsertions: {
@@ -748,8 +780,15 @@ function tokenSpeed(samples, windowSeconds, key = "totalTokens") {
 }
 
 function jj(args, cwd) {
+  const output = jjOutput(args, cwd);
+  return output ? output.split(/\r?\n/)[0] : "";
+}
+
+function jjOutput(args, cwd, options = {}) {
   const result = run("jj", args, { cwd, timeout: 1000 });
-  return result.ok ? result.stdout.trim().split(/\r?\n/)[0] : "";
+  if (!result.ok) return null;
+  const output = result.stdout.trimEnd();
+  return output || options.allowEmpty ? output : null;
 }
 
 export function parseJjStat(output) {
@@ -762,6 +801,17 @@ export function parseJjStat(output) {
     insertions: insertions ? Number(insertions[1]) : 0,
     deletions: deletions ? Number(deletions[1]) : 0
   };
+}
+
+export function parseJjBookmarks(output) {
+  return String(output || "")
+    .split(/\s+/)
+    .map((bookmark) => bookmark.trim())
+    .filter(Boolean);
+}
+
+export function formatJjChangeSummary(stat) {
+  return `(+${Number(stat?.insertions || 0)},-${Number(stat?.deletions || 0)})`;
 }
 
 function contextNumbers(usage) {

@@ -22,7 +22,8 @@ while staying honest about Codex's current extension points.
 - Token speed, input speed, output speed, total speed, usage, weekly usage,
   reset timer timestamp modes, and cache token widgets from hook state.
 - Custom command widget.
-- Basic Jujutsu root, workspace, revision, description, bookmark, change,
+- Jujutsu root, active workspace, revision, description, bookmark list,
+  bookmark count, changed files, insertion/deletion summary, combined stats,
   insertion, and deletion widgets.
 - Multi-line rendering.
 - OSC8 links.
@@ -46,7 +47,6 @@ while staying honest about Codex's current extension points.
 ## Next
 
 - Richer full-screen TUI configuration editor.
-- More complete Jujutsu diff and bookmark widgets.
 - npm publish credentials setup.
 
 ## Waiting On Codex Support

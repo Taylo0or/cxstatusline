@@ -42,7 +42,8 @@ equivalent data or extension points.
 - Session id/name, version, output style, vim mode, voice status,
   remote-control status, skills, account email, run state, last event, last
   tool, compaction count, duration, memory, and terminal width widgets.
-- Basic Jujutsu root, workspace, revision, description, bookmarks, change,
+- Jujutsu root, active workspace, revision, description, bookmark list,
+  bookmark count, changed files, insertion/deletion summary, combined stats,
   insertion, and deletion widgets.
 - Hook/native/tmux/Starship install and uninstall flows.
 - Doctor, reset, benchmark commands, and CI benchmark thresholds.
@@ -69,7 +70,6 @@ data, the matching widget stays empty instead of inventing values.
 ## Remaining Enhancements
 
 - Richer full-screen TUI configuration editor.
-- More complete Jujutsu diff/bookmark metadata.
 - Benchmark scenario suite with enforceable thresholds in CI.
 - Optional npm trusted publishing setup after repository credentials are
   configured.
