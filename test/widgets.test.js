@@ -67,3 +67,15 @@ test("parses rich GitLab merge request metadata", () => {
   assert.equal(mr.headRefName, "ship");
   assert.equal(mr.baseRefName, "main");
 });
+
+test("renders custom command output", () => {
+  const output = renderWidget({ type: "command", command: "printf command-ok" }, {
+    config: {},
+    state: {},
+    git: { isRepo: false },
+    codexConfig: {},
+    cwd: process.cwd()
+  });
+
+  assert.equal(output, "command-ok");
+});

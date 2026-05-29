@@ -42,7 +42,7 @@ export function renderStatusLine(context, options = {}) {
   const width = Number(options.width || process.env.CXSTATUSLINE_WIDTH || process.env.COLUMNS || 0);
   let output = raw
     ? renderPlain(rendered, config.separator || " | ", width)
-    : renderPowerline(rendered, theme, color, width);
+    : renderPowerline(rendered, theme, color, width, config);
 
   if (width > 0 && visibleLength(output) > width) {
     output = truncateMiddle(output, width);
@@ -63,9 +63,11 @@ function renderPlain(segments, separator, width) {
   return visibleLength(output) > width ? truncateEnd(output, width) : output;
 }
 
-function renderPowerline(segments, theme, color, width) {
+function renderPowerline(segments, theme, color, width, config = {}) {
   if (!segments.length) return "";
-  const arrow = "\uE0B0";
+  const arrow = config.powerline?.separator || config.powerlineSeparator || "\uE0B0";
+  const startCap = config.powerline?.startCap || config.powerlineStartCap || "";
+  const endCap = config.powerline?.endCap || config.powerlineEndCap || arrow;
   const fallbackSeparator = " ";
   const parts = [];
   const visibleSegments = segments.filter((segment) => !segment.spacer);
@@ -74,16 +76,19 @@ function renderPowerline(segments, theme, color, width) {
     const current = visibleSegments[index];
     const next = visibleSegments[index + 1];
     if (!color) {
+      if (index === 0 && startCap) parts.push(startCap);
       parts.push(` ${current.text} `);
       if (next) parts.push(fallbackSeparator);
+      else if (endCap) parts.push(endCap);
       continue;
     }
 
+    if (index === 0 && startCap) parts.push(fg(current.bg), startCap, reset());
     parts.push(bg(current.bg), fg(current.fg), ` ${current.text} `);
     if (next) {
       parts.push(bg(next.bg), fg(current.bg), arrow);
     } else {
-      parts.push(reset(), fg(current.bg), arrow, reset());
+      parts.push(reset(), fg(current.bg), endCap, reset());
     }
   }
   const output = parts.join("");

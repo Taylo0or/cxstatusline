@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.4
+
+- Added custom command widget.
+- Added input/output token speed widgets and cache token widgets.
+- Added generic usage remaining/utilization widgets.
+- Added terminal-width and basic Jujutsu widgets.
+- Added configurable Powerline separators and caps.
+
 ## 0.2.3
 
 - Added richer GitHub/GitLab pull request and merge request metadata widgets.

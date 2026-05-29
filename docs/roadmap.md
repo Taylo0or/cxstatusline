@@ -18,9 +18,13 @@ while staying honest about Codex's current extension points.
 - Model, reasoning, service tier, permission, sandbox, session, event, run-state,
   compaction, duration, memory, token, context, block timer, weekly timer, cost,
   and custom text widgets.
-- Token speed samples from hook state.
+- Token speed, input speed, output speed, and cache token widgets from hook
+  state.
+- Custom command widget.
+- Basic Jujutsu widgets.
 - Multi-line rendering.
 - OSC8 links.
+- Configurable Powerline separators and caps.
 - Flexible spacer/right alignment.
 - Per-widget color overrides.
 - Path abbreviation and fish-style path shortening.
@@ -38,6 +42,7 @@ while staying honest about Codex's current extension points.
 ## Next
 
 - Richer full-screen TUI configuration editor.
+- More complete Jujutsu diff and bookmark widgets.
 - Runtime benchmark suite with broader scenarios.
 - npm publish credentials setup.
 

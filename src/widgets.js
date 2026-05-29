@@ -162,10 +162,36 @@ export const widgetRegistry = {
     description: "Total output tokens",
     render: ({ state }) => state.usage?.outputTokens ? compactNumber(state.usage.outputTokens) : ""
   },
+  cachedTokens: {
+    description: "Cached token count when present in hook state",
+    render: ({ state }) => state.usage?.cachedTokens ? compactNumber(state.usage.cachedTokens) : ""
+  },
+  cacheReadTokens: {
+    description: "Cache read token count when present in hook state",
+    render: ({ state }) => state.usage?.cacheReadTokens ? compactNumber(state.usage.cacheReadTokens) : ""
+  },
+  cacheWriteTokens: {
+    description: "Cache write token count when present in hook state",
+    render: ({ state }) => state.usage?.cacheWriteTokens ? compactNumber(state.usage.cacheWriteTokens) : ""
+  },
   tokenSpeed: {
     description: "Token speed per minute from recent hook samples",
     render: ({ state, widget }) => {
-      const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120));
+      const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120), "totalTokens");
+      return speed ? `${compactNumber(Math.round(speed))}/min` : "";
+    }
+  },
+  inputSpeed: {
+    description: "Input token speed per minute from recent hook samples",
+    render: ({ state, widget }) => {
+      const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120), "inputTokens");
+      return speed ? `${compactNumber(Math.round(speed))}/min` : "";
+    }
+  },
+  outputSpeed: {
+    description: "Output token speed per minute from recent hook samples",
+    render: ({ state, widget }) => {
+      const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120), "outputTokens");
       return speed ? `${compactNumber(Math.round(speed))}/min` : "";
     }
   },
@@ -235,6 +261,32 @@ export const widgetRegistry = {
       return Number.isFinite(Number(cost)) ? `$${Number(cost).toFixed(2)}` : "";
     }
   },
+  usageRemaining: {
+    description: "Primary usage limit remaining when present in hook state",
+    render: ({ state }) => state.usage?.usageLimitRemaining ? compactNumber(state.usage.usageLimitRemaining) : ""
+  },
+  usageUtilization: {
+    description: "Primary usage limit utilization when present in hook state",
+    render: ({ state }) => {
+      const used = Number(state.usage?.usageLimitUsed || 0);
+      const remaining = Number(state.usage?.usageLimitRemaining || 0);
+      if (!used || !remaining) return "";
+      return `${Math.round((used / (used + remaining)) * 100)}%`;
+    }
+  },
+  extraUsageRemaining: {
+    description: "Extra usage remaining when present in hook state",
+    render: ({ state }) => state.usage?.extraUsageRemaining ? compactNumber(state.usage.extraUsageRemaining) : ""
+  },
+  extraUsageUtilization: {
+    description: "Extra usage utilization when present in hook state",
+    render: ({ state }) => {
+      const used = Number(state.usage?.extraUsageUsed || 0);
+      const remaining = Number(state.usage?.extraUsageRemaining || 0);
+      if (!used || !remaining) return "";
+      return `${Math.round((used / (used + remaining)) * 100)}%`;
+    }
+  },
   duration: {
     description: "Elapsed time since SessionStart hook",
     render: ({ state }) => state.startedAt ? formatDuration(Date.now() - Date.parse(state.startedAt)) : ""
@@ -295,6 +347,10 @@ export const widgetRegistry = {
       return `${numberFormat(used / 1024 / 1024 / 1024)}/${numberFormat(total / 1024 / 1024 / 1024)}GB`;
     }
   },
+  terminalWidth: {
+    description: "Detected terminal width",
+    render: () => process.env.CXSTATUSLINE_WIDTH || process.env.COLUMNS || ""
+  },
   text: {
     description: "Custom literal text",
     render: ({ widget }) => widget.text || ""
@@ -302,6 +358,14 @@ export const widgetRegistry = {
   symbol: {
     description: "Custom symbol or short text",
     render: ({ widget }) => widget.symbol || widget.text || ""
+  },
+  command: {
+    description: "Custom command output",
+    render: ({ widget, cwd }) => {
+      if (!widget.command) return "";
+      const result = run("sh", ["-c", widget.command], { cwd, timeout: Number(widget.timeout || 1000) });
+      return result.ok ? result.stdout.trim().split(/\r?\n/)[0] : "";
+    }
   },
   spacer: {
     description: "Flexible spacer for right-aligned plain output",
@@ -364,6 +428,30 @@ export const widgetRegistry = {
       if (!item?.headRefName || !item?.baseRefName) return "";
       return `${item.headRefName} -> ${item.baseRefName}`;
     }
+  },
+  jjWorkspace: {
+    description: "Current Jujutsu workspace name",
+    render: ({ cwd }) => jj(["workspace", "list", "--template", "name"], cwd)
+  },
+  jjRevision: {
+    description: "Current Jujutsu revision id",
+    render: ({ cwd }) => jj(["log", "-r", "@", "--no-graph", "-T", "change_id.shortest()"], cwd)
+  },
+  jjDescription: {
+    description: "Current Jujutsu change description",
+    render: ({ cwd }) => jj(["log", "-r", "@", "--no-graph", "-T", "description.first_line()"], cwd)
+  },
+  jjBookmarks: {
+    description: "Current Jujutsu bookmarks",
+    render: ({ cwd }) => jj(["log", "-r", "@", "--no-graph", "-T", "bookmarks"], cwd)
+  },
+  jjChanges: {
+    description: "Current Jujutsu changed file count",
+    render: ({ cwd }) => {
+      const stat = jj(["diff", "--stat"], cwd);
+      const match = stat.match(/(\d+) files? changed/);
+      return match ? match[1] : "";
+    }
   }
 };
 
@@ -412,15 +500,20 @@ export function inferContextWindow(model) {
   return Math.round(value * (unit === "m" ? 1_000_000 : 1_000));
 }
 
-function tokenSpeed(samples, windowSeconds) {
+function tokenSpeed(samples, windowSeconds, key = "totalTokens") {
   if (!Array.isArray(samples) || samples.length < 2) return 0;
   const newest = samples[samples.length - 1];
   const cutoff = Date.parse(newest.at) - windowSeconds * 1000;
   const oldest = [...samples].reverse().find((sample) => Date.parse(sample.at) <= cutoff) || samples[0];
-  const deltaTokens = Number(newest.totalTokens || 0) - Number(oldest.totalTokens || 0);
+  const deltaTokens = Number(newest[key] || 0) - Number(oldest[key] || 0);
   const deltaMinutes = (Date.parse(newest.at) - Date.parse(oldest.at)) / 60000;
   if (deltaTokens <= 0 || deltaMinutes <= 0) return 0;
   return deltaTokens / deltaMinutes;
+}
+
+function jj(args, cwd) {
+  const result = run("jj", args, { cwd, timeout: 1000 });
+  return result.ok ? result.stdout.trim().split(/\r?\n/)[0] : "";
 }
 
 function contextNumbers(usage) {

@@ -87,7 +87,12 @@ export function updateSamples(samples, usage, timestamp) {
   if (!totalTokens) return next;
   const last = next[next.length - 1];
   if (!last || last.totalTokens !== totalTokens) {
-    next.push({ at: timestamp, totalTokens });
+    next.push({
+      at: timestamp,
+      totalTokens,
+      inputTokens: Number(usage?.inputTokens || 0),
+      outputTokens: Number(usage?.outputTokens || 0)
+    });
   }
   return next.slice(-120);
 }
@@ -101,11 +106,18 @@ export function extractUsage(value) {
 
     if (["inputtokens", "totalinputtokens", "prompttokens"].includes(normalized)) output.inputTokens = number;
     if (["outputtokens", "totaloutputtokens", "completiontokens"].includes(normalized)) output.outputTokens = number;
+    if (["cachedtokens", "tokencached", "cachetokens", "promptcachedtokens"].includes(normalized)) output.cachedTokens = number;
+    if (["readtokens", "cachecreationinputtokens", "cachewritetokens"].includes(normalized)) output.cacheWriteTokens = number;
+    if (["cacheReadInputTokens", "cachereadtokens", "cachereadinputtokens"].map((item) => item.toLowerCase()).includes(normalized)) output.cacheReadTokens = number;
     if (["totaltokens", "usedtokens", "tokencount"].includes(normalized)) output.totalTokens = number;
     if (["contextwindow", "contextwindowsize"].includes(normalized)) output.contextWindow = number;
     if (["contextused", "contextusedtokens"].includes(normalized)) output.contextUsed = number;
     if (["contextremaining", "contextremainingtokens"].includes(normalized)) output.contextRemaining = number;
     if (["costusd", "totalcostusd"].includes(normalized)) output.costUsd = number;
+    if (["usagelimit", "usagelimitremaining", "fivehourlimitremaining"].includes(normalized)) output.usageLimitRemaining = number;
+    if (["usagelimitused", "fivehourlimitused"].includes(normalized)) output.usageLimitUsed = number;
+    if (["extrausagelimit", "extrausageremaining"].includes(normalized)) output.extraUsageRemaining = number;
+    if (["extrausageused", "extrausageutilized"].includes(normalized)) output.extraUsageUsed = number;
   });
 
   if (!output.totalTokens && (output.inputTokens || output.outputTokens)) {

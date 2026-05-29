@@ -106,3 +106,19 @@ test("supports per-widget color overrides", () => {
   assert.match(output, /\x1b\[48;2;4;5;6m/);
   assert.match(output, /\x1b\[38;2;1;2;3m/);
 });
+
+test("supports custom powerline separators and caps", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      powerline: { separator: ">", startCap: "<", endCap: "!" },
+      widgets: [{ type: "text", text: "a" }, { type: "text", text: "b" }]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { color: false });
+
+  assert.equal(output, "< a   b !");
+});

@@ -25,10 +25,14 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   duration, and best-effort token/context/cost metrics when Codex exposes them
   through hook payloads or transcript entries.
 - Usage widgets: token speed, context used/remaining/window, context bars,
-  five-hour block timer, and local weekly timer.
+  input/output speed, cached/cache-read/cache-write tokens, five-hour block
+  timer, and local weekly timer.
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
   links, flexible spacers/right alignment, path abbreviation, per-widget color
-  overrides, width truncation, and JSON or plain output.
+  overrides, custom command output, configurable Powerline separators/caps,
+  width truncation, and JSON or plain output.
+- Basic Jujutsu widgets for workspace, revision, description, bookmarks, and
+  changed files.
 - Presets for compact, dense, Git-focused, usage-focused, no-font,
   right-aligned, and multi-line layouts.
 - tmux and Starship integration snippets, with optional `--write` install.
