@@ -44,8 +44,8 @@ export function updateStateFromHook(payload, previous = loadState()) {
   const next = {
     ...previous,
     sessionId,
-    cwd: payload.cwd || previous.cwd || process.cwd(),
-    model: payload.model || previous.model || null,
+    cwd: payload.cwd || payload.workspace?.current_dir || previous.cwd || process.cwd(),
+    model: firstString(extractModel(payload), previous.model),
     reasoningEffort: firstString(
       payload.effort?.level,
       payload.effort_level,
@@ -63,6 +63,7 @@ export function updateStateFromHook(payload, previous = loadState()) {
     startedAt: previous.startedAt || now,
     turnId: payload.turn_id || payload.turnId || previous.turnId || null,
     transcriptPath: payload.transcript_path || previous.transcriptPath || null,
+    worktree: Object.hasOwn(payload, "worktree") ? extractWorktree(payload) : previous.worktree || null,
     eventCounts,
     usage: { ...(previous.usage || {}), ...transcriptUsage, ...usage },
     version: firstString(payload.version, payload.codex_version, payload.codexVersion, payload.app_version, payload.appVersion, previous.version),
@@ -144,6 +145,14 @@ export function extractUsage(value) {
     const normalized = key.replace(/[_-]/g, "").toLowerCase();
     const boolean = parseBooleanValue(candidate);
     if (normalized === "extrausageenabled" && boolean !== null) output.extraUsageEnabled = boolean;
+    const string = typeof candidate === "string" ? candidate.trim() : "";
+    if (string) {
+      if (["sessionresetat", "fivehourresetat", "resetsat"].includes(normalized)) output.sessionResetAt = string;
+      if (["weeklyresetat", "sevendayresetat"].includes(normalized)) output.weeklyResetAt = string;
+      if (["weeklysonnetresetat", "sonnetweeklyresetat", "sevendaysonnetresetat"].includes(normalized)) output.weeklySonnetResetAt = string;
+      if (["weeklyopusresetat", "opusweeklyresetat", "sevendayopusresetat"].includes(normalized)) output.weeklyOpusResetAt = string;
+      if (["usageerror", "error"].includes(normalized) && isUsageError(string)) output.error = string;
+    }
 
     const number = Number(candidate);
     if (!Number.isFinite(number)) return;
@@ -161,7 +170,8 @@ export function extractUsage(value) {
     if (["totaldurationms", "durationms", "sessiondurationms"].includes(normalized)) output.totalDurationMs = number;
     if (["usagelimit", "usagelimitremaining", "fivehourlimitremaining"].includes(normalized)) output.usageLimitRemaining = number;
     if (["usagelimitused", "fivehourlimitused"].includes(normalized)) output.usageLimitUsed = number;
-    if (["extrausagelimit", "extrausageremaining"].includes(normalized)) output.extraUsageRemaining = number;
+    if (["extrausagelimit", "extrausagelimitcents"].includes(normalized)) output.extraUsageLimit = number;
+    if (["extrausageremaining", "extrausageremainingdollars"].includes(normalized)) output.extraUsageRemaining = number;
     if (["extrausageused", "extrausageutilized"].includes(normalized)) output.extraUsageUsed = number;
     if (["extrausageutilization", "extrausageutilizationpercent", "extrausagepercent"].includes(normalized)) output.extraUsageUtilization = number;
     if (["sessionusage", "sessionusagepercent", "dailyusage", "dailyusagepercent"].includes(normalized)) output.sessionUsagePercent = number;
@@ -176,6 +186,8 @@ export function extractUsage(value) {
     if (["weeklyopususageremaining", "opusweeklyusageremaining"].includes(normalized)) output.weeklyOpusUsageRemaining = number;
   });
 
+  Object.assign(output, extractStructuredStatusUsage(value));
+
   if (!output.totalTokens && (output.inputTokens || output.outputTokens)) {
     output.totalTokens = Number(output.inputTokens || 0) + Number(output.outputTokens || 0);
   }
@@ -183,6 +195,10 @@ export function extractUsage(value) {
     output.contextRemaining = output.contextWindow - output.contextUsed;
   }
   return output;
+}
+
+function isUsageError(value) {
+  return ["no-credentials", "timeout", "rate-limited", "api-error", "parse-error"].includes(value);
 }
 
 function parseBooleanValue(value) {
@@ -219,6 +235,27 @@ function extractOutputStyle(payload) {
     payload.output_style,
     payload.outputStyle
   );
+}
+
+function extractModel(payload) {
+  const model = payload.model;
+  if (typeof model === "string") return model;
+  if (model && typeof model === "object") {
+    return firstString(model.display_name, model.displayName, model.name, model.id);
+  }
+  return null;
+}
+
+function extractWorktree(payload) {
+  if (!payload.worktree || typeof payload.worktree !== "object" || Array.isArray(payload.worktree)) return null;
+  return {
+    name: firstString(payload.worktree.name),
+    path: firstString(payload.worktree.path),
+    branch: firstString(payload.worktree.branch),
+    originalCwd: firstString(payload.worktree.original_cwd, payload.worktree.originalCwd),
+    originalBranch: firstString(payload.worktree.original_branch, payload.worktree.originalBranch),
+    original_branch: firstString(payload.worktree.original_branch, payload.worktree.originalBranch)
+  };
 }
 
 function extractSkillName(payload) {
@@ -283,6 +320,86 @@ export function extractUsageFromTranscript(path, maxLines = 300) {
     }
   }
   return merged;
+}
+
+function extractStructuredStatusUsage(value) {
+  if (!value || typeof value !== "object") return {};
+  const output = {};
+  const context = value.context_window || value.contextWindow;
+  if (context && typeof context === "object") {
+    const window = finiteNumber(context.context_window_size ?? context.contextWindowSize);
+    if (window !== null) output.contextWindow = window;
+
+    const usedPercent = finiteNumber(context.used_percentage ?? context.usedPercentage);
+    if (usedPercent !== null) output.contextUsagePercent = usedPercent;
+
+    const currentUsage = currentContextTokens(context.current_usage ?? context.currentUsage);
+    if (currentUsage !== null) output.contextUsed = currentUsage;
+    else {
+      if (window !== null && usedPercent !== null) output.contextUsed = Math.round((window * usedPercent) / 100);
+    }
+
+    const remainingPercent = finiteNumber(context.remaining_percentage ?? context.remainingPercentage);
+    if (window !== null && output.contextUsed !== undefined) output.contextRemaining = window - output.contextUsed;
+    else if (window !== null && remainingPercent !== null) output.contextRemaining = Math.round((window * remainingPercent) / 100);
+
+    const inputTokens = finiteNumber(context.total_input_tokens ?? context.totalInputTokens);
+    const outputTokens = finiteNumber(context.total_output_tokens ?? context.totalOutputTokens);
+    if (inputTokens !== null) output.inputTokens = inputTokens;
+    if (outputTokens !== null) output.outputTokens = outputTokens;
+    if (inputTokens !== null || outputTokens !== null) {
+      output.totalTokens = Number(inputTokens || 0) + Number(outputTokens || 0);
+    }
+  }
+
+  const rateLimits = value.rate_limits || value.rateLimits;
+  if (rateLimits && typeof rateLimits === "object") {
+    applyRateLimit(output, rateLimits.five_hour || rateLimits.fiveHour, "sessionUsagePercent", "sessionResetAt");
+    applyRateLimit(output, rateLimits.seven_day || rateLimits.sevenDay, "weeklyUsagePercent", "weeklyResetAt");
+    applyRateLimit(output, rateLimits.seven_day_sonnet || rateLimits.sevenDaySonnet, "weeklySonnetUsagePercent", "weeklySonnetResetAt");
+    applyRateLimit(output, rateLimits.seven_day_opus || rateLimits.sevenDayOpus, "weeklyOpusUsagePercent", "weeklyOpusResetAt");
+  }
+
+  return output;
+}
+
+function currentContextTokens(value) {
+  const direct = finiteNumber(value);
+  if (direct !== null) return direct;
+  if (!value || typeof value !== "object") return null;
+  const keys = [
+    "input_tokens",
+    "inputTokens",
+    "cache_creation_input_tokens",
+    "cacheCreationInputTokens",
+    "cache_read_input_tokens",
+    "cacheReadInputTokens"
+  ];
+  let total = 0;
+  for (const key of keys) total += Number(finiteNumber(value[key]) || 0);
+  return total > 0 ? total : null;
+}
+
+function applyRateLimit(output, bucket, percentKey, resetKey) {
+  if (!bucket || typeof bucket !== "object") return;
+  const percent = finiteNumber(bucket.used_percentage ?? bucket.usedPercentage);
+  if (percent !== null) output[percentKey] = percent;
+  const reset = epochToIso(bucket.resets_at ?? bucket.resetsAt);
+  if (reset) output[resetKey] = reset;
+}
+
+function epochToIso(value) {
+  const number = finiteNumber(value);
+  if (number === null) return null;
+  const ms = number > 1_000_000_000_000 ? number : number * 1000;
+  const date = new Date(ms);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function finiteNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }
 
 export function resetState() {

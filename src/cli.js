@@ -15,10 +15,14 @@ import { getUpdateStatus, runSelfUpdate } from "./update.js";
 import { cacheDir, codexHome, configDir, homePath, parseFlags, readText, run, writeTextAtomic } from "./util.js";
 
 export async function runCli(args) {
-  const [command = "render", ...rest] = args;
-  if (command === "help" || command === "--help" || command === "-h") return help();
+  const [first = "render", ...rest] = args;
+  if (first === "help" || first === "--help" || first === "-h") return help();
+  if (args.includes("--hook")) return hookCommand(args.filter((arg) => arg !== "--hook"));
 
-  if (command === "render") return renderCommand(rest);
+  const command = first.startsWith("--") ? "render" : first;
+  const commandArgs = first.startsWith("--") ? args : rest;
+
+  if (command === "render") return renderCommand(commandArgs);
   if (command === "hook") return hookCommand(rest);
   if (command === "init") return initCommand(rest);
   if (command === "install") return installCommand(rest);
@@ -39,7 +43,7 @@ export async function runCli(args) {
   throw new Error(`Unknown command: ${command}\nRun "cxstatusline help" for usage.`);
 }
 
-function renderCommand(args) {
+async function renderCommand(args) {
   const { flags } = parseFlags(args);
   let config = loadConfig({ config: flags.config });
   if (flags.theme) config.theme = flags.theme;
@@ -50,7 +54,7 @@ function renderCommand(args) {
     config.widgets = String(flags.widgets).split(",").map((type) => ({ type: type.trim() })).filter((widget) => widget.type);
   }
 
-  const state = loadState();
+  const state = await renderState(flags);
   const cwd = flags.cwd || state.cwd || process.cwd();
   const codexConfig = readCodexConfig();
   const git = getGitInfo(cwd, { ttlMs: config.gitCacheTtlMs });
@@ -65,6 +69,21 @@ function renderCommand(args) {
     }
   );
   process.stdout.write(`${output}\n`);
+}
+
+async function renderState(flags) {
+  const state = loadState();
+  const payload = await readRenderPayload(flags);
+  return payload ? updateStateFromHook(payload, state) : state;
+}
+
+async function readRenderPayload(flags) {
+  if (!flags.stdin && input.isTTY) return null;
+  const chunks = [];
+  for await (const chunk of input) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+  const raw = Buffer.concat(chunks).toString("utf8").trim();
+  if (!raw) return null;
+  return JSON.parse(raw);
 }
 
 async function hookCommand(args) {
@@ -388,8 +407,9 @@ function help() {
   console.log(`cxstatusline
 
 Usage:
-  cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
+  cxstatusline [render] [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
   cxstatusline hook
+  cxstatusline --hook
   cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--flex-mode mode] [--tui]
   cxstatusline import ccstatusline [--from path] [--dry-run]
   cxstatusline init [--force]
@@ -408,6 +428,7 @@ Usage:
 
 Examples:
   cxstatusline render --format plain
+  cat status.json | cxstatusline --format plain --widgets model,tokens-total,context-percentage
   cxstatusline render --preset compact --format plain
   cxstatusline configure --preset compact --theme powerline --yes
   cxstatusline configure --widgets model,git-branch,tokens-total --separator ' :: ' --yes

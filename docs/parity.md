@@ -23,6 +23,9 @@ equivalent data or extension points.
 - External refresh interval configuration for status surfaces that support it,
   including tmux `status-interval` generation.
 - JSON, ANSI, and plain output modes.
+- `ccstatusline`-style piped status JSON rendering without an explicit
+  `render` subcommand, including object-form model names, context window
+  metrics, and rate-limit reset fields.
 - Interactive and non-interactive configuration command, including widget,
   separator, terminal width, global formatting, Powerline separator, and
   Powerline alignment flags.
@@ -37,17 +40,18 @@ equivalent data or extension points.
   compaction-counter, separator, and flex-separator compatibility.
 - `ccstatusline` settings import for lines, minimalist mode, terminal width
   options, global formatting, widget merge/bold flags, Git and Link widget
-  metadata, separators, Git cache TTL, Powerline options, common widget
-  metadata, and named colors.
+  metadata, separators, Git cache TTL, Powerline options, speed window,
+  reset-hours, custom text/symbol, common widget metadata, and named colors.
 - Custom text, custom symbol, custom command with render-context JSON on stdin,
   timeout, max-width, `commandPath` compatibility, and optional ANSI
-  preservation, and OSC8 link widgets including `metadata.url`/`metadata.text`
-  compatibility.
+  preservation, and OSC8 link widgets including upstream `🔗` default rendering
+  plus `metadata.url`/`metadata.text` compatibility.
 - Git branch, SHA, upstream-style status indicators, clean/dirty symbols,
   staged/unstaged/untracked/conflict counts, ahead/behind arrows,
   upstream-style insertion/deletion count rendering, origin, upstream
   owner/repo, tracking remote fallback, fork status, upstream-style
-  branch/worktree icon/raw/no-git rendering, clickable branch and remote
+  branch/worktree icon/raw/no-git rendering, live status JSON worktree
+  mode/name/branch fallbacks, clickable branch and remote
   owner/repo links, Git root directory IDE links for VS Code and
   Cursor, remote and non-Git empty-state hiding,
   `ownerOnlyWhenFork`, `hideWhenNotFork`, and GitHub/GitLab PR/MR widgets with
@@ -62,10 +66,13 @@ equivalent data or extension points.
   weekly Sonnet/Opus usage, token speed, input speed, output speed, and total
   speed widgets when Codex hook/transcript data provides the underlying fields,
   including upstream-style token/context/usage/speed default/raw labels,
-  token-per-second speed formatting, usable-context percentage, usage/context
+  session-average speed defaults, `metadata.windowSeconds`, token-per-second
+  speed formatting, model-name context-window inference, the upstream 200k
+  default context denominator, usable-context percentage, usage/context
   display metadata for progress, progress-short, slider, slider-only,
   inverted, and cursor-marked displays, upstream-style Context Bar detail
-  displays, plus extra usage disabled-state hiding.
+  displays by default, plus extra usage dollar formatting and disabled-state
+  hiding.
 - Five-hour block timer, reset timer, and local weekly timer widgets, including
   Block Timer compact/progress/slider modes and reset timestamp, time zone,
   locale, 12/24-hour, combined, progress/slider, and bar modes.
@@ -73,14 +80,18 @@ equivalent data or extension points.
   voice status, remote-control status, skills, account email, run state, last
   event, last tool, compaction count, duration, memory, and terminal width
   widgets, with upstream-compatible default/raw rendering, thinking-effort
-  normalization and transcript fallback, default formats, Compaction Counter
-  zero display, Nerd Font, and hide-zero controls where applicable, plus Skills
-  mode/list-limit/hide-when-empty metadata.
+  normalization, transcript fallback for thinking effort and session name,
+  Claude account email `.claude.json` fallback with `CLAUDE_CONFIG_DIR`,
+  Claude voice status fallback from layered `.claude/settings*.json` files,
+  default formats, Compaction Counter zero display, Nerd Font, and hide-zero
+  controls where applicable, plus Skills mode/list-limit/hide-when-empty
+  metadata.
 - Jujutsu root, active workspace, revision, description, bookmark list,
   bookmark count, changed files, insertion/deletion summary, combined stats,
   insertion, and deletion widgets, including upstream-compatible `no jj`
   empty states and `hideNoJj` metadata.
-- Hook/native/tmux/Starship install and uninstall flows.
+- Hook/native/tmux/Starship install and uninstall flows, including `--hook`
+  compatibility for hook payload collection.
 - GitHub release update checks and pinned global install commands through CLI
   and the full-screen TUI.
 - Doctor, reset, benchmark commands, and CI benchmark thresholds.
@@ -104,8 +115,10 @@ Where Codex provides equivalent fields through hooks, transcripts, or native
 footer items, `cxstatusline` renders them. Where Codex does not provide the
 data, the matching widget stays empty instead of inventing values.
 
-## Remaining Enhancements
+## TUI Shortcut Note
 
-- Complete `ccstatusline` TUI parity for the remaining widget-specific
-  shortcuts beyond the currently supported Git, PR/MR, status-format, and
-  empty-state toggles.
+The full-screen TUI exposes widget-specific controls through the option editor.
+Some one-key shortcut mnemonics differ from `ccstatusline` because this TUI is a
+Codex-oriented editor rather than the upstream Ink UI, but the corresponding
+configuration and renderer behavior is covered above where Codex exposes the
+data.

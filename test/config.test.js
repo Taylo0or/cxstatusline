@@ -44,7 +44,11 @@ test("converts ccstatusline settings into cxstatusline config", () => {
         { type: "extra-usage-remaining", metadata: { hideIfDisabled: "true" } },
         { type: "skills", metadata: { mode: "list", listLimit: "2", hideWhenEmpty: "true" } },
         { type: "block-timer", metadata: { display: "slider", invert: "true", compact: "true" } },
-        { type: "compaction-counter", metadata: { format: "text-and-number", nerdFont: "true", hideZero: "true" } }
+        { type: "compaction-counter", metadata: { format: "text-and-number", nerdFont: "true", hideZero: "true" } },
+        { type: "total-speed", metadata: { windowSeconds: "75" } },
+        { type: "weekly-reset-timer", metadata: { hours: "true" } },
+        { type: "custom-text", customText: "Ship" },
+        { type: "custom-symbol", customSymbol: "=>" }
       ]
     ]
   });
@@ -124,4 +128,12 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[1][8].format, "text-and-number");
   assert.equal(config.lines[1][8].nerdFont, true);
   assert.equal(config.lines[1][8].hideZero, true);
+  assert.equal(config.lines[1][9].type, "totalSpeed");
+  assert.equal(config.lines[1][9].windowSeconds, 75);
+  assert.equal(config.lines[1][10].type, "weeklyResetTimer");
+  assert.equal(config.lines[1][10].hours, true);
+  assert.equal(config.lines[1][11].type, "text");
+  assert.equal(config.lines[1][11].customText, "Ship");
+  assert.equal(config.lines[1][12].type, "symbol");
+  assert.equal(config.lines[1][12].customSymbol, "=>");
 });

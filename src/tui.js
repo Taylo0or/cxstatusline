@@ -131,8 +131,8 @@ export function moveWidget(line, index, direction) {
 
 export function defaultWidgetForType(type) {
   const resolved = resolveWidgetType(type) || String(type || "text");
-  if (resolved === "text") return { type: "text", text: "text" };
-  if (resolved === "symbol") return { type: "symbol", symbol: "*" };
+  if (resolved === "text") return { type: "text", customText: "text" };
+  if (resolved === "symbol") return { type: "symbol", customSymbol: "*" };
   if (resolved === "command") return { type: "command", command: "printf ok", timeout: 1000, maxWidth: 40 };
   if (resolved === "link") return { type: "link", href: "https://example.com", text: "link" };
   if (resolved === "separator") return { type: "separator", text: "|" };
@@ -140,7 +140,7 @@ export function defaultWidgetForType(type) {
   if (resolved === "contextBar") return { type: resolved, width: 12 };
   if (["blockBar", "weeklyBar"].includes(resolved)) return { type: resolved, width: 16 };
   if (["tokenSpeed", "inputSpeed", "outputSpeed", "totalSpeed"].includes(resolved)) {
-    return { type: resolved, windowSeconds: 120 };
+    return { type: resolved, windowSeconds: 0 };
   }
   return { type: resolved };
 }
@@ -181,8 +181,8 @@ export function describeWidget(widget) {
   const details = [];
   if (item.label === "") details.push("raw");
   else if (item.label) details.push(`label=${item.label}`);
-  if (item.text) details.push(`text=${item.text}`);
-  if (item.symbol) details.push(`symbol=${item.symbol}`);
+  if (item.customText || item.text) details.push(`text=${item.customText || item.text}`);
+  if (item.customSymbol || item.symbol) details.push(`symbol=${item.customSymbol || item.symbol}`);
   if (item.command || item.commandPath) details.push(`cmd=${item.command || item.commandPath}`);
   if (linkUrl(item)) details.push(`url=${linkUrl(item)}`);
   if (item.merge) details.push(item.merge === true ? "merge" : `merge=${item.merge}`);
@@ -258,6 +258,7 @@ export function describeWidgetOptions(widget) {
   if (metadataFlag(item, "ownerOnlyWhenFork")) parts.push("owner-only-fork");
   if (metadataFlag(item, "hideWhenNotFork")) parts.push("hide-not-fork");
   if (metadataFlag(item, "hideIfDisabled")) parts.push("hide-if-disabled");
+  if (metadataFlag(item, "hours")) parts.push("hours-only");
   if (metadataFlag(item, "hideStatus")) parts.push("hide-status");
   if (metadataFlag(item, "hideTitle")) parts.push("hide-title");
   if (metadataFlag(item, "compact")) parts.push("compact");
@@ -329,7 +330,7 @@ export function buildWidgetOptionRows(widget) {
     rows.push({ key: "hideIfDisabled", label: "Hide if disabled", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "hideIfDisabled"))) });
   }
   if (type === "text" || type === "symbol" || type === "separator") {
-    rows.push({ key: "text", label: primaryValueLabel(type), value: item[primaryValueKey(type)] || "(empty)" });
+    rows.push({ key: "text", label: primaryValueLabel(type), value: primaryValue(item, type) || "(empty)" });
   }
   if (type === "cwd" || type === "path") {
     rows.push(
@@ -367,9 +368,12 @@ export function buildWidgetOptionRows(widget) {
       { key: "hour12", label: "12-hour clock", value: item.hour12 === undefined ? "(locale)" : BOOLEAN_TEXT.get(Boolean(item.hour12)) },
       { key: "includeDate", label: "Include date", value: BOOLEAN_TEXT.get(Boolean(item.date || item.includeDate)) }
     );
+    if (type === "weeklyResetTimer") {
+      rows.push({ key: "hours", label: "Hours only", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "hours"))) });
+    }
   }
   if (SPEED_WIDGETS.has(type)) {
-    rows.push({ key: "windowSeconds", label: "Speed window seconds", value: item.windowSeconds ?? 120 });
+    rows.push({ key: "windowSeconds", label: "Speed window seconds", value: item.windowSeconds ?? 0 });
   }
   if (type === "skills") {
     rows.push(
@@ -407,7 +411,7 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "timeout") return setNumericField(item, "timeout", value);
   if (key === "preserveColors") return { ...item, preserveColors: !Boolean(item.preserveColors) };
   if (key === "href") return value === "" ? deleteKey(deleteKey(item, "href"), "url") : { ...deleteKey(item, "url"), href: value };
-  if (key === "text") return value === "" ? deleteKey(item, primaryValueKey(resolveWidgetType(item.type) || item.type)) : { ...item, [primaryValueKey(resolveWidgetType(item.type) || item.type)]: value };
+  if (key === "text") return setPrimaryValue(item, resolveWidgetType(item.type) || item.type, value);
   if (key === "linkToRepo") return toggleLinkToRepo(item);
   if (key === "hideNoGit") return toggleOrDeleteMetadataAware(item, "hideNoGit");
   if (key === "hideNoJj") return toggleOrDeleteMetadataAware(item, "hideNoJj");
@@ -434,6 +438,7 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "locale") return value === "" ? deleteKey(item, "locale") : { ...item, locale: value };
   if (key === "hour12") return item.hour12 === undefined ? { ...item, hour12: true } : item.hour12 ? { ...item, hour12: false } : deleteKey(item, "hour12");
   if (key === "includeDate") return toggleDateOption(item);
+  if (key === "hours") return toggleOrDeleteMetadataAware(item, "hours");
   if (key === "windowSeconds") return setNumericField(item, "windowSeconds", value);
   if (key === "view") return setSkillsView(item, nextValue(["current", "count", "list"], item.view || metadataValue(item, "mode") || "current"));
   if (key === "limit") return setSkillsLimit(item, value);
@@ -968,8 +973,8 @@ class TuiEditor {
     if (!widget) return;
     const type = resolveWidgetType(widget.type) || widget.type;
     const key = primaryValueKey(type);
-    this.openInput(primaryValueLabel(type), widget[key] || "", (value) => {
-      this.updateSelected((item) => ({ ...item, [key]: value }), `Updated ${key}`);
+    this.openInput(primaryValueLabel(type), primaryValue(widget, type), (value) => {
+      this.updateSelected((item) => setPrimaryValue(item, type, value), `Updated ${key}`);
     });
   }
 
@@ -1442,22 +1447,43 @@ function optionInputValue(widget, key) {
   if (key === "command") return item.command || item.commandPath || "";
   if (key === "timeout") return item.timeout || 1000;
   if (key === "href") return linkUrl(item);
-  if (key === "text") return resolveWidgetType(item.type) === "link" ? linkText(item) : item[primaryValueKey(resolveWidgetType(item.type) || item.type)] || "";
+  if (key === "text") return resolveWidgetType(item.type) === "link" ? linkText(item) : primaryValue(item, resolveWidgetType(item.type) || item.type);
   if (key === "segments") return item.segments || "";
   if (key === "width") return item.width || 16;
   if (key === "timeZone") return item.timeZone || "";
   if (key === "locale") return item.locale || "en";
-  if (key === "windowSeconds") return item.windowSeconds ?? 120;
+  if (key === "windowSeconds") return item.windowSeconds ?? 0;
   if (key === "limit") return item.limit ?? item.listLimit ?? "";
   return "";
 }
 
 function primaryValueKey(type) {
-  if (type === "symbol") return "symbol";
+  if (type === "symbol") return "customSymbol";
+  if (type === "text") return "customText";
   if (type === "command") return "command";
   if (type === "link") return "text";
   if (type === "separator") return "text";
   return "text";
+}
+
+function primaryValue(item, type) {
+  if (type === "symbol") return item.customSymbol || item.symbol || "";
+  if (type === "text") return item.customText || item.text || "";
+  return item[primaryValueKey(type)] || "";
+}
+
+function setPrimaryValue(item, type, value) {
+  const key = primaryValueKey(type);
+  if (value === "") {
+    let next = deleteKey(item, key);
+    if (type === "symbol") next = deleteKey(next, "symbol");
+    if (type === "text") next = deleteKey(next, "text");
+    return next;
+  }
+  const next = { ...item, [key]: value };
+  if (type === "symbol") delete next.symbol;
+  if (type === "text") delete next.text;
+  return next;
 }
 
 function primaryValueLabel(type) {

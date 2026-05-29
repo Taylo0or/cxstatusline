@@ -39,15 +39,17 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   Codex exposes them through hook payloads or transcript entries.
 - Usage widgets: upstream-style token/input/output/total speed, session and weekly usage,
   Sonnet/Opus weekly usage when available, upstream-style token and context
-  default/raw labels, context used/remaining/window,
+  default/raw labels, context used/remaining/window with model-name inference
+  and the upstream 200k default denominator,
   context bars with upstream-compatible detail display modes (`progress`,
   `progress-short`, `slider`, `slider-only`), percent display modes with
-  invert/cursor controls, extra usage disabled-state hiding,
+  invert/cursor controls, extra usage dollar formatting, disabled-state hiding,
   cached/cache-read/cache-write tokens,
   five-hour block timer with compact/progress/slider modes, reset timers with
   timestamp/time zone aliases and progress/slider modes, and local weekly timer.
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
-  links including `ccstatusline` Link metadata, flexible spacers/right
+  links including `ccstatusline` Link metadata and upstream `🔗` default
+  rendering, flexible spacers/right
   alignment, manual separator collapse, path abbreviation, default
   padding/separator controls, inherited separator colors, global bold and color
   overrides, widget merge/no-padding modes, per-widget color overrides,
@@ -125,6 +127,13 @@ Use with any shell prompt:
 
 ```sh
 cxstatusline render --format plain
+```
+
+Render a Claude-style status JSON payload from stdin, matching the
+`ccstatusline` command-backed renderer shape:
+
+```sh
+cat status.json | cxstatusline --format plain --widgets model,tokens-total,context-percentage
 ```
 
 Force a render width with either native or compatibility environment variables:
@@ -336,14 +345,15 @@ Check or pin the global install to a release tag:
 ```sh
 cxstatusline update-check
 cxstatusline self-update --dry-run
-cxstatusline self-update --tag v0.2.24
+cxstatusline self-update --tag v1.0.0
 ```
 
 ## Commands
 
 ```text
-cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
+cxstatusline [render] [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
 cxstatusline hook
+cxstatusline --hook
 cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--flex-mode mode] [--tui]
 cxstatusline tui [--config path]
 cxstatusline import ccstatusline [--from path] [--dry-run]
@@ -356,7 +366,7 @@ cxstatusline native-items
 cxstatusline themes
 cxstatusline bench [--iterations 500] [--max-avg-ms 5]
 cxstatusline update-check [--json]
-cxstatusline self-update [--dry-run] [--tag v0.2.24]
+cxstatusline self-update [--dry-run] [--tag v1.0.0]
 cxstatusline doctor
 cxstatusline reset
 ```

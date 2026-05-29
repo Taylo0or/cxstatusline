@@ -1,12 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { homedir } from "node:os";
+import { homedir, tmpdir } from "node:os";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { formatJjChangeSummary, formatPath, formatPullRequestInfo, formatResetTimer, inferContextWindow, parseGithubPullRequest, parseGitlabMergeRequest, parseJjBookmarks, parseJjStat, renderWidget, resolveWidgetType } from "../src/widgets.js";
 import { stripAnsi } from "../src/util.js";
 
 test("infers context windows from model suffixes", () => {
   assert.equal(inferContextWindow("gpt-example 1M context"), 1000000);
   assert.equal(inferContextWindow("model-200k"), 200000);
+  assert.equal(inferContextWindow("claude-sonnet[1M]"), 1000000);
+  assert.equal(inferContextWindow("model (1,000k context)"), 1000000);
   assert.equal(inferContextWindow("plain-model"), 0);
 });
 
@@ -19,7 +23,13 @@ test("renders OSC8 links and strips them for visible text", () => {
   });
 
   assert.match(output, /\x1b]8;;https:\/\/example.com/);
-  assert.equal(stripAnsi(output), "repo");
+  assert.equal(stripAnsi(output), "\u{1F517} repo");
+  assert.equal(stripAnsi(renderWidget({ type: "link", text: "repo", href: "https://example.com", rawValue: true }, {
+    config: {},
+    state: {},
+    git: { isRepo: false },
+    codexConfig: {}
+  })), "repo");
 });
 
 test("renders ccstatusline-style link metadata", () => {
@@ -32,12 +42,14 @@ test("renders ccstatusline-style link metadata", () => {
 
   const output = renderWidget({ type: "link", metadata: { url: "https://example.com/docs", text: "Docs" } }, context);
   assert.match(output, /\x1b]8;;https:\/\/example.com\/docs/);
-  assert.equal(stripAnsi(output), "Docs");
+  assert.equal(stripAnsi(output), "\u{1F517} Docs");
 
   const urlLabel = renderWidget({ type: "link", metadata: { url: "https://example.com/docs" } }, context);
-  assert.equal(stripAnsi(urlLabel), "https://example.com/docs");
+  assert.equal(stripAnsi(urlLabel), "\u{1F517} https://example.com/docs");
+  assert.equal(stripAnsi(renderWidget({ type: "link", metadata: { url: "https://example.com/docs", text: "Docs" }, rawValue: true }, context)), "Docs");
 
-  assert.equal(renderWidget({ type: "link", metadata: { text: "Docs" } }, context), "Docs");
+  assert.equal(renderWidget({ type: "link", metadata: { text: "Docs" } }, context), "\u{1F517} Docs");
+  assert.equal(renderWidget({ type: "link" }, context), "\u{1F517} no url");
 });
 
 test("renders Git branch and remote widgets as repo links from metadata", () => {
@@ -240,6 +252,11 @@ test("renders Git worktree values with upstream icon and no-git metadata", () =>
   assert.equal(renderWidget({ type: "gitWorktree", label: "" }, linked), "feature/wt");
   assert.equal(renderWidget({ type: "gitWorktree" }, noGit), "\u{16830} no git");
   assert.equal(renderWidget({ type: "gitWorktree", metadata: { hideNoGit: "true" } }, noGit), "");
+  assert.equal(renderWidget({ type: "gitWorktreeMode" }, { ...noGit, state: { worktree: { name: "status-wt" } } }), "\u2387");
+  assert.equal(renderWidget({ type: "gitWorktreeMode", rawValue: true }, { ...noGit, state: { worktree: { name: "status-wt" } } }), "true");
+  assert.equal(renderWidget({ type: "gitWorktreeName" }, { ...noGit, state: { worktree: { name: "status-wt" } } }), "status-wt");
+  assert.equal(renderWidget({ type: "gitWorktreeBranch" }, { ...noGit, state: { worktree: { branch: "feature" } } }), "feature");
+  assert.equal(renderWidget({ type: "gitWorktreeOriginalBranch" }, { ...noGit, state: { worktree: { originalBranch: "main" } } }), "main");
 });
 
 test("renders Jujutsu no-repo empty states and hideNoJj metadata", () => {
@@ -302,7 +319,7 @@ test("renders upstream-style Context Bar display metadata", () => {
     codexConfig: {}
   };
 
-  assert.equal(renderWidget({ type: "contextBar" }, context), "[##--------] 15%");
+  assert.equal(renderWidget({ type: "contextBar" }, context), "Context: [\u2588\u2588\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591] 30k/200k (15%)");
   assert.equal(renderWidget({ type: "contextBar", metadata: { display: "progress-short" }, style: "ascii", width: 10 }, context), "Context: [##--------] 30k/200k (15%)");
   assert.equal(renderWidget({ type: "contextBar", metadata: { display: "progress" }, label: "", style: "ascii", width: 10 }, context), "[##--------] 30k/200k (15%)");
   assert.equal(renderWidget({ type: "contextBar", metadata: { display: "slider" } }, context), "Context: \u2593\u2593\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591 30k/200k (15%)");
@@ -333,6 +350,84 @@ test("renders raw and labeled core environment widgets", () => {
   } finally {
     if (previousWidth === undefined) delete process.env.CXSTATUSLINE_WIDTH;
     else process.env.CXSTATUSLINE_WIDTH = previousWidth;
+  }
+});
+
+test("renders upstream-style environment, worktree mode, and custom literal widgets", () => {
+  const context = {
+    config: {},
+    state: {},
+    git: { isRepo: true, worktree: { linked: true, name: "feature", branch: "wt-feature", original_branch: "main" } },
+    codexConfig: {},
+    terminalWidth: 101
+  };
+
+  assert.match(renderWidget({ type: "memory" }, context), /^Mem: .+\/.+$/);
+  assert.doesNotMatch(renderWidget({ type: "memory", rawValue: true }, context), /^Mem: /);
+  assert.equal(renderWidget({ type: "terminalWidth" }, context), "Term: 101");
+  assert.equal(renderWidget({ type: "gitWorktreeMode" }, context), "\u2387");
+  assert.equal(renderWidget({ type: "gitWorktreeMode", rawValue: true }, context), "true");
+  assert.equal(renderWidget({ type: "gitWorktreeMode" }, { ...context, git: { isRepo: true, worktree: { linked: false } } }), "");
+  assert.equal(renderWidget({ type: "gitWorktreeMode", rawValue: true }, { ...context, git: { isRepo: true, worktree: { linked: false } } }), "false");
+  assert.equal(renderWidget({ type: "gitWorktreeOriginalBranch" }, context), "main");
+  assert.equal(renderWidget({ type: "text", customText: "hello" }, context), "hello");
+  assert.equal(renderWidget({ type: "symbol", customSymbol: "=>" }, context), "=>");
+});
+
+test("renders speed metrics, window metadata, reset labels, and extra usage API fields", () => {
+  const resetAt = new Date(Date.now() + 270 * 60 * 1000).toISOString();
+  const weeklyResetAt = new Date(Date.now() + 36.5 * 60 * 60 * 1000).toISOString();
+  const context = {
+    config: {},
+    state: {
+      speedMetrics: { totalDurationMs: 2000, totalTokens: 3000, inputTokens: 2000, outputTokens: 1000 },
+      windowedSpeedMetrics: {
+        75: { totalDurationMs: 4000, totalTokens: 400, inputTokens: 200, outputTokens: 200 }
+      },
+      usage: {
+        sessionResetAt: resetAt,
+        weeklyResetAt,
+        extraUsageEnabled: true,
+        extraUsageLimit: 400000,
+        extraUsageUsed: 106
+      }
+    },
+    git: { isRepo: false },
+    codexConfig: {}
+  };
+
+  assert.equal(renderWidget({ type: "totalSpeed" }, context), "Total: 1.5k t/s");
+  assert.equal(renderWidget({ type: "outputSpeed", metadata: { windowSeconds: "75" } }, context), "Out: 50.0 t/s");
+  assert.equal(renderWidget({ type: "totalSpeed" }, { ...context, state: { speedMetrics: { totalDurationMs: 0, totalTokens: 10 } } }), "Total: \u2014");
+  assert.match(renderWidget({ type: "blockResetTimer" }, context), /^Reset: 4hr (29|30)m$/);
+  assert.match(renderWidget({ type: "weeklyResetTimer" }, context), /^Weekly Reset: 1d 12hr (29|30)m$/);
+  assert.equal(renderWidget({ type: "blockResetTimer" }, { ...context, state: { usage: { error: "timeout" } } }), "[Timeout]");
+  assert.equal(renderWidget({ type: "weeklyResetTimer" }, { ...context, state: { usage: { error: "timeout" } } }), "[Timeout]");
+  assert.equal(renderWidget({ type: "extraUsageRemaining" }, context), "Overage Left: $3,894.00");
+  assert.equal(renderWidget({ type: "extraUsageRemaining", rawValue: true }, context), "$3,894.00");
+  assert.equal(renderWidget({ type: "extraUsageRemaining" }, { ...context, state: { usage: { error: "timeout" } } }), "[Timeout]");
+});
+
+test("reads session name from transcript custom-title entries", () => {
+  const dir = mkdtempSync(join(tmpdir(), "cxstatusline-transcript-"));
+  try {
+    const transcript = join(dir, "session.jsonl");
+    writeFileSync(transcript, [
+      JSON.stringify({ type: "custom-title", customTitle: "Old Name" }),
+      "{bad json",
+      JSON.stringify({ type: "custom-title", customTitle: "New Name" })
+    ].join("\n"));
+    const context = {
+      config: {},
+      state: { transcriptPath: transcript },
+      git: { isRepo: false },
+      codexConfig: {}
+    };
+
+    assert.equal(renderWidget({ type: "sessionName" }, context), "Session: New Name");
+    assert.equal(renderWidget({ type: "sessionName", rawValue: true }, context), "New Name");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });
 
@@ -368,6 +463,23 @@ test("parses rich GitHub pull request metadata", () => {
   assert.equal(stripAnsi(formatPullRequestInfo(pr, { hideStatus: true })), "PR #42 Add feature");
   assert.equal(stripAnsi(formatPullRequestInfo(pr, { hideTitle: true })), "PR #42 APPROVED");
   assert.equal(stripAnsi(formatPullRequestInfo(pr, { rawValue: true })), "#42 APPROVED Add feature");
+});
+
+test("renders upstream-style Git PR empty states", () => {
+  const context = {
+    config: {},
+    state: {},
+    git: { isRepo: false },
+    codexConfig: {},
+    cwd: process.cwd()
+  };
+
+  assert.equal(renderWidget({ type: "gitPullRequest" }, context), "(no PR)");
+  assert.equal(renderWidget({ type: "gitPullRequest", hideNoGit: true }, context), "");
+  assert.equal(renderWidget({ type: "gitPullRequest" }, {
+    ...context,
+    git: { isRepo: false, origin: { host: "gitlab.com" } }
+  }), "(no MR)");
 });
 
 test("parses rich GitLab merge request metadata", () => {
@@ -490,12 +602,12 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "contextPercentage", metadata: { inverse: "true" } }, context), "Ctx Left: 50.0%");
   assert.equal(renderWidget({ type: "weeklyUsage" }, context), "Weekly: 40.0%");
   assert.equal(renderWidget({ type: "weeklyUsage", rawValue: true }, context), "40.0%");
-  assert.equal(renderWidget({ type: "extraUsageRemaining" }, context), "Overage Left: 75");
-  assert.equal(renderWidget({ type: "extraUsageRemaining", rawValue: true }, context), "75");
+  assert.equal(renderWidget({ type: "extraUsageRemaining" }, context), "Overage Left: $75.00");
+  assert.equal(renderWidget({ type: "extraUsageRemaining", rawValue: true }, context), "$75.00");
   assert.equal(renderWidget({ type: "extraUsageUtilization" }, context), "Overage: 25.0%");
   assert.equal(renderWidget({ type: "extraUsageUtilization", metadata: { display: "progress-short", invert: "true" } }, context), "Overage: [████████████░░░░] 75.0%");
   assert.equal(renderWidget({ type: "extraUsageUtilization", metadata: { display: "slider-only", cursor: "true" } }, context), "Overage: ▓▓▓│░░░░░░");
-  assert.equal(renderWidget({ type: "extraUsageRemaining" }, { ...context, state: { usage: { extraUsageRemaining: 0 } } }), "Overage Left: 0");
+  assert.equal(renderWidget({ type: "extraUsageRemaining" }, { ...context, state: { usage: { extraUsageRemaining: 0 } } }), "Overage Left: $0.00");
   assert.equal(renderWidget({ type: "extraUsageRemaining" }, { ...context, state: { usage: { extraUsageEnabled: false } } }), "Overage Left: n/a");
   assert.equal(renderWidget({ type: "extraUsageUtilization", metadata: { hideIfDisabled: "true" } }, { ...context, state: { usage: { extraUsageEnabled: false } } }), "");
   const blockContext = { ...context, state: { startedAt: new Date(Date.now() - 13_500_000).toISOString() } };
@@ -588,6 +700,60 @@ test("renders upstream-style core labels and raw values", () => {
   assert.equal(renderWidget({ type: "claudeAccountEmail" }, context), "Account: dev@example.com");
 });
 
+test("reads Claude account email from CLAUDE_CONFIG_DIR .claude.json", () => {
+  const tempDir = mkdtempSync(join(tmpdir(), "cxstatusline-claude-"));
+  const previousClaudeConfigDir = process.env.CLAUDE_CONFIG_DIR;
+  const previousCodexEmail = process.env.CODEX_ACCOUNT_EMAIL;
+  try {
+    process.env.CLAUDE_CONFIG_DIR = tempDir;
+    delete process.env.CODEX_ACCOUNT_EMAIL;
+    writeFileSync(join(tempDir, ".claude.json"), JSON.stringify({
+      oauthAccount: { emailAddress: "claude@example.com" }
+    }));
+
+    assert.equal(renderWidget({ type: "claudeAccountEmail" }, {
+      config: {},
+      state: {},
+      git: { isRepo: false },
+      codexConfig: {}
+    }), "Account: claude@example.com");
+  } finally {
+    if (previousClaudeConfigDir === undefined) delete process.env.CLAUDE_CONFIG_DIR;
+    else process.env.CLAUDE_CONFIG_DIR = previousClaudeConfigDir;
+    if (previousCodexEmail === undefined) delete process.env.CODEX_ACCOUNT_EMAIL;
+    else process.env.CODEX_ACCOUNT_EMAIL = previousCodexEmail;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("reads Claude voice status from layered settings", () => {
+  const tempDir = mkdtempSync(join(tmpdir(), "cxstatusline-voice-"));
+  try {
+    const projectClaudeDir = join(tempDir, ".claude");
+    mkdirSync(projectClaudeDir);
+    writeFileSync(join(projectClaudeDir, "settings.json"), JSON.stringify({
+      voice: { enabled: true }
+    }));
+
+    assert.equal(renderWidget({ type: "voiceStatus", format: "word" }, {
+      config: {},
+      state: {},
+      git: { isRepo: false },
+      codexConfig: {},
+      cwd: tempDir
+    }), "voice on");
+    assert.equal(renderWidget({ type: "voiceStatus", rawValue: true }, {
+      config: {},
+      state: {},
+      git: { isRepo: false },
+      codexConfig: {},
+      cwd: tempDir
+    }), "on");
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("renders upstream-style token and context labels", () => {
   const context = {
     config: {},
@@ -617,6 +783,29 @@ test("renders upstream-style token and context labels", () => {
   assert.equal(renderWidget({ type: "contextPercentage", rawValue: true }, context), "4.2%");
   assert.equal(renderWidget({ type: "contextPercentage", metadata: { inverse: "true" } }, context), "Ctx Left: 95.8%");
   assert.equal(renderWidget({ type: "contextPercentageUsable" }, context), "Ctx(u) Used: 5.3%");
+});
+
+test("uses upstream default and inferred context windows when explicit size is missing", () => {
+  const base = {
+    config: {},
+    state: {
+      usage: { contextUsed: 42000 }
+    },
+    git: { isRepo: false },
+    codexConfig: {}
+  };
+
+  assert.equal(renderWidget({ type: "contextWindow" }, base), "Win: 200.0k");
+  assert.equal(renderWidget({ type: "contextPercentage" }, base), "Ctx Used: 21.0%");
+  assert.equal(renderWidget({ type: "contextPercentageUsable" }, base), "Ctx(u) Used: 26.3%");
+  assert.equal(renderWidget({ type: "contextPercentage" }, {
+    ...base,
+    state: { model: "claude-sonnet[1m]", usage: { contextUsed: 42000 } }
+  }), "Ctx Used: 4.2%");
+  assert.equal(renderWidget({ type: "contextPercentageUsable" }, {
+    ...base,
+    state: { model: "claude-sonnet[1m]", usage: { contextUsed: 42000 } }
+  }), "Ctx(u) Used: 5.3%");
 });
 
 test("resolves ccstatusline kebab-case widget names", () => {

@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.0.0
+
+- Continued full `ccstatusline` parity work without publishing another interim
+  version.
+- Aligned Link widget rendering with upstream `🔗` default text and raw output.
+- Aligned Context Bar default rendering to upstream detailed progress output.
+- Aligned extra usage remaining with upstream dollar formatting and API-style
+  limit/used calculation.
+- Aligned speed widgets with upstream session-average defaults,
+  `metadata.windowSeconds`, metric-based rendering, and `k t/s` formatting.
+- Aligned reset timer labels, usage-duration formatting, usage error messages,
+  terminal width, memory labels, worktree mode, custom text/symbol metadata, and
+  transcript-backed session names with upstream behavior.
+- Aligned context window fallback behavior with upstream model-name inference
+  and the 200k default denominator.
+- Preserved upstream `windowSeconds`, `hours`, `customText`, and
+  `customSymbol` settings during `ccstatusline` config import.
+- Added `ccstatusline`-style piped status JSON rendering without an explicit
+  `render` subcommand, plus `--hook` compatibility.
+- Updated the full-screen TUI to create and edit upstream-compatible
+  `customText`, `customSymbol`, reset-hours, and session-average speed settings.
+- Aligned Git PR/MR empty-state rendering with upstream `(no PR)`/`(no MR)`
+  defaults and `hideNoGit` hiding.
+- Added upstream-compatible Claude account email fallback from `.claude.json`
+  with `CLAUDE_CONFIG_DIR` support.
+- Added upstream-compatible Claude voice status fallback from layered
+  `.claude/settings*.json` files.
+- Added live status JSON `worktree` fallback for worktree mode/name/branch
+  widgets.
+
 ## 0.2.54
 
 - Aligned token speed widgets with upstream `ccstatusline`: `In:`/`Out:`/

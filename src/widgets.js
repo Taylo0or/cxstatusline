@@ -1,11 +1,12 @@
 import { closeSync, existsSync, openSync, readSync, statSync } from "node:fs";
 import os from "node:os";
 import { basename, join } from "node:path";
-import { compactNumber, formatDuration, numberFormat, readJson, repoRoot, run, stripAnsi } from "./util.js";
+import { compactNumber, formatDuration, homePath, readJson, repoRoot, run, stripAnsi } from "./util.js";
 
 export const SPACER = "__CXSTATUSLINE_SPACER__";
 const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const DEFAULT_CONTEXT_WINDOW = 200_000;
 const PACKAGE = readJson(join(repoRoot, "package.json"), {});
 const VIM_ICON = "v";
 const VIM_NERD_FONT_ICON = "\uE62B";
@@ -275,7 +276,11 @@ export const widgetRegistry = {
   },
   gitWorktreeMode: {
     description: "Whether the repository is a linked worktree",
-    render: ({ git, widget }) => git.isRepo ? (git.worktree?.linked ? "worktree" : "normal") : gitNoGit(widget, "no git")
+    render: ({ git, state, widget }) => {
+      const linked = Boolean(state.worktree || git.isRepo && git.worktree?.linked);
+      if (widget.rawValue || widget.label === "") return String(linked);
+      return linked ? "\u2387" : "";
+    }
   },
   gitWorktree: {
     description: "Current Git worktree name when in a linked worktree",
@@ -283,15 +288,15 @@ export const widgetRegistry = {
   },
   gitWorktreeName: {
     description: "Current worktree directory name",
-    render: ({ git }) => git.worktree?.name || ""
+    render: ({ git, state }) => state.worktree?.name || git.worktree?.name || ""
   },
   gitWorktreeBranch: {
     description: "Current worktree branch name",
-    render: ({ git }) => git.worktree?.branch || ""
+    render: ({ git, state }) => state.worktree?.branch || git.worktree?.branch || ""
   },
   gitWorktreeOriginalBranch: {
     description: "Upstream branch name associated with the current worktree",
-    render: ({ git }) => git.worktree?.originalBranch || ""
+    render: ({ git, state }) => state.worktree?.originalBranch || state.worktree?.original_branch || git.worktree?.originalBranch || git.worktree?.original_branch || ""
   },
   tokens: {
     description: "Total session token usage from hook or transcript state",
@@ -327,31 +332,31 @@ export const widgetRegistry = {
     render: ({ state }) => state.usage?.cacheWriteTokens ? compactNumber(state.usage.cacheWriteTokens) : ""
   },
   tokenSpeed: {
-    description: "Token speed per minute from recent hook samples",
+    description: "Token speed per second from recent hook samples or metrics",
     render: ({ state, widget }) => {
-      const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120), "totalTokens");
-      return speed ? formatRawOrLabeledValue(widget, "Total: ", formatSpeedValue(speed)) : "";
+      const value = speedWidgetValue(state, widget, "total");
+      return value ? formatRawOrLabeledValue(widget, "Total: ", value) : "";
     }
   },
   totalSpeed: {
-    description: "Total token speed per minute from recent hook samples",
+    description: "Total token speed per second from recent hook samples or metrics",
     render: ({ state, widget }) => {
-      const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120), "totalTokens");
-      return speed ? formatRawOrLabeledValue(widget, "Total: ", formatSpeedValue(speed)) : "";
+      const value = speedWidgetValue(state, widget, "total");
+      return value ? formatRawOrLabeledValue(widget, "Total: ", value) : "";
     }
   },
   inputSpeed: {
-    description: "Input token speed per minute from recent hook samples",
+    description: "Input token speed per second from recent hook samples or metrics",
     render: ({ state, widget }) => {
-      const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120), "inputTokens");
-      return speed ? formatRawOrLabeledValue(widget, "In: ", formatSpeedValue(speed)) : "";
+      const value = speedWidgetValue(state, widget, "input");
+      return value ? formatRawOrLabeledValue(widget, "In: ", value) : "";
     }
   },
   outputSpeed: {
-    description: "Output token speed per minute from recent hook samples",
+    description: "Output token speed per second from recent hook samples or metrics",
     render: ({ state, widget }) => {
-      const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120), "outputTokens");
-      return speed ? formatRawOrLabeledValue(widget, "Out: ", formatSpeedValue(speed)) : "";
+      const value = speedWidgetValue(state, widget, "output");
+      return value ? formatRawOrLabeledValue(widget, "Out: ", value) : "";
     }
   },
   contextWindow: {
@@ -359,30 +364,31 @@ export const widgetRegistry = {
     render: ({ state, codexConfig, widget }) => {
       const usage = state.usage || {};
       const inferred = inferContextWindow(state.model || codexConfig.model || "");
-      const value = usage.contextWindow || inferred;
+      const value = usage.contextWindow || inferred || DEFAULT_CONTEXT_WINDOW;
       return value ? formatRawOrLabeledValue(widget, "Win: ", compactNumber(value)) : "";
     }
   },
   contextPercent: {
     description: "Context window used percentage",
-    render: ({ state, widget }) => renderContextPercent(state.usage || {}, widget)
+    render: ({ state, codexConfig, widget }) => renderContextPercent(state.usage || {}, widget, state.model || codexConfig.model)
   },
   contextPercentage: {
     description: "Context window used percentage",
-    render: ({ state, widget }) => renderContextPercent(state.usage || {}, widget)
+    render: ({ state, codexConfig, widget }) => renderContextPercent(state.usage || {}, widget, state.model || codexConfig.model)
   },
   contextPercentageUsable: {
     description: "Context window usable percentage when available, otherwise context percentage",
-    render: ({ state, widget }) => renderContextUsablePercent(state.usage || {}, widget)
+    render: ({ state, codexConfig, widget }) => renderContextUsablePercent(state.usage || {}, widget, state.model || codexConfig.model)
   },
   contextBar: {
     description: "Context usage bar",
-    render: ({ state, widget }) => {
-      const { used, window, remaining } = contextNumbers(state.usage || {});
+    render: ({ state, codexConfig, widget }) => {
+      const { used, window, remaining } = contextNumbers(state.usage || {}, state.model || codexConfig.model);
       if (!used || !window) return "";
       const value = widget.mode === "remaining" ? remaining : used;
       const percent = (value / window) * 100;
-      if (contextBarDetailedMode(widget)) return renderContextBarDisplay(percent, used, window, widget);
+      const detailedMode = contextBarDetailedMode(widget);
+      if (detailedMode) return renderContextBarDisplay(percent, used, window, widget, detailedMode);
       const width = Number(widget.width || 10);
       if (usageDisplayMode(widget)) return renderPercentDisplay(percent, widget);
       return renderBar(percent / 100, width, widget.style);
@@ -390,8 +396,8 @@ export const widgetRegistry = {
   },
   contextTokens: {
     description: "Context usage as used/total tokens",
-    render: ({ state }) => {
-      const { used, window } = contextNumbers(state.usage || {});
+    render: ({ state, codexConfig }) => {
+      const { used, window } = contextNumbers(state.usage || {}, state.model || codexConfig.model);
       if (!used || !window) return "";
       return `${compactNumber(used)}/${compactNumber(window)}`;
     }
@@ -412,16 +418,16 @@ export const widgetRegistry = {
   },
   contextRemaining: {
     description: "Context remaining percentage",
-    render: ({ state }) => {
-      const { remaining, window } = contextNumbers(state.usage || {});
+    render: ({ state, codexConfig }) => {
+      const { remaining, window } = contextNumbers(state.usage || {}, state.model || codexConfig.model);
       if (!remaining || !window) return "";
       return `${Math.round((remaining / window) * 100)}%`;
     }
   },
   contextRemainingTokens: {
     description: "Context tokens remaining",
-    render: ({ state }) => {
-      const { remaining } = contextNumbers(state.usage || {});
+    render: ({ state, codexConfig }) => {
+      const { remaining } = contextNumbers(state.usage || {}, state.model || codexConfig.model);
       return remaining ? compactNumber(remaining) : "";
     }
   },
@@ -482,9 +488,9 @@ export const widgetRegistry = {
     render: ({ state, widget }) => {
       const usage = state.usage || {};
       if (usage.extraUsageEnabled === false) return extraUsageDisabled(widget, "Overage Left: ");
-      return hasUsageValue(usage.extraUsageRemaining)
-        ? formatRawOrLabeledValue(widget, "Overage Left: ", compactNumber(usage.extraUsageRemaining))
-        : "";
+      const remaining = extraUsageRemainingDollars(usage);
+      if (Number.isFinite(remaining)) return formatRawOrLabeledValue(widget, "Overage Left: ", formatUsd(remaining));
+      return usage.error ? usageErrorMessage(usage.error) : "";
     }
   },
   extraUsageUtilization: {
@@ -493,7 +499,7 @@ export const widgetRegistry = {
       const usage = state.usage || {};
       if (usage.extraUsageEnabled === false) return extraUsageDisabled(widget, "Overage: ");
       const percent = extraUsagePercent(usage);
-      if (!Number.isFinite(percent)) return "";
+      if (!Number.isFinite(percent)) return usage.error ? usageErrorMessage(usage.error) : "";
       return formatRawOrLabeledValue(widget, "Overage: ", renderUsagePercentValue(percent, widget));
     }
   },
@@ -511,7 +517,7 @@ export const widgetRegistry = {
   },
   blockResetTimer: {
     description: "Remaining time or reset timestamp for the current five-hour usage block",
-    render: ({ state, widget }) => state.startedAt ? formatResetTimer(blockProgress(Date.parse(state.startedAt)), widget) : ""
+    render: ({ state, widget }) => renderResetTimerWidget("Reset", resolveBlockProgress(state), widget, { error: state.usage?.error })
   },
   blockBar: {
     description: "Progress bar for the current five-hour usage block",
@@ -531,7 +537,10 @@ export const widgetRegistry = {
   },
   weeklyResetTimer: {
     description: "Remaining time or reset timestamp for the current local calendar week",
-    render: ({ widget }) => formatResetTimer(weekProgress(), widget)
+    render: ({ state, widget }) => renderResetTimerWidget("Weekly Reset", resolveWeeklyProgress(state), widget, {
+      error: state.usage?.error,
+      useDays: !metadataFlag(widget, "hours")
+    })
   },
   weeklyBar: {
     description: "Progress bar for the current local calendar week",
@@ -563,7 +572,10 @@ export const widgetRegistry = {
   },
   sessionName: {
     description: "Current session name or thread title when present in hook state",
-    render: ({ state, widget }) => state.sessionName ? formatRawOrLabeledValue(widget, "Session: ", state.sessionName) : ""
+    render: ({ state, widget }) => {
+      const value = state.sessionName || transcriptSessionName(state.transcriptPath);
+      return value ? formatRawOrLabeledValue(widget, "Session: ", value) : "";
+    }
   },
   sessionClock: {
     description: "Elapsed time since SessionStart hook",
@@ -598,7 +610,7 @@ export const widgetRegistry = {
   },
   voiceStatus: {
     description: "Voice input status when present in hook state",
-    render: ({ state, widget }) => formatStatusValue(state.voiceStatus, "voice", widget, {
+    render: ({ state, cwd, widget }) => formatStatusValue(resolveVoiceStatus(state, cwd), "voice", widget, {
       icon: VOICE_ICON,
       nerdOn: VOICE_NERD_FONT_ON,
       nerdOff: VOICE_NERD_FONT_OFF,
@@ -623,12 +635,12 @@ export const widgetRegistry = {
   },
   accountEmail: {
     description: "Account email when present in hook state or environment",
-    render: ({ state }) => state.accountEmail || process.env.CODEX_ACCOUNT_EMAIL || ""
+    render: ({ state }) => accountEmailValue(state)
   },
   claudeAccountEmail: {
     description: "Claude-compatible alias for account email when present",
     render: ({ state, widget }) => {
-      const value = state.accountEmail || process.env.CODEX_ACCOUNT_EMAIL || "";
+      const value = accountEmailValue(state);
       return value ? formatRawOrLabeledValue(widget, "Account: ", value) : "";
     }
   },
@@ -638,26 +650,22 @@ export const widgetRegistry = {
   },
   memory: {
     description: "System memory utilization",
-    render: () => {
-      const total = os.totalmem();
-      const used = total - os.freemem();
-      return `${numberFormat(used / 1024 / 1024 / 1024)}/${numberFormat(total / 1024 / 1024 / 1024)}GB`;
-    }
+    render: ({ widget }) => formatRawOrLabeledValue(widget, "Mem: ", memoryUsage())
   },
   terminalWidth: {
     description: "Detected terminal width",
-    render: ({ widget }) => {
-      const width = process.env.CXSTATUSLINE_WIDTH || process.env.CCSTATUSLINE_WIDTH || process.env.COLUMNS || "";
+    render: ({ widget, terminalWidth }) => {
+      const width = terminalWidth || process.env.CXSTATUSLINE_WIDTH || process.env.CCSTATUSLINE_WIDTH || process.env.COLUMNS || process.stdout.columns || "";
       return width ? formatRawOrLabeledValue(widget, "Term: ", width) : "";
     }
   },
   text: {
     description: "Custom literal text",
-    render: ({ widget }) => widget.text || ""
+    render: ({ widget }) => widget.customText || widget.text || ""
   },
   symbol: {
     description: "Custom symbol or short text",
-    render: ({ widget }) => widget.symbol || widget.text || ""
+    render: ({ widget }) => widget.customSymbol || widget.symbol || widget.text || ""
   },
   command: {
     description: "Custom command output",
@@ -685,8 +693,9 @@ export const widgetRegistry = {
     render: ({ widget }) => {
       const url = linkUrl(widget);
       const text = linkText(widget, url);
-      if (!url) return text;
-      return osc8(url, text) || text;
+      const displayText = widget.rawValue ? text : `\u{1F517} ${text}`;
+      if (!isHttpUrl(url)) return displayText;
+      return osc8(url, displayText) || displayText;
     }
   },
   gitBranchLink: {
@@ -700,9 +709,9 @@ export const widgetRegistry = {
   gitPullRequest: {
     description: "Current GitHub pull request or GitLab merge request when gh/glab is available",
     render: ({ git, cwd, widget }) => {
-      if (!git.isRepo) return gitNoGit(widget, "(no PR)");
+      if (!git.isRepo) return gitNoGit(widget, `(no ${pullRequestNoun(null, git)})`);
       const item = getPullRequestInfo(cwd || git.root);
-      if (!item) return "";
+      if (!item) return gitNoGit(widget, `(no ${pullRequestNoun(null, git)})`);
       return formatPullRequestInfo(item, widget);
     }
   },
@@ -895,11 +904,58 @@ export function formatPath(path, options = {}) {
 
 export function inferContextWindow(model) {
   const text = String(model || "").toLowerCase();
-  const match = text.match(/(\d+(?:\.\d+)?)\s*([mk])(?:\s*context)?/);
+  const match = text.match(/(\d+(?:[,_]\d+)*(?:\.\d+)?)\s*([mk])(?:\s*(?:token\s*)?context)?/);
   if (!match) return 0;
-  const value = Number(match[1]);
+  const value = Number.parseFloat(match[1].replace(/[,_]/g, ""));
   const unit = match[2];
   return Math.round(value * (unit === "m" ? 1_000_000 : 1_000));
+}
+
+function speedWidgetValue(state = {}, widget = {}, kind = "total") {
+  const metrics = speedMetricsForWidget(state, widget);
+  if (metrics) return formatSpeedValue(calculateMetricSpeed(metrics, kind));
+
+  const key = kind === "input" ? "inputTokens" : kind === "output" ? "outputTokens" : "totalTokens";
+  const speed = tokenSpeed(state.samples || [], speedWindowSeconds(widget), key);
+  return speed ? formatSpeedValue(speed) : "";
+}
+
+function speedMetricsForWidget(state = {}, widget = {}) {
+  const windowSeconds = speedWindowSeconds(widget);
+  if (windowSeconds > 0) {
+    const windowed = state.windowedSpeedMetrics || state.usage?.windowedSpeedMetrics;
+    const metrics = windowed?.[String(windowSeconds)] || windowed?.[windowSeconds];
+    return metrics || null;
+  }
+  if (state.speedMetrics) return state.speedMetrics;
+  const usage = state.usage || {};
+  if (hasUsageValue(usage.totalDurationMs)) {
+    return {
+      totalDurationMs: usage.totalDurationMs,
+      inputTokens: Number(usage.inputTokens || 0),
+      outputTokens: Number(usage.outputTokens || 0),
+      totalTokens: Number(usage.totalTokens || 0)
+    };
+  }
+  return null;
+}
+
+function speedWindowSeconds(widget = {}) {
+  const value = metadataValue(widget, "windowSeconds") ?? widget.windowSeconds ?? 0;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.min(120, Math.trunc(parsed)));
+}
+
+function calculateMetricSpeed(metrics = {}, kind = "total") {
+  const durationMs = Number(metrics.totalDurationMs || 0);
+  if (durationMs === 0) return null;
+  const tokens = kind === "input"
+    ? Number(metrics.inputTokens || 0)
+    : kind === "output"
+      ? Number(metrics.outputTokens || 0)
+      : Number(metrics.totalTokens || 0);
+  return tokens / (durationMs / 1000);
 }
 
 function tokenSpeed(samples, windowSeconds, key = "totalTokens") {
@@ -915,7 +971,10 @@ function tokenSpeed(samples, windowSeconds, key = "totalTokens") {
 }
 
 function formatSpeedValue(speed) {
-  return `${Number(speed || 0).toFixed(1)} t/s`;
+  if (speed === null) return "\u2014";
+  const number = Number(speed || 0);
+  if (number >= 1000) return `${(number / 1000).toFixed(1)}k t/s`;
+  return `${number.toFixed(1)} t/s`;
 }
 
 function jj(args, cwd) {
@@ -961,24 +1020,27 @@ export function formatJjChangeSummary(stat) {
   return `(+${Number(stat?.insertions || 0)},-${Number(stat?.deletions || 0)})`;
 }
 
-function contextNumbers(usage) {
+function contextNumbers(usage, model) {
   const used = Number(usage.contextUsed || 0);
-  const window = Number(usage.contextWindow || (usage.contextRemaining && usage.contextUsed ? usage.contextRemaining + usage.contextUsed : 0));
+  const inferred = inferContextWindow(model);
+  const window = Number(usage.contextWindow || (usage.contextRemaining && usage.contextUsed ? usage.contextRemaining + usage.contextUsed : 0) || (used ? inferred || DEFAULT_CONTEXT_WINDOW : 0));
   const remaining = Number(usage.contextRemaining || (window && used ? window - used : 0));
   return { used, window, remaining };
 }
 
-function renderContextPercent(usage, widget) {
-  const { used, window, remaining } = contextNumbers(usage);
-  if (!used || !window) return "";
+function renderContextPercent(usage, widget, model) {
+  const { used, window, remaining } = contextNumbers(usage, model);
+  const explicitPercent = Number(usage.contextUsagePercent);
+  if ((!used && !Number.isFinite(explicitPercent)) || !window) return "";
   const inverse = contextInverse(widget);
   const value = inverse ? remaining : used;
+  const percent = Number.isFinite(explicitPercent) ? (inverse ? 100 - explicitPercent : explicitPercent) : (value / window) * 100;
   const label = inverse ? "Ctx Left: " : "Ctx Used: ";
-  return formatRawOrLabeledValue(widget, label, renderContextPercentValue((value / window) * 100, widget));
+  return formatRawOrLabeledValue(widget, label, renderContextPercentValue(percent, widget));
 }
 
-function renderContextUsablePercent(usage, widget) {
-  const { used, window } = contextNumbers(usage);
+function renderContextUsablePercent(usage, widget, model) {
+  const { used, window } = contextNumbers(usage, model);
   const usableWindow = window * 0.8;
   if (!used || !usableWindow) return "";
   const usedPercent = Math.min(100, (used / usableWindow) * 100);
@@ -1003,7 +1065,7 @@ function renderContextPercentValue(percent, widget = {}) {
 
 function renderUsagePercent(usage, widget, keys, label = "") {
   const percent = usagePercent(usage, keys);
-  if (!Number.isFinite(percent)) return "";
+  if (!Number.isFinite(percent)) return usage.error ? usageErrorMessage(usage.error) : "";
   const display = widget.mode === "remaining" ? 100 - percent : percent;
   return formatRawOrLabeledValue(widget, label, renderUsagePercentValue(display, widget));
 }
@@ -1043,8 +1105,7 @@ function renderPercentDisplay(percent, widget = {}) {
   return `${Math.round(displayPercent)}%`;
 }
 
-function renderContextBarDisplay(percent, used, total, widget = {}) {
-  const display = contextBarDetailedMode(widget);
+function renderContextBarDisplay(percent, used, total, widget = {}, display = contextBarDetailedMode(widget)) {
   const clamped = clampPercent(percent);
   const displayPercent = metadataFlag(widget, "invert") === true ? 100 - clamped : clamped;
   const raw = widget.rawValue || widget.label !== undefined;
@@ -1068,11 +1129,10 @@ function renderContextBarDisplay(percent, used, total, widget = {}) {
 
 function contextBarDetailedMode(widget = {}) {
   const value = metadataValue(widget, "display");
-  const raw = widget.rawValue || widget.label === "";
-  const configured = value !== undefined ? value : raw ? "progress-short" : "";
+  const configured = value !== undefined ? value : "progress-short";
   const mode = String(configured || "").trim();
   if (["progress", "progress-short", "slider", "slider-only"].includes(mode)) return mode;
-  return value !== undefined || raw ? "progress-short" : "";
+  return "progress-short";
 }
 
 function contextK(value) {
@@ -1121,12 +1181,34 @@ function extraUsagePercent(usage) {
   });
 }
 
+function extraUsageRemainingDollars(usage = {}) {
+  if (hasUsageValue(usage.extraUsageLimit) && hasUsageValue(usage.extraUsageUsed)) {
+    return Math.max(0, Number(usage.extraUsageLimit) / 100 - Number(usage.extraUsageUsed));
+  }
+  if (hasUsageValue(usage.extraUsageRemaining)) return Number(usage.extraUsageRemaining);
+  return Number.NaN;
+}
+
+function formatUsd(value) {
+  return `$${Number(value || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 function hasUsageValue(value) {
   return value !== undefined && value !== null && Number.isFinite(Number(value));
 }
 
 function extraUsageDisabled(widget, label = "") {
   return metadataFlag(widget, "hideIfDisabled") === true ? "" : formatRawOrLabeledValue(widget, label, "n/a");
+}
+
+function usageErrorMessage(error) {
+  const normalized = String(error || "").trim().toLowerCase();
+  if (normalized === "no-credentials") return "[No credentials]";
+  if (normalized === "timeout") return "[Timeout]";
+  if (normalized === "rate-limited") return "[Rate limited]";
+  if (normalized === "api-error") return "[API Error]";
+  if (normalized === "parse-error") return "[Parse Error]";
+  return `[${String(error || "Usage error")}]`;
 }
 
 function formatStatusValue(value, label, widget = {}, options = {}) {
@@ -1230,6 +1312,29 @@ function transcriptThinkingEffort(path) {
   return undefined;
 }
 
+function transcriptSessionName(path) {
+  if (!path || !existsSync(path)) return "";
+  try {
+    const stat = statSync(path);
+    const lines = readTranscriptTail(path, stat).split(/\r?\n/);
+    for (let index = lines.length - 1; index >= 0; index -= 1) {
+      const line = lines[index]?.trim();
+      if (!line) continue;
+      try {
+        const entry = JSON.parse(line);
+        if (entry?.type === "custom-title" && typeof entry.customTitle === "string" && entry.customTitle.trim()) {
+          return entry.customTitle.trim();
+        }
+      } catch {
+        // Ignore malformed transcript lines.
+      }
+    }
+  } catch {
+    return "";
+  }
+  return "";
+}
+
 function readTranscriptTail(path, stat) {
   const size = Number(stat?.size || 0);
   const length = Math.min(size, TRANSCRIPT_TAIL_BYTES);
@@ -1311,6 +1416,46 @@ function formatUsageDuration(durationMs, compact = false, useDays = true) {
   return parts.length ? parts.join(separator) : "0m";
 }
 
+function renderResetTimerWidget(label, progress, widget = {}, options = {}) {
+  if (!progress) {
+    return options.error ? usageErrorMessage(options.error) : "";
+  }
+  const prefix = usageDisplayMode(widget) ? `${label} ` : `${label}: `;
+  return formatRawOrLabeledValue(widget, prefix, formatResetTimer(progress, widget, {
+    usageDuration: true,
+    useDays: options.useDays !== false
+  }));
+}
+
+function resolveBlockProgress(state = {}) {
+  const usage = state.usage || {};
+  if (usage.sessionResetAt) return progressFromResetAt(usage.sessionResetAt, FIVE_HOURS_MS);
+  if (state.startedAt) return blockProgress(Date.parse(state.startedAt));
+  if (usage.error) return null;
+  return null;
+}
+
+function resolveWeeklyProgress(state = {}) {
+  const usage = state.usage || {};
+  if (usage.weeklyResetAt) return progressFromResetAt(usage.weeklyResetAt, WEEK_MS);
+  if (usage.error) return null;
+  return weekProgress();
+}
+
+function progressFromResetAt(resetAt, durationMs, nowMs = Date.now()) {
+  const resetAtMs = Date.parse(resetAt);
+  if (!Number.isFinite(resetAtMs)) return null;
+  const startAtMs = resetAtMs - durationMs;
+  const elapsed = Math.max(0, Math.min(durationMs, nowMs - startAtMs));
+  const remaining = Math.max(0, durationMs - elapsed);
+  return {
+    elapsed,
+    remaining,
+    ratio: durationMs > 0 ? elapsed / durationMs : 0,
+    resetAt: new Date(resetAtMs)
+  };
+}
+
 function statusState(value) {
   if (value === true) return { enabled: true, text: "on" };
   if (value === false) return { enabled: false, text: "off" };
@@ -1376,6 +1521,48 @@ function formatSkills(skills, widget) {
   return skills.lastSkill || (hideWhenEmpty ? "" : "none");
 }
 
+function accountEmailValue(state = {}) {
+  return state.accountEmail || process.env.CODEX_ACCOUNT_EMAIL || readClaudeAccountEmail() || "";
+}
+
+function readClaudeAccountEmail() {
+  const data = readJson(claudeJsonPath(), null);
+  const email = data?.oauthAccount?.emailAddress || data?.user?.email || "";
+  return typeof email === "string" && email.trim() ? email.trim() : "";
+}
+
+function claudeJsonPath() {
+  return process.env.CLAUDE_CONFIG_DIR
+    ? join(process.env.CLAUDE_CONFIG_DIR, ".claude.json")
+    : homePath(".claude.json");
+}
+
+function resolveVoiceStatus(state = {}, cwd = process.cwd()) {
+  if (state.voiceStatus !== null && state.voiceStatus !== undefined) return state.voiceStatus;
+  return readClaudeVoiceStatus(cwd);
+}
+
+function readClaudeVoiceStatus(cwd = process.cwd()) {
+  const candidates = Array.from(new Set([
+    join(cwd || process.cwd(), ".claude", "settings.local.json"),
+    join(cwd || process.cwd(), ".claude", "settings.json"),
+    join(claudeConfigDir(), "settings.local.json"),
+    join(claudeConfigDir(), "settings.json")
+  ]));
+  let anyFile = false;
+  for (const path of candidates) {
+    const data = readJson(path, null);
+    if (!data || typeof data !== "object" || Array.isArray(data)) continue;
+    anyFile = true;
+    if (typeof data.voice?.enabled === "boolean") return data.voice.enabled;
+  }
+  return anyFile ? false : null;
+}
+
+function claudeConfigDir() {
+  return process.env.CLAUDE_CONFIG_DIR || homePath(".claude");
+}
+
 export function formatPullRequestInfo(item, widget = {}) {
   if (!item) return "";
   const showStatus = metadataFlag(widget, "hideStatus") !== true;
@@ -1390,10 +1577,11 @@ export function formatPullRequestInfo(item, widget = {}) {
   return parts.filter(Boolean).join(" ");
 }
 
-function pullRequestNoun(item) {
-  const provider = String(item.provider || "").toLowerCase();
-  const url = String(item.url || "").toLowerCase();
-  return provider.includes("gitlab") || provider === "glab" || url.includes("/-/merge_requests/") || url.includes("gitlab")
+function pullRequestNoun(item, git = null) {
+  const provider = String(item?.provider || "").toLowerCase();
+  const url = String(item?.url || "").toLowerCase();
+  const host = String(git?.origin?.host || git?.upstreamRemote?.host || "").toLowerCase();
+  return provider.includes("gitlab") || provider === "glab" || url.includes("/-/merge_requests/") || url.includes("gitlab") || host.includes("gitlab")
     ? "MR"
     : "PR";
 }
@@ -1499,7 +1687,7 @@ function barWidth(width, fallback) {
   return Number.isFinite(number) && number > 0 ? Math.round(number) : fallback;
 }
 
-export function formatResetTimer(progress, widget = {}) {
+export function formatResetTimer(progress, widget = {}, options = {}) {
   const display = usageDisplayMode(widget);
   if (display) return renderPercentDisplay((progress.ratio || 0) * 100, widget);
 
@@ -1507,12 +1695,16 @@ export function formatResetTimer(progress, widget = {}) {
   if (mode === "timestamp" || mode === "time" || mode === "clock") return formatResetTimestamp(progress.resetAt, widget);
   if (mode === "iso") return progress.resetAt instanceof Date ? progress.resetAt.toISOString() : "";
   if (mode === "both") {
-    const duration = formatDuration(progress.remaining);
+    const duration = options.usageDuration
+      ? formatUsageDuration(progress.remaining, metadataFlag(widget, "compact") === true, options.useDays !== false)
+      : formatDuration(progress.remaining);
     const timestamp = formatResetTimestamp(progress.resetAt, widget);
     return timestamp ? `${duration} (${timestamp})` : duration;
   }
   if (mode === "bar" || mode === "progress") return renderBar(progress.ratio, Number(widget.width || 16), widget.style);
-  return formatDuration(progress.remaining);
+  return options.usageDuration
+    ? formatUsageDuration(progress.remaining, metadataFlag(widget, "compact") === true, options.useDays !== false)
+    : formatDuration(progress.remaining);
 }
 
 function resetTimerMode(widget = {}) {
@@ -1594,12 +1786,52 @@ function gitNoGit(widget, text = "(no git)") {
   return metadataFlag(widget, "hideNoGit") === true ? "" : text;
 }
 
+function memoryUsage() {
+  const total = os.totalmem();
+  const used = os.platform() === "darwin" ? usedMemoryMacOs() ?? (total - os.freemem()) : total - os.freemem();
+  return `${formatBytes(used)}/${formatBytes(total)}`;
+}
+
+function usedMemoryMacOs() {
+  const result = run("vm_stat", [], { timeout: 1000 });
+  if (!result.ok) return null;
+  const firstLine = result.stdout.split(/\r?\n/)[0] || "";
+  const pageSize = Number(firstLine.match(/page size of (\d+) bytes/)?.[1] || 0);
+  if (!pageSize) return null;
+  let active = 0;
+  let wired = 0;
+  for (const line of result.stdout.split(/\r?\n/)) {
+    const activeMatch = line.match(/Pages active:\s+([\d.]+)/);
+    if (activeMatch) active = Number(activeMatch[1].replace(/\./g, ""));
+    const wiredMatch = line.match(/Pages wired down:\s+([\d.]+)/);
+    if (wiredMatch) wired = Number(wiredMatch[1].replace(/\./g, ""));
+  }
+  return (active + wired) * pageSize;
+}
+
+function formatBytes(bytes) {
+  const value = Number(bytes || 0);
+  if (value >= 1024 ** 3) return `${(value / 1024 ** 3).toFixed(1)}G`;
+  if (value >= 1024 ** 2) return `${(value / 1024 ** 2).toFixed(0)}M`;
+  if (value >= 1024) return `${(value / 1024).toFixed(0)}K`;
+  return `${value}B`;
+}
+
 function linkUrl(widget) {
   return widget?.href || widget?.url || metadataValue(widget, "url") || "";
 }
 
 function linkText(widget, url = linkUrl(widget)) {
-  return widget?.text || metadataValue(widget, "text") || url || "";
+  return metadataValue(widget, "text") || widget?.text || url || "no url";
+}
+
+function isHttpUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 function commandStdin(context) {

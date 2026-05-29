@@ -50,6 +50,9 @@ test("TUI default widgets include editable metadata for custom widgets", () => {
     href: "https://example.com",
     text: "link"
   });
+  assert.deepEqual(defaultWidgetForType("custom-text"), { type: "text", customText: "text" });
+  assert.deepEqual(defaultWidgetForType("custom-symbol"), { type: "symbol", customSymbol: "*" });
+  assert.deepEqual(defaultWidgetForType("total-speed"), { type: "totalSpeed", windowSeconds: 0 });
 });
 
 test("TUI preview sanitizes command widgets to avoid executing shell commands", () => {
@@ -70,6 +73,8 @@ test("TUI widget descriptions expose common editor modifiers", () => {
     describeWidget({ type: "command", command: "printf ok", label: "", merge: "no-padding", bold: true, maxWidth: 8, timeout: 500 }),
     "command (raw, cmd=printf ok, merge=no-padding, bold, max=8, timeout=500)"
   );
+  assert.equal(describeWidget({ type: "text", customText: "Ship" }), "text (text=Ship)");
+  assert.equal(describeWidget({ type: "symbol", customSymbol: "=>" }), "symbol (symbol==>)");
 });
 
 test("TUI color helpers edit foreground, background, and clear aliases", () => {
@@ -127,12 +132,22 @@ test("TUI widget option helpers expose type-specific rows", () => {
   assert.equal(linkRows.find((row) => row.key === "href")?.value, "https://example.com/docs");
   assert.equal(linkRows.find((row) => row.key === "text")?.value, "Docs");
 
+  const textRows = buildWidgetOptionRows({ type: "text", customText: "Ship" });
+  assert.equal(textRows.find((row) => row.key === "text")?.value, "Ship");
+  assert.equal(buildWidgetOptionRows({ type: "text", text: "Legacy" }).find((row) => row.key === "text")?.value, "Legacy");
+  const symbolRows = buildWidgetOptionRows({ type: "symbol", customSymbol: "=>" });
+  assert.equal(symbolRows.find((row) => row.key === "text")?.value, "=>");
+
   const timerRows = buildWidgetOptionRows({ type: "blockResetTimer", metadata: { timezone: "UTC" } });
   assert.equal(timerRows.find((row) => row.key === "timeZone")?.value, "UTC");
   const timerKeys = timerRows.map((row) => row.key);
   assert.ok(timerKeys.includes("timerMode"));
   assert.ok(timerKeys.includes("timeZone"));
   assert.ok(timerKeys.includes("hour12"));
+  const weeklyRows = buildWidgetOptionRows({ type: "weeklyResetTimer", metadata: { hours: "true" } });
+  assert.equal(weeklyRows.find((row) => row.key === "hours")?.value, "on");
+
+  assert.equal(buildWidgetOptionRows({ type: "totalSpeed" }).find((row) => row.key === "windowSeconds")?.value, 0);
 
   const usageRows = buildWidgetOptionRows({ type: "sessionUsage", metadata: { display: "slider", invert: "true" } });
   assert.equal(usageRows.find((row) => row.key === "display")?.value, "slider");
@@ -188,6 +203,8 @@ test("TUI widget option helpers apply common and specific settings", () => {
 
   const timer = applyWidgetOption({ type: "blockResetTimer" }, "timerMode");
   assert.deepEqual(timer, { type: "blockResetTimer", mode: "timestamp" });
+  assert.deepEqual(applyWidgetOption({ type: "weeklyResetTimer" }, "hours"), { type: "weeklyResetTimer", hours: true });
+  assert.deepEqual(applyWidgetOption({ type: "weeklyResetTimer", metadata: { hours: "true" } }, "hours"), { type: "weeklyResetTimer" });
 
   assert.deepEqual(applyWidgetOption({ type: "sessionUsage" }, "display"), { type: "sessionUsage", display: "progress" });
   assert.deepEqual(applyWidgetOption({ type: "sessionUsage", metadata: { display: "slider-only" } }, "display"), { type: "sessionUsage" });
@@ -235,6 +252,9 @@ test("TUI widget option helpers apply common and specific settings", () => {
     metadata: { url: "https://example.com/docs" },
     text: "Docs"
   });
+  assert.deepEqual(applyWidgetOption({ type: "text" }, "text", "Ship"), { type: "text", customText: "Ship" });
+  assert.deepEqual(applyWidgetOption({ type: "text", text: "Old" }, "text", "New"), { type: "text", customText: "New" });
+  assert.deepEqual(applyWidgetOption({ type: "symbol" }, "text", "=>"), { type: "symbol", customSymbol: "=>" });
   assert.deepEqual(applyWidgetOption({ type: "sessionUsage", metadata: { display: "slider", invert: "true", keep: "yes" } }, "clear"), {
     type: "sessionUsage",
     metadata: { keep: "yes" }
@@ -249,6 +269,7 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.equal(describeWidgetOptions({ type: "gitPullRequest", hideStatus: true, hideTitle: true }), "hide-status, hide-title");
   assert.equal(describeWidgetOptions({ type: "gitRootDir", linkToIDE: "cursor" }), "link-cursor");
   assert.equal(describeWidgetOptions({ type: "blockResetTimer", metadata: { absolute: "true", timezone: "UTC" } }), "timestamp, tz=UTC");
+  assert.equal(describeWidgetOptions({ type: "weeklyResetTimer", metadata: { hours: "true" } }), "hours-only");
   assert.equal(describeWidgetOptions({ type: "blockTimer", metadata: { display: "slider", invert: "true", compact: "true" } }), "display=slider, invert, compact");
   assert.equal(describeWidgetOptions({ type: "sessionUsage", display: "progress-short", invert: true, cursor: true }), "display=progress-short, invert, cursor");
   assert.equal(describeWidgetOptions({ type: "extraUsageRemaining", hideIfDisabled: true }), "hide-if-disabled");

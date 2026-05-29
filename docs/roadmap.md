@@ -5,11 +5,14 @@ while staying honest about Codex's current extension points.
 
 ## Implemented
 
-- Codex hook collector.
+- Codex hook collector, including `--hook` compatibility.
 - Native Codex `[tui].status_line` installer.
 - Powerline and plain renderers.
 - Theme system.
 - JSON config.
+- `ccstatusline`-style piped status JSON rendering without an explicit
+  `render` subcommand, including context and rate-limit fields from live status
+  payloads.
 - Interactive and non-interactive configuration command, including direct
   widget, separator, terminal width, global formatting, Powerline separator,
   and Powerline alignment flags.
@@ -19,7 +22,8 @@ while staying honest about Codex's current extension points.
   branch/worktree icon/raw/no-git rendering, PR/MR detection, clickable branch
   widgets, clickable Git remote owner/repo widgets, Git root directory IDE links,
   upstream tracking-remote fallback, remote and non-Git empty-state hiding,
-  `ownerOnlyWhenFork`, and `hideWhenNotFork`.
+  live status JSON worktree mode/name/branch fallbacks, `ownerOnlyWhenFork`,
+  and `hideWhenNotFork`.
 - Rich GitHub/GitLab PR/MR state, review, branch, diff-stat, and combined
   status/title display widgets.
 - Model, reasoning, service tier, permission, sandbox, session, event, run-state,
@@ -28,16 +32,20 @@ while staying honest about Codex's current extension points.
   block timer, weekly timer, cost, and custom text widgets, including
   upstream-compatible status default formats, core raw/default rendering,
   thinking-effort normalization and transcript fallback, Skills metadata,
+  Claude account email `.claude.json` fallback with `CLAUDE_CONFIG_DIR`,
+  Claude voice status fallback from layered `.claude/settings*.json` files,
   Compaction Counter zero display, Nerd Font, and compaction hide-zero controls
   where applicable.
 - Token speed, input speed, output speed, total speed, usage, weekly usage,
   reset timer timestamp modes, and cache token widgets from hook state,
   including upstream-compatible token/context/usage/speed default labels,
-  token-per-second speed formatting, usable-context percentage, usage/context
+  session-average speed defaults, `metadata.windowSeconds`, token-per-second
+  speed formatting, model-name context-window inference, the upstream 200k
+  default context denominator, usable-context percentage, usage/context
   progress, slider, invert, inverse, and cursor display metadata, Context Bar
-  detail display metadata, Block Timer
+  detail display defaults and metadata, Block Timer
   compact/progress/slider metadata, reset timer progress/slider metadata, and
-  extra usage disabled-state hiding.
+  extra usage dollar formatting and disabled-state hiding.
 - Custom command widget with render-context stdin JSON, timeout, max-width,
   `commandPath` compatibility, and optional ANSI preservation.
 - Jujutsu root, active workspace, revision, description, bookmark list,
@@ -46,7 +54,8 @@ while staying honest about Codex's current extension points.
   empty states and `hideNoJj` metadata.
 - Multi-line rendering with manual separator collapse around empty widgets,
   Powerline auto-alignment, and optional theme continuation across lines.
-- OSC8 links and custom command ANSI color preservation.
+- OSC8 links, upstream `🔗` Link widget rendering, and custom command ANSI color
+  preservation.
 - `ccstatusline` Link widget metadata compatibility.
 - Configurable Powerline separators, multi-separator arrays, inverted separator
   backgrounds, and multi-cap/codepoint caps.
@@ -61,7 +70,8 @@ while staying honest about Codex's current extension points.
 - Path abbreviation, fish-style path shortening, and `ccstatusline` path
   metadata aliases.
 - `ccstatusline` kebab-case widget aliases for migrated widget lists.
-- `ccstatusline` settings import for common layout and widget options.
+- `ccstatusline` settings import for common layout and widget options,
+  including speed window, reset-hours, and custom text/symbol metadata.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and multi-line
   layouts.
 - Full-screen TUI configuration editor with live preview, widget picker, line
@@ -83,10 +93,11 @@ while staying honest about Codex's current extension points.
 - GitHub Actions CI and release workflow with optional npm token or trusted
   publishing.
 
-## Next
+## Optional Ergonomics
 
-- Complete advanced `ccstatusline` TUI parity for the remaining
-  widget-specific shortcut editors that require renderer support.
+- Add more one-key `ccstatusline` shortcut mnemonics in the full-screen TUI.
+  The same widget-specific settings are already available through the option
+  editor.
 
 ## Waiting On Codex Support
 
