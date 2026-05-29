@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.27
+
+- Added `linkToRepo` rendering for Git branch, origin owner/repo, and upstream
+  owner/repo widgets, including legacy `linkToGitHub` support for Git branch.
+- Added self-hosted Git remote URL parsing for clickable Git widget links.
+- Preserved Git link metadata during `ccstatusline` settings import and exposed
+  Git link toggles in the full-screen TUI widget options.
+
 ## 0.2.26
 
 - Added configurable external refresh intervals through

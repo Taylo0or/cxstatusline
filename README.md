@@ -18,8 +18,9 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 - Codex native footer installer for all currently known built-in status items.
 - Git widgets: branch, SHA, staged/unstaged/untracked/conflict counts,
   ahead/behind, insertions, deletions, origin owner/repo, upstream, worktree
-  mode/branch, fork status, clickable GitHub/GitLab branch links, and PR/MR
-  metadata through `gh`/`glab` when available.
+  mode/branch, fork status, clickable Git branch and remote owner/repo links
+  for GitHub, GitLab, and compatible self-hosted remotes, and PR/MR metadata
+  through `gh`/`glab` when available.
 - Codex/session widgets: model, reasoning effort, service tier, permission mode,
   sandbox mode, session id/name, output style, vim/voice/remote-control status
   when present, skills, run state, last event, last tool, compaction count,
@@ -213,7 +214,7 @@ Example:
     { "type": "model", "label": "Model" },
     { "type": "reasoning", "label": "Think" },
     { "type": "project", "label": "Project" },
-    { "type": "gitBranch", "label": "Git" },
+    { "type": "gitBranch", "label": "Git", "linkToRepo": true },
     { "type": "gitStatus", "label": "" },
     { "type": "contextBar", "label": "Ctx", "width": 12 },
     { "type": "tokens", "label": "Tokens" },
@@ -233,6 +234,17 @@ Render with `ccstatusline`-style widget names:
 
 ```sh
 cxstatusline render --format plain --widgets model,git-branch,tokens-total,current-working-dir
+```
+
+Use `ccstatusline`-style Git link metadata:
+
+```json
+{
+  "widgets": [
+    { "type": "gitBranch", "linkToRepo": true },
+    { "type": "gitOriginOwnerRepo", "linkToRepo": true, "ownerOnlyWhenFork": true }
+  ]
+}
 ```
 
 Render reset timers as exact timestamps:

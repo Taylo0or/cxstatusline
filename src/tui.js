@@ -20,6 +20,14 @@ const BAR_STYLES = ["ascii", "blocks", "dots"];
 const SPEED_WIDGETS = new Set(["tokenSpeed", "inputSpeed", "outputSpeed", "totalSpeed"]);
 const RESET_TIMER_WIDGETS = new Set(["blockResetTimer", "weeklyResetTimer"]);
 const BAR_WIDGETS = new Set(["contextBar", "blockBar", "weeklyBar"]);
+const GIT_REMOTE_WIDGETS = new Set([
+  "gitOriginOwner",
+  "gitOriginRepo",
+  "gitOriginOwnerRepo",
+  "gitUpstreamOwner",
+  "gitUpstreamRepo",
+  "gitUpstreamOwnerRepo"
+]);
 const USAGE_WIDGETS = new Set([
   "contextPercent",
   "contextPercentage",
@@ -182,6 +190,8 @@ export function describeWidgetOptions(widget) {
   if (item.windowSeconds !== undefined) parts.push(`window=${item.windowSeconds}s`);
   if (item.timeout !== undefined) parts.push(`timeout=${item.timeout}ms`);
   if (item.preserveColors) parts.push("ansi");
+  if (gitLinkEnabled(item, type)) parts.push("repo-link");
+  if (metadataFlag(item, "ownerOnlyWhenFork")) parts.push("owner-only-fork");
   if (item.segments !== undefined) parts.push(`segments=${item.segments}`);
   if (item.fish) parts.push("fish");
   if (item.home === false) parts.push("no-home");
@@ -214,6 +224,12 @@ export function buildWidgetOptionRows(widget) {
       { key: "href", label: "URL", value: item.href || item.url || "(empty)" },
       { key: "text", label: "Link text", value: item.text || "(URL)" }
     );
+  }
+  if (type === "gitBranch" || GIT_REMOTE_WIDGETS.has(type)) {
+    rows.push({ key: "linkToRepo", label: "Repo link", value: BOOLEAN_TEXT.get(gitLinkEnabled(item, type)) });
+  }
+  if (type === "gitOriginOwnerRepo") {
+    rows.push({ key: "ownerOnlyWhenFork", label: "Owner only when fork", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "ownerOnlyWhenFork"))) });
   }
   if (type === "text" || type === "symbol" || type === "separator") {
     rows.push({ key: "text", label: primaryValueLabel(type), value: item[primaryValueKey(type)] || "(empty)" });
@@ -272,6 +288,8 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "preserveColors") return { ...item, preserveColors: !Boolean(item.preserveColors) };
   if (key === "href") return value === "" ? deleteKey(deleteKey(item, "href"), "url") : { ...deleteKey(item, "url"), href: value };
   if (key === "text") return value === "" ? deleteKey(item, primaryValueKey(resolveWidgetType(item.type) || item.type)) : { ...item, [primaryValueKey(resolveWidgetType(item.type) || item.type)]: value };
+  if (key === "linkToRepo") return toggleLinkToRepo(item);
+  if (key === "ownerOnlyWhenFork") return toggleOrDelete(item, "ownerOnlyWhenFork");
   if (key === "segments") return setNumericField(item, "segments", value);
   if (key === "home") return item.home === false ? deleteKey(item, "home") : { ...item, home: false };
   if (key === "fish") return toggleOrDelete(item, "fish");
@@ -1309,6 +1327,52 @@ function primaryValueLabel(type) {
   return "Text";
 }
 
+function gitLinkEnabled(item, type = resolveWidgetType(item?.type) || item?.type) {
+  const linkToRepo = metadataFlag(item, "linkToRepo");
+  if (type === "gitBranch" && linkToRepo === null) return metadataFlag(item, "linkToGitHub") === true;
+  return linkToRepo === true;
+}
+
+function metadataFlag(item, key) {
+  if (!item || typeof item !== "object") return null;
+  if (item[key] !== undefined) return parseFlag(item[key]);
+  if (item.metadata && typeof item.metadata === "object" && item.metadata[key] !== undefined) {
+    return parseFlag(item.metadata[key]);
+  }
+  return null;
+}
+
+function parseFlag(value) {
+  if (value === undefined || value === null) return null;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    const text = value.trim().toLowerCase();
+    if (!text || ["false", "0", "no", "off"].includes(text)) return false;
+    if (["true", "1", "yes", "on"].includes(text)) return true;
+  }
+  return Boolean(value);
+}
+
+function toggleLinkToRepo(item) {
+  const enabled = gitLinkEnabled(item);
+  const next = removeMetadataKeys({ ...item }, ["linkToRepo", "linkToGitHub"]);
+  delete next.linkToRepo;
+  delete next.linkToGitHub;
+  if (!enabled) next.linkToRepo = true;
+  return next;
+}
+
+function removeMetadataKeys(item, keys) {
+  if (!item.metadata || typeof item.metadata !== "object") return item;
+  const metadata = { ...item.metadata };
+  for (const key of keys) delete metadata[key];
+  const next = { ...item };
+  if (Object.keys(metadata).length) next.metadata = metadata;
+  else delete next.metadata;
+  return next;
+}
+
 function setNumericField(item, key, value) {
   const number = Number(value);
   const next = { ...item };
@@ -1393,6 +1457,13 @@ function clearWidgetOptions(item) {
     "width",
     "timeout",
     "preserveColors",
+    "linkToRepo",
+    "linkToGitHub",
+    "hideNoGit",
+    "hideNoRemote",
+    "ownerOnlyWhenFork",
+    "linkToIDE",
+    "linkToCursor",
     "segments",
     "home",
     "fish",
@@ -1488,7 +1559,7 @@ function previewGit(git, cwd) {
     diff: { insertions: 0, deletions: 0 },
     stagedDiff: { insertions: 0, deletions: 0 },
     origin: { owner: "owner", repo: "repo", ownerRepo: "owner/repo", httpsUrl: "https://github.com/owner/repo", host: "github.com" },
-    upstreamRemote: { owner: "owner", repo: "repo", ownerRepo: "owner/repo" }
+    upstreamRemote: { owner: "owner", repo: "repo", ownerRepo: "owner/repo", httpsUrl: "https://github.com/owner/repo", host: "github.com" }
   };
 }
 

@@ -36,13 +36,15 @@ equivalent data or extension points.
 - `ccstatusline` kebab-case widget aliases for migrated widget lists, including
   separator and flex-separator compatibility.
 - `ccstatusline` settings import for lines, minimalist mode, terminal width
-  options, global formatting, widget merge/bold flags, separators, Git cache
-  TTL, Powerline options, common widget metadata, and named colors.
+  options, global formatting, widget merge/bold flags, Git link metadata,
+  separators, Git cache TTL, Powerline options, common widget metadata, and
+  named colors.
 - Custom text, custom symbol, custom command with timeout, max-width, and
   optional ANSI preservation, and OSC8 link widgets.
 - Git branch, SHA, status, clean/dirty, staged, unstaged, untracked, conflicts,
   ahead/behind, insertions, deletions, origin, upstream owner/repo, fork status,
-  worktree, clickable branch links, and GitHub/GitLab PR/MR widgets.
+  worktree, clickable branch and remote owner/repo links, `ownerOnlyWhenFork`,
+  and GitHub/GitLab PR/MR widgets.
 - Persistent Git cache with TTL plus `.git/HEAD` and `.git/index`
   invalidation.
 - Current directory path abbreviation, segment limiting, and fish-style path
@@ -87,4 +89,4 @@ data, the matching widget stays empty instead of inventing values.
 ## Remaining Enhancements
 
 - Complete `ccstatusline` TUI parity for the remaining widget-specific
-  shortcuts that require renderer support.
+  shortcuts beyond Git link toggles.

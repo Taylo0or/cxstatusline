@@ -170,7 +170,26 @@ function convertCcstatuslineWidget(widget, settings) {
   const output = { type };
 
   if (widget.rawValue || settings.minimalistMode) output.label = "";
-  for (const key of ["text", "symbol", "command", "href", "url", "timeout", "width", "maxWidth", "preserveColors", "merge", "bold"]) {
+  for (const key of [
+    "text",
+    "symbol",
+    "command",
+    "href",
+    "url",
+    "timeout",
+    "width",
+    "maxWidth",
+    "preserveColors",
+    "merge",
+    "bold",
+    "linkToRepo",
+    "linkToGitHub",
+    "hideNoGit",
+    "hideNoRemote",
+    "ownerOnlyWhenFork",
+    "linkToIDE",
+    "linkToCursor"
+  ]) {
     if (widget[key] !== undefined) output[key] = widget[key];
   }
 
@@ -181,7 +200,29 @@ function convertCcstatuslineWidget(widget, settings) {
   const metadata = widget.metadata && typeof widget.metadata === "object" ? widget.metadata : {};
   for (const [key, value] of Object.entries(metadata)) {
     if (value === undefined || value === null) continue;
-    if (["format", "mode", "style", "segments", "fish", "home", "limit", "listLimit", "locale", "timeZone", "hour12", "twelveHour", "date", "includeDate"].includes(key)) {
+    if ([
+      "format",
+      "mode",
+      "style",
+      "segments",
+      "fish",
+      "home",
+      "limit",
+      "listLimit",
+      "locale",
+      "timeZone",
+      "hour12",
+      "twelveHour",
+      "date",
+      "includeDate",
+      "linkToRepo",
+      "linkToGitHub",
+      "hideNoGit",
+      "hideNoRemote",
+      "ownerOnlyWhenFork",
+      "linkToIDE",
+      "linkToCursor"
+    ].includes(key)) {
       output[key === "listLimit" ? "limit" : key] = coerceMetadataValue(value);
     }
   }

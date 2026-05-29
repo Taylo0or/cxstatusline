@@ -79,7 +79,13 @@ export const widgetRegistry = {
   },
   gitBranch: {
     description: "Current Git branch",
-    render: ({ git }) => (git.isRepo ? git.branch : "")
+    render: ({ git, widget }) => {
+      if (!git.isRepo || !git.branch) return "";
+      if (git.branch !== "(detached)" && gitBranchLinkEnabled(widget)) {
+        return osc8(branchWebUrl(git.origin, git.branch), git.branch) || git.branch;
+      }
+      return git.branch;
+    }
   },
   gitSha: {
     description: "Short Git commit SHA",
@@ -175,15 +181,18 @@ export const widgetRegistry = {
   },
   gitOriginOwner: {
     description: "Origin remote owner",
-    render: ({ git }) => git.origin?.owner || ""
+    render: ({ git, widget }) => renderRemoteValue(git.origin, git.origin?.owner, widget)
   },
   gitOriginRepo: {
     description: "Origin remote repository name",
-    render: ({ git }) => git.origin?.repo || ""
+    render: ({ git, widget }) => renderRemoteValue(git.origin, git.origin?.repo, widget)
   },
   gitOriginOwnerRepo: {
     description: "Origin owner/repository",
-    render: ({ git }) => git.origin?.ownerRepo || ""
+    render: ({ git, widget }) => {
+      const text = metadataFlag(widget, "ownerOnlyWhenFork") && git.isFork ? git.origin?.owner : git.origin?.ownerRepo;
+      return renderRemoteValue(git.origin, text, widget);
+    }
   },
   gitUpstream: {
     description: "Configured upstream branch",
@@ -191,15 +200,15 @@ export const widgetRegistry = {
   },
   gitUpstreamOwner: {
     description: "Upstream remote owner",
-    render: ({ git }) => git.upstreamRemote?.owner || ""
+    render: ({ git, widget }) => renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.owner, widget)
   },
   gitUpstreamRepo: {
     description: "Upstream remote repository name",
-    render: ({ git }) => git.upstreamRemote?.repo || ""
+    render: ({ git, widget }) => renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.repo, widget)
   },
   gitUpstreamOwnerRepo: {
     description: "Upstream owner/repository",
-    render: ({ git }) => git.upstreamRemote?.ownerRepo || ""
+    render: ({ git, widget }) => renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.ownerRepo, widget)
   },
   gitIsFork: {
     description: "Whether origin differs from upstream remote",
@@ -573,10 +582,8 @@ export const widgetRegistry = {
   gitBranchLink: {
     description: "Clickable GitHub/GitLab branch link when origin is known",
     render: ({ git }) => {
-      if (!git.isRepo || !git.origin?.httpsUrl || !git.branch || git.branch === "(detached)") return "";
-      const branch = encodeURIComponent(git.branch);
-      const path = git.origin.host === "gitlab.com" ? `-/tree/${branch}` : `tree/${branch}`;
-      return osc8(`${git.origin.httpsUrl}/${path}`, git.branch);
+      if (!git.isRepo || !git.branch || git.branch === "(detached)") return "";
+      return osc8(branchWebUrl(git.origin, git.branch), git.branch);
     }
   },
   gitPullRequest: {
@@ -964,6 +971,60 @@ function fishPath(path) {
   const parts = path.replace(/^~?\//, "").split("/").filter(Boolean);
   if (parts.length <= 1) return path;
   return `${prefix}${parts.slice(0, -1).map((part) => part[0] || "").join("/")}/${parts.at(-1)}`;
+}
+
+function renderRemoteValue(remote, text, widget) {
+  if (!text) return "";
+  if (!metadataFlag(widget, "linkToRepo")) return text;
+  return osc8(repoWebUrl(remote), text) || text;
+}
+
+function gitBranchLinkEnabled(widget) {
+  const linkToRepo = metadataFlag(widget, "linkToRepo");
+  if (linkToRepo !== null) return linkToRepo;
+  return metadataFlag(widget, "linkToGitHub") === true;
+}
+
+function metadataFlag(widget, key) {
+  if (!widget || typeof widget !== "object") return null;
+  if (widget[key] !== undefined) return parseFlag(widget[key]);
+  if (widget.metadata && typeof widget.metadata === "object" && widget.metadata[key] !== undefined) {
+    return parseFlag(widget.metadata[key]);
+  }
+  return null;
+}
+
+function parseFlag(value) {
+  if (value === undefined || value === null) return null;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    const text = value.trim().toLowerCase();
+    if (!text || ["false", "0", "no", "off"].includes(text)) return false;
+    if (["true", "1", "yes", "on"].includes(text)) return true;
+  }
+  return Boolean(value);
+}
+
+function repoWebUrl(remote) {
+  if (!remote) return "";
+  if (remote.httpsUrl) return remote.httpsUrl;
+  if (remote.host && remote.owner && remote.repo) return `https://${remote.host}/${remote.owner}/${remote.repo}`;
+  if (typeof remote.url === "string" && /^https?:\/\//i.test(remote.url)) return remote.url.replace(/\.git\/?$/, "").replace(/\/$/, "");
+  return "";
+}
+
+function branchWebUrl(remote, branch) {
+  const url = repoWebUrl(remote);
+  if (!url) return "";
+  return `${url}/tree/${encodeGitRefForUrlPath(branch)}`;
+}
+
+function encodeGitRefForUrlPath(ref) {
+  return String(ref || "")
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
 }
 
 function osc8(url, text) {

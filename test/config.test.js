@@ -28,13 +28,14 @@ test("converts ccstatusline settings into cxstatusline config", () => {
       [
         { type: "model", color: "cyan", merge: "no-padding", bold: true },
         { type: "separator" },
-        { type: "git-branch", color: "magenta" },
+        { type: "git-branch", color: "magenta", metadata: { linkToGitHub: "true", linkToRepo: "false" } },
         { type: "custom-command", command: "printf ok", maxWidth: 8, preserveColors: true },
         { type: "tokens-total", rawValue: true },
         { type: "current-working-dir", metadata: { segments: "2", fish: "true" } }
       ],
       [
         { type: "flex-separator" },
+        { type: "git-origin-owner-repo", metadata: { linkToRepo: "true", ownerOnlyWhenFork: "true", hideNoRemote: "true" } },
         { type: "reset-timer", color: "brightYellow", metadata: { format: "timestamp", timeZone: "UTC", hour12: "false" } }
       ]
     ]
@@ -67,6 +68,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[0][1].type, "separator");
   assert.equal(config.lines[0][1].text, " :: ");
   assert.equal(config.lines[0][2].type, "gitBranch");
+  assert.equal(config.lines[0][2].linkToGitHub, true);
+  assert.equal(config.lines[0][2].linkToRepo, false);
   assert.equal(config.lines[0][3].type, "command");
   assert.equal(config.lines[0][3].maxWidth, 8);
   assert.equal(config.lines[0][3].preserveColors, true);
@@ -76,9 +79,13 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[0][5].segments, 2);
   assert.equal(config.lines[0][5].fish, true);
   assert.equal(config.lines[1][0].type, "spacer");
-  assert.equal(config.lines[1][1].type, "blockResetTimer");
-  assert.equal(config.lines[1][1].fg, "#eab308");
-  assert.equal(config.lines[1][1].format, "timestamp");
-  assert.equal(config.lines[1][1].timeZone, "UTC");
-  assert.equal(config.lines[1][1].hour12, false);
+  assert.equal(config.lines[1][1].type, "gitOriginOwnerRepo");
+  assert.equal(config.lines[1][1].linkToRepo, true);
+  assert.equal(config.lines[1][1].ownerOnlyWhenFork, true);
+  assert.equal(config.lines[1][1].hideNoRemote, true);
+  assert.equal(config.lines[1][2].type, "blockResetTimer");
+  assert.equal(config.lines[1][2].fg, "#eab308");
+  assert.equal(config.lines[1][2].format, "timestamp");
+  assert.equal(config.lines[1][2].timeZone, "UTC");
+  assert.equal(config.lines[1][2].hour12, false);
 });

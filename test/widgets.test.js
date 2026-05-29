@@ -21,6 +21,53 @@ test("renders OSC8 links and strips them for visible text", () => {
   assert.equal(stripAnsi(output), "repo");
 });
 
+test("renders Git branch and remote widgets as repo links from metadata", () => {
+  const context = {
+    config: {},
+    state: {},
+    git: {
+      isRepo: true,
+      branch: "feature/link mode",
+      isFork: true,
+      origin: {
+        host: "github.example.com",
+        owner: "acme",
+        repo: "tool",
+        ownerRepo: "acme/tool",
+        httpsUrl: "https://github.example.com/acme/tool"
+      },
+      upstreamRemote: {
+        host: "gitlab.com",
+        owner: "upstream",
+        repo: "tool",
+        ownerRepo: "upstream/tool",
+        httpsUrl: "https://gitlab.com/upstream/tool"
+      }
+    },
+    codexConfig: {}
+  };
+
+  const branch = renderWidget({ type: "gitBranch", linkToRepo: true }, context);
+  assert.match(branch, /\x1b]8;;https:\/\/github\.example\.com\/acme\/tool\/tree\/feature\/link%20mode/);
+  assert.equal(stripAnsi(branch), "feature/link mode");
+
+  const legacy = renderWidget({ type: "gitBranch", metadata: { linkToGitHub: "true" } }, context);
+  assert.match(legacy, /\x1b]8;;https:\/\/github\.example\.com\/acme\/tool\/tree\/feature\/link%20mode/);
+
+  const disabledLegacy = renderWidget({ type: "gitBranch", metadata: { linkToRepo: "false", linkToGitHub: "true" } }, context);
+  assert.equal(disabledLegacy, "feature/link mode");
+
+  const origin = renderWidget({ type: "gitOriginOwnerRepo", metadata: { linkToRepo: "true" } }, context);
+  assert.match(origin, /\x1b]8;;https:\/\/github\.example\.com\/acme\/tool/);
+  assert.equal(stripAnsi(origin), "acme/tool");
+
+  const upstream = renderWidget({ type: "gitUpstreamRepo", linkToRepo: true }, context);
+  assert.match(upstream, /\x1b]8;;https:\/\/gitlab\.com\/upstream\/tool/);
+  assert.equal(stripAnsi(upstream), "tool");
+
+  assert.equal(renderWidget({ type: "gitOriginOwnerRepo", ownerOnlyWhenFork: true }, context), "acme");
+});
+
 test("formats paths with home abbreviation, segments, and fish mode", () => {
   assert.equal(formatPath("/Users/luke/AlphaPay/ca-parent", { segments: 2, home: false }), "/.../AlphaPay/ca-parent");
   assert.equal(formatPath("/Users/luke/AlphaPay/ca-parent", { fish: true, home: false }), "/U/l/A/ca-parent");

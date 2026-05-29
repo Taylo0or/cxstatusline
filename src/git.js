@@ -110,15 +110,42 @@ export function parseShortStat(output) {
 }
 
 export function parseRemote(remote) {
-  const text = String(remote || "").trim().replace(/\.git$/, "");
+  const text = String(remote || "").trim().replace(/\.git\/?$/, "").replace(/\/$/, "");
   if (!text) return {};
-  const match = text.match(/(?:github\.com|gitlab\.com)[/:]([^/\s:]+)\/([^/\s]+)$/i)
-    || text.match(/([^/\s:]+)\/([^/\s]+)$/);
-  if (!match) return { url: text };
-  const [, owner, repo] = match;
-  const host = text.includes("gitlab.com") ? "gitlab.com" : text.includes("github.com") ? "github.com" : "";
+  const parsed = parseRemoteParts(text);
+  if (!parsed) return { url: text };
+  const { host, owner, repo } = parsed;
   const httpsUrl = host ? `https://${host}/${owner}/${repo}` : "";
   return { url: text, host, owner, repo, ownerRepo: `${owner}/${repo}`, httpsUrl };
+}
+
+function parseRemoteParts(text) {
+  if (!text.includes("://")) {
+    const scp = text.match(/^(?:[^@]+@)?([^:]+):(.+)$/);
+    if (scp) return parseRemotePath(scp[2], scp[1]);
+    return parseRemotePath(text, "");
+  }
+
+  try {
+    const url = new URL(text);
+    if (!["http:", "https:", "ssh:", "git:"].includes(url.protocol)) return null;
+    return parseRemotePath(url.pathname, url.protocol === "http:" || url.protocol === "https:" ? url.host : url.hostname);
+  } catch {
+    return null;
+  }
+}
+
+function parseRemotePath(path, host) {
+  const parts = String(path || "")
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/\.git$/, "")
+    .split("/")
+    .filter(Boolean);
+  if (parts.length < 2) return null;
+  const repo = parts.at(-1);
+  const owner = parts.slice(0, -1).join("/");
+  if (!owner || !repo) return null;
+  return { host, owner, repo };
 }
 
 export function gitCacheKey(root) {

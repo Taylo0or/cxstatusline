@@ -42,6 +42,14 @@ test("parses common GitHub and GitLab remote URLs", () => {
   });
 
   assert.equal(parseRemote("https://gitlab.com/acme/tool.git").ownerRepo, "acme/tool");
+  assert.deepEqual(parseRemote("ssh://git@git.company.test/group/platform/tool.git"), {
+    url: "ssh://git@git.company.test/group/platform/tool",
+    host: "git.company.test",
+    owner: "group/platform",
+    repo: "tool",
+    ownerRepo: "group/platform/tool",
+    httpsUrl: "https://git.company.test/group/platform/tool"
+  });
 });
 
 test("reports upstream remote and fork status", () => {
