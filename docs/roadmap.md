@@ -11,8 +11,8 @@ while staying honest about Codex's current extension points.
 - Theme system.
 - JSON config.
 - Interactive and non-interactive configuration command, including direct
-  widget, separator, global formatting, Powerline separator, and Powerline
-  alignment flags.
+  widget, separator, terminal width, global formatting, Powerline separator,
+  and Powerline alignment flags.
 - Git branch, SHA, status, ahead/behind, and diff widgets.
 - Git origin owner/repo, upstream owner/repo, fork status, worktree, PR/MR
   detection, and clickable branch widgets.
@@ -35,6 +35,8 @@ while staying honest about Codex's current extension points.
 - Flexible spacer/right alignment.
 - Global default padding/separators, inherited separator colors, global bold and
   color overrides, no-padding plain merges, and per-widget color overrides.
+- Terminal width modes, compact thresholds, width truncation, and
+  `CXSTATUSLINE_WIDTH`/`CCSTATUSLINE_WIDTH` overrides.
 - Path abbreviation and fish-style path shortening.
 - `ccstatusline` kebab-case widget aliases for migrated widget lists.
 - `ccstatusline` settings import for common layout and widget options.
@@ -44,7 +46,6 @@ while staying honest about Codex's current extension points.
 - tmux, Starship, native footer, and hooks uninstall flows.
 - SketchyBar integration docs.
 - Persistent Git cache with TTL and `.git/HEAD`/`.git/index` invalidation.
-- Width truncation and `CXSTATUSLINE_WIDTH`/`CCSTATUSLINE_WIDTH` overrides.
 - Doctor and reset commands.
 - Runtime benchmark command and CI benchmark scenario suite.
 - GitHub Actions CI and release workflow with optional npm token or trusted

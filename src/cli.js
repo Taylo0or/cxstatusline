@@ -94,6 +94,11 @@ async function configureCommand(args) {
       flags[minimal ? "minimal" : "no-minimal"] = true;
       const hideEmpty = await yesNo(rl, "Hide empty widgets?", config.hideEmpty !== false);
       flags[hideEmpty ? "hide-empty" : "show-empty"] = true;
+      const flexMode = await choose(rl, "Terminal width", ["full", "full-minus-40", "full-until-compact"], config.flexMode || "full");
+      flags["flex-mode"] = flexMode;
+      if (flexMode === "full-until-compact") {
+        flags["compact-threshold"] = await optional(rl, "Compact threshold percent", config.compactThreshold || 60);
+      }
       flags["default-padding"] = await optional(rl, "Default padding", config.defaultPadding || "");
       if (mode === "plain") {
         flags["default-separator"] = await optional(rl, "Plain separator", config.defaultSeparator ?? config.separator ?? " | ");
@@ -311,7 +316,7 @@ function help() {
 Usage:
   cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
   cxstatusline hook
-  cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--default-padding text]
+  cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--flex-mode mode]
   cxstatusline import ccstatusline [--from path] [--dry-run]
   cxstatusline init [--force]
   cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
@@ -329,6 +334,7 @@ Examples:
   cxstatusline render --preset compact --format plain
   cxstatusline configure --preset compact --theme powerline --yes
   cxstatusline configure --widgets model,git-branch,tokens-total --separator ' :: ' --yes
+  cxstatusline configure --flex-mode full-until-compact --compact-threshold 70 --yes
   cxstatusline configure --mode plain --default-padding ' ' --global-bold --override-fg cyan --yes
   cxstatusline configure --powerline-separators 'U+E0B0,U+E0B1' --powerline-auto-align --yes
   cxstatusline import ccstatusline --dry-run
@@ -362,6 +368,14 @@ export function applyConfigureFlags(config, flags = {}) {
   if (flags["no-minimal"] !== undefined) outputConfig.minimal = false;
   if (flags["hide-empty"] !== undefined) outputConfig.hideEmpty = parseBoolean(flags["hide-empty"]);
   if (flags["show-empty"] !== undefined) outputConfig.hideEmpty = false;
+  if (flags["flex-mode"] !== undefined || flags.flexMode !== undefined) {
+    const flexMode = String(flags["flex-mode"] ?? flags.flexMode);
+    if (["full", "full-minus-40", "full-until-compact"].includes(flexMode)) outputConfig.flexMode = flexMode;
+  }
+  if (flags["compact-threshold"] !== undefined || flags.compactThreshold !== undefined) {
+    const threshold = Number(flags["compact-threshold"] ?? flags.compactThreshold);
+    if (Number.isFinite(threshold) && threshold > 0) outputConfig.compactThreshold = Math.min(99, Math.max(1, Math.round(threshold)));
+  }
   if (flags["inherit-separator-colors"] !== undefined) outputConfig.inheritSeparatorColors = parseBoolean(flags["inherit-separator-colors"]);
   if (flags["no-inherit-separator-colors"] !== undefined) outputConfig.inheritSeparatorColors = false;
   if (flags["global-bold"] !== undefined) outputConfig.globalBold = parseBoolean(flags["global-bold"]);

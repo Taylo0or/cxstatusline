@@ -36,7 +36,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   output with optional ANSI color preservation, configurable Powerline separators/caps,
   multi-separator and inverted Powerline separator support,
   multi-cap/codepoint Powerline caps, multi-line Powerline auto-alignment,
-  theme continuation, width truncation, and JSON or plain output.
+  theme continuation, terminal width modes, width truncation, and JSON or plain
+  output.
 - `ccstatusline` widget-name aliases for common kebab-case types such as
   `git-branch`, `tokens-total`, `current-working-dir`, `git-pr`,
   `weekly-sonnet-usage`, `separator`, and `flex-separator`.
@@ -168,6 +169,7 @@ Persist a specific layout without prompts:
 
 ```sh
 cxstatusline configure --widgets model,git-branch,tokens-total --separator " :: " --yes
+cxstatusline configure --flex-mode full-until-compact --compact-threshold 70 --yes
 cxstatusline configure --mode plain --default-padding " " --global-bold --override-fg cyan --yes
 cxstatusline configure --powerline-separators "U+E0B0,U+E0B1" --powerline-auto-align --yes
 ```
@@ -247,7 +249,7 @@ cxstatusline presets
 ```text
 cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
 cxstatusline hook
-cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--default-padding text]
+cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--flex-mode mode]
 cxstatusline import ccstatusline [--from path] [--dry-run]
 cxstatusline init [--force] [--preset default|compact|dense|git|usage|nofont|right|multiline]
 cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]

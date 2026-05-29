@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.19
+
+- Added ccstatusline-style terminal width modes with `flexMode` values
+  `full`, `full-minus-40`, and `full-until-compact`.
+- Added `compactThreshold` support so status lines can reserve room for compact
+  messages after context usage crosses a configured percentage.
+- Preserved `flexMode` and `compactThreshold` during `ccstatusline` settings
+  import and exposed matching `configure` flags.
+
 ## 0.2.18
 
 - Added ccstatusline-style global plain renderer options for default padding,

@@ -32,14 +32,14 @@ function renderLines(context, options = {}) {
   const alignWidths = autoAlign ? powerlineAlignWidths(prepared.map((line) => line.segments)) : null;
 
   return prepared.map(({ lineConfig, theme, segments }) => {
-    return renderPreparedLine(segments, theme, lineConfig, options, alignWidths);
+    return renderPreparedLine(segments, theme, lineConfig, options, alignWidths, context);
   }).join("\n");
 }
 
 function renderLine(context, config, options = {}) {
   const theme = THEMES[options.theme || config.theme] || THEMES.powerline;
   const rendered = buildSegments(context, config, theme);
-  return renderPreparedLine(rendered, theme, config, options);
+  return renderPreparedLine(rendered, theme, config, options, null, context);
 }
 
 function buildSegments(context, config, theme, themeOffset = 0) {
@@ -66,7 +66,7 @@ function buildSegments(context, config, theme, themeOffset = 0) {
   }).filter(Boolean)));
 }
 
-function renderPreparedLine(rendered, theme, config, options = {}, alignWidths = null) {
+function renderPreparedLine(rendered, theme, config, options = {}, alignWidths = null, context = {}) {
   if (options.format === "json") {
     return JSON.stringify({ segments: rendered, theme: theme.name });
   }
@@ -74,7 +74,7 @@ function renderPreparedLine(rendered, theme, config, options = {}, alignWidths =
   const mode = options.mode || config.mode || "powerline";
   const color = options.color !== false && options.format !== "plain";
   const raw = isPlainMode(config, options);
-  const width = Number(options.width || process.env.CXSTATUSLINE_WIDTH || process.env.CCSTATUSLINE_WIDTH || process.env.COLUMNS || 0);
+  const width = resolveRenderWidth(config, options, context);
   let output = raw
     ? renderPlain(rendered, config, width, color)
     : renderPowerline(rendered, theme, color, width, config, alignWidths);
@@ -83,6 +83,43 @@ function renderPreparedLine(rendered, theme, config, options = {}, alignWidths =
     output = truncateMiddle(output, width);
   }
   return output;
+}
+
+function resolveRenderWidth(config, options = {}, context = {}) {
+  const explicit = positiveInteger(options.width)
+    || positiveInteger(process.env.CXSTATUSLINE_WIDTH)
+    || positiveInteger(process.env.CCSTATUSLINE_WIDTH);
+  if (explicit) return explicit;
+
+  const columns = positiveInteger(process.env.COLUMNS);
+  if (!columns) return 0;
+
+  const flexMode = config.flexMode || config.terminalWidthMode || "full";
+  if (flexMode === "full-minus-40") return Math.max(1, columns - 40);
+  if (flexMode === "full-until-compact") {
+    const threshold = positiveInteger(config.compactThreshold) || 60;
+    return contextUsagePercent(context) >= threshold ? Math.max(1, columns - 40) : columns;
+  }
+  return columns;
+}
+
+function positiveInteger(value) {
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0 ? number : 0;
+}
+
+function contextUsagePercent(context = {}) {
+  const usage = context.state?.usage || {};
+  for (const value of [usage.contextPercent, usage.contextPercentage, usage.contextUsedPercentage, usage.usedPercentage]) {
+    const number = Number(value);
+    if (Number.isFinite(number) && number >= 0) return number <= 1 ? number * 100 : number;
+  }
+  const used = Number(usage.contextUsed || 0);
+  const window = Number(usage.contextWindow || 0);
+  if (used > 0 && window > 0) return (used / window) * 100;
+  const remaining = Number(usage.contextRemaining || 0);
+  if (used > 0 && remaining > 0) return (used / (used + remaining)) * 100;
+  return 0;
 }
 
 function isPlainMode(config, options = {}) {

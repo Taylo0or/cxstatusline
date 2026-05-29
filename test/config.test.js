@@ -5,6 +5,8 @@ import { convertCcstatuslineSettings } from "../src/config.js";
 test("converts ccstatusline settings into cxstatusline config", () => {
   const config = convertCcstatuslineSettings({
     minimalistMode: true,
+    flexMode: "full-until-compact",
+    compactThreshold: 70,
     defaultSeparator: " :: ",
     defaultPadding: " ",
     inheritSeparatorColors: true,
@@ -38,6 +40,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   });
 
   assert.equal(config.minimal, true);
+  assert.equal(config.flexMode, "full-until-compact");
+  assert.equal(config.compactThreshold, 70);
   assert.equal(config.defaultSeparator, " :: ");
   assert.equal(config.separator, " :: ");
   assert.equal(config.defaultPadding, " ");

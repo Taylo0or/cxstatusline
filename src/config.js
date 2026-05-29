@@ -91,6 +91,11 @@ export function importCcstatuslineConfig(options = {}) {
 export function convertCcstatuslineSettings(settings, base = DEFAULT_CONFIG) {
   const output = structuredClone(base);
   if (typeof settings.minimalistMode === "boolean") output.minimal = settings.minimalistMode;
+  if (["full", "full-minus-40", "full-until-compact"].includes(settings.flexMode)) output.flexMode = settings.flexMode;
+  if (settings.compactThreshold !== undefined) {
+    const threshold = Number(settings.compactThreshold);
+    if (Number.isFinite(threshold) && threshold > 0) output.compactThreshold = Math.min(99, Math.max(1, Math.round(threshold)));
+  }
   if (typeof settings.defaultSeparator === "string") {
     output.defaultSeparator = settings.defaultSeparator;
     output.separator = settings.defaultSeparator;

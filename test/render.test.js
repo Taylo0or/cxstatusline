@@ -146,6 +146,96 @@ test("supports ccstatusline width env alias", () => {
   }
 });
 
+test("supports ccstatusline flex width modes", () => {
+  const previousColumns = process.env.COLUMNS;
+  process.env.COLUMNS = "50";
+  try {
+    const compact = renderStatusLine({
+      config: {
+        ...DEFAULT_CONFIG,
+        mode: "plain",
+        flexMode: "full-minus-40",
+        widgets: [{ type: "text", text: "abcdefghijklmnopqrstuvwxyz" }]
+      },
+      state: {},
+      git: { isRepo: false },
+      cwd: "/tmp/project",
+      codexConfig: {}
+    }, { format: "plain" });
+
+    assert.equal(visibleLength(compact), 10);
+    assert.match(compact, /\.\.\./);
+  } finally {
+    if (previousColumns === undefined) delete process.env.COLUMNS;
+    else process.env.COLUMNS = previousColumns;
+  }
+});
+
+test("supports full-until-compact width thresholds", () => {
+  const previousColumns = process.env.COLUMNS;
+  process.env.COLUMNS = "50";
+  try {
+    const under = renderStatusLine({
+      config: {
+        ...DEFAULT_CONFIG,
+        mode: "plain",
+        flexMode: "full-until-compact",
+        compactThreshold: 60,
+        widgets: [{ type: "text", text: "abcdefghijklmnopqrstuvwxyz" }]
+      },
+      state: { usage: { contextUsed: 20, contextWindow: 100 } },
+      git: { isRepo: false },
+      cwd: "/tmp/project",
+      codexConfig: {}
+    }, { format: "plain" });
+
+    const over = renderStatusLine({
+      config: {
+        ...DEFAULT_CONFIG,
+        mode: "plain",
+        flexMode: "full-until-compact",
+        compactThreshold: 60,
+        widgets: [{ type: "text", text: "abcdefghijklmnopqrstuvwxyz" }]
+      },
+      state: { usage: { contextUsed: 80, contextWindow: 100 } },
+      git: { isRepo: false },
+      cwd: "/tmp/project",
+      codexConfig: {}
+    }, { format: "plain" });
+
+    assert.equal(under, "abcdefghijklmnopqrstuvwxyz");
+    assert.equal(visibleLength(over), 10);
+    assert.match(over, /\.\.\./);
+  } finally {
+    if (previousColumns === undefined) delete process.env.COLUMNS;
+    else process.env.COLUMNS = previousColumns;
+  }
+});
+
+test("keeps explicit width ahead of flex width modes", () => {
+  const previousColumns = process.env.COLUMNS;
+  process.env.COLUMNS = "50";
+  try {
+    const output = renderStatusLine({
+      config: {
+        ...DEFAULT_CONFIG,
+        mode: "plain",
+        flexMode: "full-minus-40",
+        widgets: [{ type: "text", text: "abcdefghijklmnopqrstuvwxyz" }]
+      },
+      state: {},
+      git: { isRepo: false },
+      cwd: "/tmp/project",
+      codexConfig: {}
+    }, { format: "plain", width: 20 });
+
+    assert.equal(visibleLength(output), 20);
+  } finally {
+    if (previousColumns === undefined) delete process.env.COLUMNS;
+    else process.env.COLUMNS = previousColumns;
+  }
+});
+
 test("supports multiple powerline caps and Unicode codepoint caps", () => {
   const output = renderStatusLine({
     config: {

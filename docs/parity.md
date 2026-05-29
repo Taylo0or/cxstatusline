@@ -17,19 +17,20 @@ equivalent data or extension points.
 - Multi-line rendering with manual separator collapse around empty widgets,
   Powerline auto-alignment, and optional theme continuation across lines.
 - Flexible spacer/right-aligned plain rendering.
-- Width truncation and explicit width override through `CXSTATUSLINE_WIDTH` or
-  the `CCSTATUSLINE_WIDTH` compatibility alias.
+- Width truncation, terminal width modes, `compactThreshold`, and explicit
+  width override through `CXSTATUSLINE_WIDTH` or the `CCSTATUSLINE_WIDTH`
+  compatibility alias.
 - JSON, ANSI, and plain output modes.
 - Interactive and non-interactive configuration command, including widget,
-  separator, global formatting, Powerline separator, and Powerline alignment
-  flags.
+  separator, terminal width, global formatting, Powerline separator, and
+  Powerline alignment flags.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and
   multi-line layouts.
 - `ccstatusline` kebab-case widget aliases for migrated widget lists, including
   separator and flex-separator compatibility.
-- `ccstatusline` settings import for lines, minimalist mode, global formatting,
-  separators, Git cache TTL, Powerline options, common widget metadata, and
-  named colors.
+- `ccstatusline` settings import for lines, minimalist mode, terminal width
+  options, global formatting, separators, Git cache TTL, Powerline options,
+  common widget metadata, and named colors.
 - Custom text, custom symbol, custom command with optional ANSI preservation,
   and OSC8 link widgets.
 - Git branch, SHA, status, clean/dirty, staged, unstaged, untracked, conflicts,

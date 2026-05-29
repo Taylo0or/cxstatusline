@@ -7,6 +7,8 @@ test("applies configure flags for widgets and powerline options", () => {
   const config = applyConfigureFlags(structuredClone(DEFAULT_CONFIG), {
     widgets: "model,git-branch,tokens-total",
     separator: " :: ",
+    "flex-mode": "full-until-compact",
+    "compact-threshold": "70",
     "default-padding": " ",
     "inherit-separator-colors": true,
     "global-bold": true,
@@ -24,6 +26,8 @@ test("applies configure flags for widgets and powerline options", () => {
 
   assert.deepEqual(config.widgets, [{ type: "model" }, { type: "gitBranch" }, { type: "tokens" }]);
   assert.equal(config.separator, " :: ");
+  assert.equal(config.flexMode, "full-until-compact");
+  assert.equal(config.compactThreshold, 70);
   assert.equal(config.defaultSeparator, " :: ");
   assert.equal(config.defaultPadding, " ");
   assert.equal(config.inheritSeparatorColors, true);
