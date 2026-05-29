@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatPath, inferContextWindow, parseGithubPullRequest, parseGitlabMergeRequest, renderWidget } from "../src/widgets.js";
+import { formatPath, inferContextWindow, parseGithubPullRequest, parseGitlabMergeRequest, parseJjStat, renderWidget } from "../src/widgets.js";
 import { stripAnsi } from "../src/util.js";
 
 test("infers context windows from model suffixes", () => {
@@ -78,4 +78,12 @@ test("renders custom command output", () => {
   });
 
   assert.equal(output, "command-ok");
+});
+
+test("parses Jujutsu diff stats", () => {
+  assert.deepEqual(parseJjStat("2 files changed, 12 insertions(+), 3 deletions(-)"), {
+    files: 2,
+    insertions: 12,
+    deletions: 3
+  });
 });

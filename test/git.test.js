@@ -44,6 +44,20 @@ test("parses common GitHub and GitLab remote URLs", () => {
   assert.equal(parseRemote("https://gitlab.com/acme/tool.git").ownerRepo, "acme/tool");
 });
 
+test("reports upstream remote and fork status", () => {
+  const dir = mkdtempSync(join(tmpdir(), "cxstatusline-upstream-"));
+  process.env.CXSTATUSLINE_CACHE_DIR = mkdtempSync(join(tmpdir(), "cxstatusline-cache-"));
+  execFileSync("git", ["init", "-b", "main"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["config", "remote.origin.url", "git@github.com:user/fork.git"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["config", "remote.upstream.url", "git@github.com:upstream/repo.git"], { cwd: dir, stdio: "ignore" });
+  writeFileSync(join(dir, "README.md"), "# test\n");
+
+  const info = getGitInfo(dir, { ttlMs: 0 });
+
+  assert.equal(info.upstreamRemote.ownerRepo, "upstream/repo");
+  assert.equal(info.isFork, true);
+});
+
 test("caches git info within the configured TTL", () => {
   const dir = mkdtempSync(join(tmpdir(), "cxstatusline-git-"));
   const cache = mkdtempSync(join(tmpdir(), "cxstatusline-cache-"));

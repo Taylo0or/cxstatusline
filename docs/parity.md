@@ -20,8 +20,8 @@ equivalent data or extension points.
   multi-line layouts.
 - Custom text, custom symbol, custom command, and OSC8 link widgets.
 - Git branch, SHA, status, clean/dirty, staged, unstaged, untracked, conflicts,
-  ahead/behind, insertions, deletions, origin, upstream, worktree, clickable
-  branch links, and GitHub/GitLab PR/MR widgets.
+  ahead/behind, insertions, deletions, origin, upstream owner/repo, fork status,
+  worktree, clickable branch links, and GitHub/GitLab PR/MR widgets.
 - Persistent Git cache with TTL plus `.git/HEAD` and `.git/index`
   invalidation.
 - Current directory path abbreviation, segment limiting, and fish-style path
@@ -33,7 +33,8 @@ equivalent data or extension points.
 - Five-hour block timer and local weekly timer widgets.
 - Session id, run state, last event, last tool, compaction count, duration,
   memory, and terminal width widgets.
-- Basic Jujutsu workspace, revision, description, bookmarks, and change widgets.
+- Basic Jujutsu root, workspace, revision, description, bookmarks, change,
+  insertion, and deletion widgets.
 - Hook/native/tmux/Starship install and uninstall flows.
 - Doctor, reset, and benchmark commands.
 - GitHub CI and release workflow, including optional npm publish when

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.6
+
+- Added upstream remote owner/repo and fork-status Git widgets.
+- Added Git root dir, staged/unstaged/untracked file aliases, and worktree
+  branch widgets.
+- Added Jujutsu root, insertion, and deletion widgets.
+
 ## 0.2.5
 
 - Added ccstatusline parity matrix documentation.

@@ -19,6 +19,7 @@ export function getGitInfo(cwd = process.cwd(), options = {}) {
   const stagedShortResult = git(["diff", "--cached", "--shortstat"], root);
   const originResult = git(["config", "--get", "remote.origin.url"], root);
   const upstreamResult = git(["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], root);
+  const upstreamRemoteResult = git(["config", "--get", "remote.upstream.url"], root);
   const gitDirResult = git(["rev-parse", "--git-dir"], root);
   const commonDirResult = git(["rev-parse", "--git-common-dir"], root);
 
@@ -26,20 +27,27 @@ export function getGitInfo(cwd = process.cwd(), options = {}) {
   const diff = parseShortStat(diffShortResult.stdout);
   const stagedDiff = parseShortStat(stagedShortResult.stdout);
   const origin = parseRemote(originResult.stdout.trim());
+  const upstreamRemote = parseRemote(upstreamRemoteResult.stdout.trim());
   const gitDir = gitDirResult.stdout.trim();
   const commonDir = commonDirResult.stdout.trim();
+  const branch = branchResult.stdout.trim() || "(detached)";
+  const upstream = upstreamResult.ok ? upstreamResult.stdout.trim() : "";
 
   const info = {
     isRepo: true,
     root,
     rootName: basename(root),
-    branch: branchResult.stdout.trim() || "(detached)",
+    branch,
     sha: shaResult.stdout.trim(),
     origin,
-    upstream: upstreamResult.ok ? upstreamResult.stdout.trim() : "",
+    upstream,
+    upstreamRemote,
+    isFork: Boolean(origin.ownerRepo && upstreamRemote.ownerRepo && origin.ownerRepo !== upstreamRemote.ownerRepo),
     worktree: {
       linked: Boolean(gitDir && commonDir && gitDir !== commonDir && !gitDir.endsWith("/.git")),
-      name: basename(root)
+      name: basename(root),
+      branch,
+      originalBranch: upstream ? upstream.replace(/^[^/]+\//, "") : ""
     },
     status,
     diff,

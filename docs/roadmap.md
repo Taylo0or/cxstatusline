@@ -12,8 +12,8 @@ while staying honest about Codex's current extension points.
 - JSON config.
 - Interactive and non-interactive configuration command.
 - Git branch, SHA, status, ahead/behind, and diff widgets.
-- Git origin owner/repo, upstream, worktree, PR/MR detection, and clickable
-  branch widgets.
+- Git origin owner/repo, upstream owner/repo, fork status, worktree, PR/MR
+  detection, and clickable branch widgets.
 - Rich GitHub/GitLab PR/MR state, review, branch, and diff-stat widgets.
 - Model, reasoning, service tier, permission, sandbox, session, event, run-state,
   compaction, duration, memory, token, context, block timer, weekly timer, cost,
@@ -21,7 +21,8 @@ while staying honest about Codex's current extension points.
 - Token speed, input speed, output speed, and cache token widgets from hook
   state.
 - Custom command widget.
-- Basic Jujutsu widgets.
+- Basic Jujutsu root, workspace, revision, description, bookmark, change,
+  insertion, and deletion widgets.
 - Multi-line rendering.
 - OSC8 links.
 - Configurable Powerline separators and caps.

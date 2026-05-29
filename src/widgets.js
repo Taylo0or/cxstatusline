@@ -35,6 +35,10 @@ export const widgetRegistry = {
     description: "Git root name or current directory name",
     render: ({ git, cwd }) => git.rootName || basename(cwd || process.cwd())
   },
+  gitRootDir: {
+    description: "Git repository root directory name",
+    render: ({ git }) => git.rootName || ""
+  },
   cwd: {
     description: "Current working directory",
     render: ({ cwd, widget }) => formatPath(cwd || process.cwd(), widget)
@@ -69,11 +73,23 @@ export const widgetRegistry = {
     description: "Number of staged files",
     render: ({ git }) => git.isRepo && git.status.staged ? String(git.status.staged) : ""
   },
+  gitStagedFiles: {
+    description: "Number of staged files",
+    render: ({ git }) => git.isRepo && git.status.staged ? String(git.status.staged) : ""
+  },
   gitUnstaged: {
     description: "Number of unstaged files",
     render: ({ git }) => git.isRepo && git.status.unstaged ? String(git.status.unstaged) : ""
   },
+  gitUnstagedFiles: {
+    description: "Number of unstaged files",
+    render: ({ git }) => git.isRepo && git.status.unstaged ? String(git.status.unstaged) : ""
+  },
   gitUntracked: {
+    description: "Number of untracked files",
+    render: ({ git }) => git.isRepo && git.status.untracked ? String(git.status.untracked) : ""
+  },
+  gitUntrackedFiles: {
     description: "Number of untracked files",
     render: ({ git }) => git.isRepo && git.status.untracked ? String(git.status.untracked) : ""
   },
@@ -139,6 +155,22 @@ export const widgetRegistry = {
     description: "Configured upstream branch",
     render: ({ git }) => git.upstream || ""
   },
+  gitUpstreamOwner: {
+    description: "Upstream remote owner",
+    render: ({ git }) => git.upstreamRemote?.owner || ""
+  },
+  gitUpstreamRepo: {
+    description: "Upstream remote repository name",
+    render: ({ git }) => git.upstreamRemote?.repo || ""
+  },
+  gitUpstreamOwnerRepo: {
+    description: "Upstream owner/repository",
+    render: ({ git }) => git.upstreamRemote?.ownerRepo || ""
+  },
+  gitIsFork: {
+    description: "Whether origin differs from upstream remote",
+    render: ({ git }) => git.isRepo && git.upstreamRemote?.ownerRepo ? (git.isFork ? "fork" : "upstream") : ""
+  },
   gitWorktreeMode: {
     description: "Whether the repository is a linked worktree",
     render: ({ git }) => git.isRepo ? (git.worktree?.linked ? "worktree" : "normal") : ""
@@ -146,6 +178,14 @@ export const widgetRegistry = {
   gitWorktreeName: {
     description: "Current worktree directory name",
     render: ({ git }) => git.worktree?.name || ""
+  },
+  gitWorktreeBranch: {
+    description: "Current worktree branch name",
+    render: ({ git }) => git.worktree?.branch || ""
+  },
+  gitWorktreeOriginalBranch: {
+    description: "Upstream branch name associated with the current worktree",
+    render: ({ git }) => git.worktree?.originalBranch || ""
   },
   tokens: {
     description: "Total session token usage from hook or transcript state",
@@ -445,12 +485,32 @@ export const widgetRegistry = {
     description: "Current Jujutsu bookmarks",
     render: ({ cwd }) => jj(["log", "-r", "@", "--no-graph", "-T", "bookmarks"], cwd)
   },
+  jjRootDir: {
+    description: "Current Jujutsu root directory name",
+    render: ({ cwd }) => {
+      const root = jj(["root"], cwd);
+      return root ? basename(root) : "";
+    }
+  },
   jjChanges: {
     description: "Current Jujutsu changed file count",
     render: ({ cwd }) => {
-      const stat = jj(["diff", "--stat"], cwd);
-      const match = stat.match(/(\d+) files? changed/);
-      return match ? match[1] : "";
+      const stat = parseJjStat(jj(["diff", "--stat"], cwd));
+      return stat.files ? String(stat.files) : "";
+    }
+  },
+  jjInsertions: {
+    description: "Current Jujutsu insertion count",
+    render: ({ cwd }) => {
+      const stat = parseJjStat(jj(["diff", "--stat"], cwd));
+      return stat.insertions ? `+${stat.insertions}` : "";
+    }
+  },
+  jjDeletions: {
+    description: "Current Jujutsu deletion count",
+    render: ({ cwd }) => {
+      const stat = parseJjStat(jj(["diff", "--stat"], cwd));
+      return stat.deletions ? `-${stat.deletions}` : "";
     }
   }
 };
@@ -514,6 +574,18 @@ function tokenSpeed(samples, windowSeconds, key = "totalTokens") {
 function jj(args, cwd) {
   const result = run("jj", args, { cwd, timeout: 1000 });
   return result.ok ? result.stdout.trim().split(/\r?\n/)[0] : "";
+}
+
+export function parseJjStat(output) {
+  const text = String(output || "");
+  const files = text.match(/(\d+) files? changed/);
+  const insertions = text.match(/(\d+) insertions?\(\+\)/) || text.match(/(\d+)\s+\+/);
+  const deletions = text.match(/(\d+) deletions?\(-\)/) || text.match(/(\d+)\s+-/);
+  return {
+    files: files ? Number(files[1]) : 0,
+    insertions: insertions ? Number(insertions[1]) : 0,
+    deletions: deletions ? Number(deletions[1]) : 0
+  };
 }
 
 function contextNumbers(usage) {

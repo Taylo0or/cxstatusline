@@ -18,8 +18,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 - Codex native footer installer for all currently known built-in status items.
 - Git widgets: branch, SHA, staged/unstaged/untracked/conflict counts,
   ahead/behind, insertions, deletions, origin owner/repo, upstream, worktree
-  mode, clickable GitHub/GitLab branch links, and PR/MR metadata through
-  `gh`/`glab` when available.
+  mode/branch, fork status, clickable GitHub/GitLab branch links, and PR/MR
+  metadata through `gh`/`glab` when available.
 - Codex/session widgets: model, reasoning effort, service tier, permission mode,
   sandbox mode, session id, run state, last event, last tool, compaction count,
   duration, and best-effort token/context/cost metrics when Codex exposes them
@@ -31,8 +31,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   links, flexible spacers/right alignment, path abbreviation, per-widget color
   overrides, custom command output, configurable Powerline separators/caps,
   width truncation, and JSON or plain output.
-- Basic Jujutsu widgets for workspace, revision, description, bookmarks, and
-  changed files.
+- Basic Jujutsu widgets for root, workspace, revision, description, bookmarks,
+  changed files, insertions, and deletions.
 - Presets for compact, dense, Git-focused, usage-focused, no-font,
   right-aligned, and multi-line layouts.
 - tmux and Starship integration snippets, with optional `--write` install.
