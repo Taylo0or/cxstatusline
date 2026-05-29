@@ -317,12 +317,7 @@ export const widgetRegistry = {
   },
   contextPercent: {
     description: "Context window used percentage",
-    render: ({ state, widget }) => {
-      const { used, window, remaining } = contextNumbers(state.usage || {});
-      const value = widget.mode === "remaining" ? remaining : used;
-      if (!used || !window) return "";
-      return `${Math.round((value / window) * 100)}%`;
-    }
+    render: ({ state, widget }) => renderContextPercent(state.usage || {}, widget)
   },
   contextPercentage: {
     description: "Context window used percentage",
@@ -339,9 +334,9 @@ export const widgetRegistry = {
       if (!used || !window) return "";
       const width = Number(widget.width || 10);
       const value = widget.mode === "remaining" ? remaining : used;
-      const filled = Math.max(0, Math.min(width, Math.round((value / window) * width)));
-      const chars = barChars(widget.style);
-      return `${chars.left}${chars.full.repeat(filled)}${chars.empty.repeat(width - filled)}${chars.right} ${Math.round((value / window) * 100)}%`;
+      const percent = (value / window) * 100;
+      if (usageDisplayMode(widget)) return renderPercentDisplay(percent, widget);
+      return renderBar(percent / 100, width, widget.style);
     }
   },
   contextTokens: {
@@ -871,18 +866,54 @@ function renderContextPercent(usage, widget) {
   const { used, window, remaining } = contextNumbers(usage);
   const value = widget.mode === "remaining" ? remaining : used;
   if (!used || !window) return "";
-  return `${Math.round((value / window) * 100)}%`;
+  return renderPercentDisplay((value / window) * 100, widget);
 }
 
 function renderUsagePercent(usage, widget, keys) {
   const percent = usagePercent(usage, keys);
   if (!Number.isFinite(percent)) return "";
   const display = widget.mode === "remaining" ? 100 - percent : percent;
-  const clamped = Math.max(0, Math.min(100, display));
-  if (widget.mode === "bar" || widget.mode === "progress" || widget.style === "bar" || widget.display === "bar") {
-    return renderBar(clamped / 100, Number(widget.width || 16), widget.barStyle || widget.style);
+  return renderPercentDisplay(display, widget);
+}
+
+function renderPercentDisplay(percent, widget = {}) {
+  const clamped = clampPercent(percent);
+  const displayPercent = metadataFlag(widget, "invert") === true ? 100 - clamped : clamped;
+  const display = usageDisplayMode(widget);
+  const cursor = usageCursorPercent(widget, displayPercent);
+
+  if (display === "progress" || display === "progress-short") {
+    const width = Number(widget.width || (display === "progress" ? 32 : 16));
+    return renderProgressBar(displayPercent, width, widget.style || widget.barStyle, {
+      cursor,
+      decimals: 1
+    });
   }
-  return `${Math.round(clamped)}%`;
+
+  if (display === "slider" || display === "slider-only") {
+    const slider = renderSlider(displayPercent, Number(widget.width || 10), cursor);
+    return display === "slider-only" ? slider : `${slider} ${formatPercent(displayPercent, 1)}`;
+  }
+
+  if (widget.mode === "bar" || widget.mode === "progress" || widget.style === "bar" || widget.display === "bar") {
+    return renderBar(displayPercent / 100, Number(widget.width || 16), widget.barStyle || widget.style);
+  }
+
+  return `${Math.round(displayPercent)}%`;
+}
+
+function usageDisplayMode(widget = {}) {
+  const mode = String(metadataValue(widget, "display") || widget.display || "").trim();
+  return ["progress", "progress-short", "slider", "slider-only"].includes(mode) ? mode : "";
+}
+
+function usageCursorPercent(widget, fallback) {
+  const value = metadataValue(widget, "cursor");
+  const flag = metadataFlag(widget, "cursor");
+  if (typeof value === "number" && Number.isFinite(value)) return clampPercent(value);
+  if (typeof value === "string" && /^-?\d+(?:\.\d+)?$/.test(value.trim())) return clampPercent(Number(value));
+  if (flag === false) return null;
+  return flag === true ? clampPercent(fallback) : null;
 }
 
 function usagePercent(usage, keys) {
@@ -1035,8 +1066,57 @@ function weekProgress(now = new Date()) {
 
 function renderBar(ratio, width, style) {
   const chars = barChars(style);
-  const filled = Math.max(0, Math.min(width, Math.round(ratio * width)));
-  return `${chars.left}${chars.full.repeat(filled)}${chars.empty.repeat(width - filled)}${chars.right} ${Math.round(ratio * 100)}%`;
+  const safeWidth = barWidth(width, 16);
+  const percent = clampPercent(Number(ratio) * 100);
+  const filled = Math.max(0, Math.min(safeWidth, Math.round((percent / 100) * safeWidth)));
+  return `${chars.left}${chars.full.repeat(filled)}${chars.empty.repeat(safeWidth - filled)}${chars.right} ${Math.round(percent)}%`;
+}
+
+function renderProgressBar(percent, width, style, options = {}) {
+  const chars = progressChars(style);
+  const safeWidth = barWidth(width, 16);
+  const clamped = clampPercent(percent);
+  const filled = Math.max(0, Math.min(safeWidth, Math.round((clamped / 100) * safeWidth)));
+  const cursor = cursorIndex(options.cursor, safeWidth);
+  let body = "";
+  for (let index = 0; index < safeWidth; index += 1) {
+    body += index === cursor ? chars.cursor : index < filled ? chars.full : chars.empty;
+  }
+  return `${chars.left}${body}${chars.right} ${formatPercent(clamped, options.decimals ?? 0)}`;
+}
+
+function renderSlider(percent, width, cursorPercent = null) {
+  const safeWidth = barWidth(width, 10);
+  const clamped = clampPercent(percent);
+  const filled = Math.max(0, Math.min(safeWidth, Math.round((clamped / 100) * safeWidth)));
+  const cursor = cursorIndex(cursorPercent, safeWidth);
+  let output = "";
+  for (let index = 0; index < safeWidth; index += 1) {
+    output += index === cursor ? "\u2502" : index < filled ? "\u2593" : "\u2591";
+  }
+  return output;
+}
+
+function cursorIndex(percent, width) {
+  if (percent === null || percent === undefined) return -1;
+  if (!Number.isFinite(Number(percent)) || width <= 0) return -1;
+  return Math.max(0, Math.min(width - 1, Math.round((clampPercent(percent) / 100) * width)));
+}
+
+function formatPercent(percent, decimals = 0) {
+  const clamped = clampPercent(percent);
+  return `${decimals > 0 ? clamped.toFixed(decimals) : Math.round(clamped)}%`;
+}
+
+function clampPercent(percent) {
+  const number = Number(percent);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.min(100, number));
+}
+
+function barWidth(width, fallback) {
+  const number = Number(width);
+  return Number.isFinite(number) && number > 0 ? Math.round(number) : fallback;
 }
 
 export function formatResetTimer(progress, widget = {}) {
@@ -1085,6 +1165,12 @@ function barChars(style = "ascii") {
   if (style === "blocks") return { left: "", right: "", full: "█", empty: "░" };
   if (style === "dots") return { left: "", right: "", full: "●", empty: "○" };
   return { left: "[", right: "]", full: "#", empty: "-" };
+}
+
+function progressChars(style = "blocks") {
+  if (style === "ascii") return { left: "[", right: "]", full: "#", empty: "-", cursor: "|" };
+  if (style === "dots") return { left: "[", right: "]", full: "●", empty: "○", cursor: "\u2502" };
+  return { left: "[", right: "]", full: "█", empty: "░", cursor: "\u2502" };
 }
 
 function fishPath(path) {

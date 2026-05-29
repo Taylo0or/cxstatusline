@@ -18,6 +18,7 @@ const IDE_LINK_MODES = ["off", "vscode", "cursor"];
 const USED_REMAINING_MODES = ["used", "remaining"];
 const TIMER_MODES = ["duration", "timestamp", "both", "bar"];
 const BAR_STYLES = ["ascii", "blocks", "dots"];
+const USAGE_DISPLAY_MODES = ["percent", "progress", "progress-short", "slider", "slider-only"];
 const DEFAULT_FORMATS = ["default", "word", "letter", "icon"];
 const VIM_FORMATS = ["icon-dash-letter", "icon-letter", "icon", "letter", "word"];
 const STATUS_FORMATS = ["word", "icon", "icon-text", "text"];
@@ -191,6 +192,7 @@ export function describeWidgetOptions(widget) {
   if (item.merge) parts.push(item.merge === "no-padding" ? "merge=no-padding" : "merge");
   if (item.maxWidth || item.width && type === "command") parts.push(`max=${item.maxWidth || item.width}`);
   if (item.mode) parts.push(`mode=${item.mode}`);
+  if (usageDisplayMode(item) !== "percent") parts.push(`display=${usageDisplayMode(item)}`);
   if (item.format) parts.push(`format=${item.format}`);
   if (item.style || item.barStyle) parts.push(`style=${item.style || item.barStyle}`);
   if (item.width) parts.push(`width=${item.width}`);
@@ -199,6 +201,8 @@ export function describeWidgetOptions(widget) {
   if (item.preserveColors) parts.push("ansi");
   if (metadataFlag(item, "nerdFont")) parts.push("nerd-font");
   if (metadataFlag(item, "hideZero")) parts.push("hide-zero");
+  if (metadataFlag(item, "invert")) parts.push("invert");
+  if (metadataFlag(item, "cursor")) parts.push("cursor");
   if (gitLinkEnabled(item, type)) parts.push("repo-link");
   if (ideLinkMode(item)) parts.push(`link-${ideLinkMode(item)}`);
   if (metadataFlag(item, "hideNoRemote")) parts.push("hide-no-remote");
@@ -267,7 +271,12 @@ export function buildWidgetOptionRows(widget) {
     );
   }
   if (USAGE_WIDGETS.has(type) || type === "contextBar") {
-    rows.push({ key: "mode", label: "Used/remaining mode", value: item.mode || "used" });
+    rows.push(
+      { key: "mode", label: "Used/remaining mode", value: item.mode || "used" },
+      { key: "display", label: "Usage display", value: usageDisplayMode(item) },
+      { key: "invert", label: "Invert display", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "invert"))) },
+      { key: "cursor", label: "Show cursor", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "cursor"))) }
+    );
   }
   if (USAGE_WIDGETS.has(type) || BAR_WIDGETS.has(type) || RESET_TIMER_WIDGETS.has(type)) {
     rows.push({ key: "style", label: "Bar style", value: item.barStyle || item.style || "ascii" });
@@ -329,6 +338,9 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "home") return item.home === false ? deleteKey(item, "home") : { ...item, home: false };
   if (key === "fish") return toggleOrDelete(item, "fish");
   if (key === "mode") return setModeValue(item, nextValue(USED_REMAINING_MODES, item.mode || "used"));
+  if (key === "display") return setUsageDisplayValue(item, nextValue(USAGE_DISPLAY_MODES, usageDisplayMode(item)));
+  if (key === "invert") return toggleOrDeleteMetadataAware(item, "invert");
+  if (key === "cursor") return toggleOrDeleteMetadataAware(item, "cursor");
   if (key === "style") return setStyleValue(item, nextValue(BAR_STYLES, item.barStyle || item.style || "ascii"));
   if (key === "width") return setNumericField(item, "width", value);
   if (key === "timerMode") return setModeValue(item, nextValue(TIMER_MODES, item.mode || item.format || "duration"));
@@ -1504,6 +1516,13 @@ function setStyleValue(item, style) {
   return next;
 }
 
+function setUsageDisplayValue(item, display) {
+  const next = removeMetadataKeys({ ...item }, ["display"]);
+  delete next.display;
+  if (display && display !== "percent") next.display = display;
+  return next;
+}
+
 function setFormatValue(item, format) {
   const type = resolveWidgetType(item.type) || item.type;
   const next = removeMetadataKeys({ ...item }, ["format"]);
@@ -1527,6 +1546,11 @@ function defaultFormatForType(type) {
   return "default";
 }
 
+function usageDisplayMode(item) {
+  const mode = String(metadataValue(item, "display") || item?.display || "percent");
+  return USAGE_DISPLAY_MODES.includes(mode) ? mode : "percent";
+}
+
 function toggleDateOption(item) {
   const next = { ...item };
   if (next.date || next.includeDate) {
@@ -1539,8 +1563,7 @@ function toggleDateOption(item) {
 }
 
 function clearWidgetOptions(item) {
-  const next = { ...item };
-  for (const key of [
+  const optionKeys = [
     "label",
     "merge",
     "maxWidth",
@@ -1561,6 +1584,9 @@ function clearWidgetOptions(item) {
     "fish",
     "mode",
     "format",
+    "display",
+    "invert",
+    "cursor",
     "style",
     "barStyle",
     "timeZone",
@@ -1576,7 +1602,9 @@ function clearWidgetOptions(item) {
     "hideEmpty",
     "nerdFont",
     "hideZero"
-  ]) {
+  ];
+  const next = removeMetadataKeys({ ...item }, optionKeys);
+  for (const key of optionKeys) {
     delete next[key];
   }
   return next;

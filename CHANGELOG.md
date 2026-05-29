@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.36
+
+- Added upstream-compatible usage/context display metadata for progress,
+  progress-short, slider, slider-only, inverted, and cursor-marked percentage
+  widgets.
+- Exposed usage display, invert, and cursor controls in the full-screen TUI.
+
 ## 0.2.35
 
 - Added upstream-compatible Git PR/MR display controls for combined status,

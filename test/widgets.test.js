@@ -270,6 +270,11 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
 
   assert.equal(renderWidget({ type: "totalSpeed", windowSeconds: 0 }, context), "120/min");
   assert.equal(renderWidget({ type: "sessionUsage" }, context), "25%");
+  assert.equal(renderWidget({ type: "sessionUsage", metadata: { display: "progress-short", invert: "true" } }, context), "[████████████░░░░] 75.0%");
+  assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider" } }, context), "▓▓▓▓▓░░░░░ 50.0%");
+  assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider-only" } }, context), "▓▓▓▓▓░░░░░");
+  assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider-only", cursor: "true" } }, context), "▓▓▓▓▓│░░░░");
+  assert.equal(renderWidget({ type: "contextPercentage", display: "slider-only", cursor: true }, context), "▓▓▓▓▓│░░░░");
   assert.equal(renderWidget({ type: "weeklyUsage" }, context), "40%");
   assert.equal(renderWidget({ type: "contextPercentageUsable" }, context), "50%");
   assert.equal(renderWidget({ type: "claudeSessionId" }, context), "abcdef12");

@@ -27,7 +27,9 @@ while staying honest about Codex's current extension points.
   upstream-compatible status format, Nerd Font, and compaction hide-zero
   controls where applicable.
 - Token speed, input speed, output speed, total speed, usage, weekly usage,
-  reset timer timestamp modes, and cache token widgets from hook state.
+  reset timer timestamp modes, and cache token widgets from hook state,
+  including upstream-compatible usage/context progress, slider, invert, and
+  cursor display metadata.
 - Custom command widget with render-context stdin JSON, timeout, max-width,
   `commandPath` compatibility, and optional ANSI preservation.
 - Jujutsu root, active workspace, revision, description, bookmark list,
@@ -54,7 +56,8 @@ while staying honest about Codex's current extension points.
   layouts.
 - Full-screen TUI configuration editor with live preview, widget picker, line
   editor, widget-specific option editor including Git link, IDE-link,
-  PR/MR status/title, status-format, Nerd Font, and remote empty-state toggles,
+  PR/MR status/title, usage display, status-format, Nerd Font, and remote
+  empty-state toggles,
   per-widget color editor,
   preset/theme/mode selection, terminal width controls, global formatting
   controls, Powerline controls, install/update management, and save-time

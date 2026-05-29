@@ -57,7 +57,9 @@ equivalent data or extension points.
   cache-write token, context, context percentage aliases, context bar, context
   window, cost, usage remaining/utilization, session usage, weekly usage,
   weekly Sonnet/Opus usage, token speed, input speed, output speed, and total
-  speed widgets when Codex hook/transcript data provides the underlying fields.
+  speed widgets when Codex hook/transcript data provides the underlying fields,
+  including upstream-compatible usage/context display metadata for progress,
+  progress-short, slider, slider-only, inverted, and cursor-marked displays.
 - Five-hour block timer, reset timer, and local weekly timer widgets, including
   reset timestamp, time zone, locale, 12/24-hour, combined, and bar modes.
 - Session id/name, version, output style, vim mode, voice status,

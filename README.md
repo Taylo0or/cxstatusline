@@ -31,8 +31,10 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   Codex exposes them through hook payloads or transcript entries.
 - Usage widgets: token/input/output/total speed, session and weekly usage,
   Sonnet/Opus weekly usage when available, context used/remaining/window,
-  context bars, cached/cache-read/cache-write tokens, five-hour block timer,
-  reset timers with timestamp/time zone modes, and local weekly timer.
+  context bars, upstream-compatible percent display modes (`progress`,
+  `progress-short`, `slider`, `slider-only`) with invert/cursor controls,
+  cached/cache-read/cache-write tokens, five-hour block timer, reset timers
+  with timestamp/time zone modes, and local weekly timer.
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
   links including `ccstatusline` Link metadata, flexible spacers/right
   alignment, manual separator collapse, path abbreviation, default
@@ -274,6 +276,13 @@ Example widget config:
 
 ```json
 { "type": "blockResetTimer", "format": "timestamp", "timeZone": "UTC", "hour12": false }
+```
+
+Render usage or context percentages with `ccstatusline` display metadata:
+
+```json
+{ "type": "sessionUsage", "metadata": { "display": "progress-short", "invert": "true" } }
+{ "type": "contextPercentage", "metadata": { "display": "slider", "cursor": "true" } }
 ```
 
 Import an existing `ccstatusline` config:

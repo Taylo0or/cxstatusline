@@ -121,6 +121,11 @@ test("TUI widget option helpers expose type-specific rows", () => {
   assert.ok(timerRows.includes("timeZone"));
   assert.ok(timerRows.includes("hour12"));
 
+  const usageRows = buildWidgetOptionRows({ type: "sessionUsage", metadata: { display: "slider", invert: "true" } });
+  assert.equal(usageRows.find((row) => row.key === "display")?.value, "slider");
+  assert.equal(usageRows.find((row) => row.key === "invert")?.value, "on");
+  assert.ok(usageRows.map((row) => row.key).includes("cursor"));
+
   const statusRows = buildWidgetOptionRows({ type: "voiceStatus", metadata: { format: "icon", nerdFont: "true" } });
   assert.equal(statusRows.find((row) => row.key === "format")?.value, "icon");
   assert.equal(statusRows.find((row) => row.key === "nerdFont")?.value, "on");
@@ -151,6 +156,11 @@ test("TUI widget option helpers apply common and specific settings", () => {
   const timer = applyWidgetOption({ type: "blockResetTimer" }, "timerMode");
   assert.deepEqual(timer, { type: "blockResetTimer", mode: "timestamp" });
 
+  assert.deepEqual(applyWidgetOption({ type: "sessionUsage" }, "display"), { type: "sessionUsage", display: "progress" });
+  assert.deepEqual(applyWidgetOption({ type: "sessionUsage", metadata: { display: "slider-only" } }, "display"), { type: "sessionUsage" });
+  assert.deepEqual(applyWidgetOption({ type: "sessionUsage" }, "invert"), { type: "sessionUsage", invert: true });
+  assert.deepEqual(applyWidgetOption({ type: "sessionUsage", metadata: { cursor: "true" } }, "cursor"), { type: "sessionUsage" });
+
   assert.deepEqual(applyWidgetOption({ type: "vimMode" }, "format"), { type: "vimMode", format: "icon-letter" });
   assert.deepEqual(applyWidgetOption({ type: "voiceStatus", metadata: { format: "icon" } }, "format"), { type: "voiceStatus", format: "icon-text" });
   assert.deepEqual(applyWidgetOption({ type: "voiceStatus", metadata: { nerdFont: "true" } }, "nerdFont"), { type: "voiceStatus" });
@@ -171,11 +181,16 @@ test("TUI widget option helpers apply common and specific settings", () => {
     metadata: { url: "https://example.com/docs" },
     text: "Docs"
   });
+  assert.deepEqual(applyWidgetOption({ type: "sessionUsage", metadata: { display: "slider", invert: "true", keep: "yes" } }, "clear"), {
+    type: "sessionUsage",
+    metadata: { keep: "yes" }
+  });
 
   assert.equal(describeWidgetOptions({ type: "cwd", segments: 2, fish: true, home: false }), "segments=2, fish, no-home");
   assert.equal(describeWidgetOptions({ type: "gitBranch", linkToRepo: true }), "repo-link");
   assert.equal(describeWidgetOptions({ type: "gitOriginRepo", hideNoRemote: true }), "hide-no-remote");
   assert.equal(describeWidgetOptions({ type: "gitPullRequest", hideStatus: true, hideTitle: true }), "hide-status, hide-title");
   assert.equal(describeWidgetOptions({ type: "gitRootDir", linkToIDE: "cursor" }), "link-cursor");
+  assert.equal(describeWidgetOptions({ type: "sessionUsage", display: "progress-short", invert: true, cursor: true }), "display=progress-short, invert, cursor");
   assert.equal(describeWidgetOptions({ type: "compactions", nerdFont: true, hideZero: true }), "nerd-font, hide-zero");
 });
