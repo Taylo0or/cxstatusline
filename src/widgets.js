@@ -204,28 +204,21 @@ export const widgetRegistry = {
     description: "Uncommitted insertions and deletions",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      const parts = [];
-      const inserted = git.diff.insertions + git.stagedDiff.insertions;
-      const deleted = git.diff.deletions + git.stagedDiff.deletions;
-      if (inserted) parts.push(`+${inserted}`);
-      if (deleted) parts.push(`-${deleted}`);
-      return parts.join(" ");
+      return formatGitChanges(git);
     }
   },
   gitInsertions: {
     description: "Uncommitted insertion count",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      const inserted = git.diff.insertions + git.stagedDiff.insertions;
-      return inserted ? `+${inserted}` : "";
+      return `+${gitChangeCounts(git).insertions}`;
     }
   },
   gitDeletions: {
     description: "Uncommitted deletion count",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      const deleted = git.diff.deletions + git.stagedDiff.deletions;
-      return deleted ? `-${deleted}` : "";
+      return `-${gitChangeCounts(git).deletions}`;
     }
   },
   gitOriginOwner: {
@@ -1485,6 +1478,18 @@ function formatGitAheadBehind(status = {}, widget = {}) {
   if (!ahead && !behind) return "";
   if (widget.rawValue || widget.label === "") return `${ahead},${behind}`;
   return `${ahead ? `\u2191${ahead}` : ""}${behind ? `\u2193${behind}` : ""}`;
+}
+
+function formatGitChanges(git = {}) {
+  const { insertions, deletions } = gitChangeCounts(git);
+  return `(+${insertions},-${deletions})`;
+}
+
+function gitChangeCounts(git = {}) {
+  return {
+    insertions: Number(git.diff?.insertions || 0) + Number(git.stagedDiff?.insertions || 0),
+    deletions: Number(git.diff?.deletions || 0) + Number(git.stagedDiff?.deletions || 0)
+  };
 }
 
 function metadataFlag(widget, key) {

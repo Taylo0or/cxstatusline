@@ -14,7 +14,7 @@ while staying honest about Codex's current extension points.
   widget, separator, terminal width, global formatting, Powerline separator,
   and Powerline alignment flags.
 - Git branch, SHA, upstream-style status indicators, ahead/behind, and diff
-  widgets.
+  count widgets.
 - Git origin owner/repo, upstream owner/repo, fork status, upstream-style
   branch/worktree icon/raw/no-git rendering, PR/MR detection, clickable branch
   widgets, clickable Git remote owner/repo widgets, Git root directory IDE links,

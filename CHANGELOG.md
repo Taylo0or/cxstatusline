@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.51
+
+- Aligned Git diff count widgets with upstream `ccstatusline`: `gitChanges`
+  now renders `(+insertions,-deletions)`, and `gitInsertions`/`gitDeletions`
+  keep explicit `+0`/`-0` output when no lines changed.
+
 ## 0.2.50
 
 - Aligned Git status widgets with upstream `ccstatusline`: compact status

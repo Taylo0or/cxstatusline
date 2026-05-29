@@ -174,6 +174,36 @@ test("renders upstream-style Git status indicators and file counts", () => {
   assert.equal(renderWidget({ type: "gitAheadBehind", hideNoGit: true }, { ...context, git: { ...context.git, upstream: "", status: { ...context.git.status, ahead: 0, behind: 0 } } }), "");
 });
 
+test("renders upstream-style Git change count widgets", () => {
+  const context = {
+    config: {},
+    state: {},
+    git: {
+      isRepo: true,
+      diff: { insertions: 7, deletions: 2 },
+      stagedDiff: { insertions: 5, deletions: 3 }
+    },
+    codexConfig: {}
+  };
+  const zeroContext = {
+    ...context,
+    git: {
+      ...context.git,
+      diff: { insertions: 0, deletions: 0 },
+      stagedDiff: { insertions: 0, deletions: 0 }
+    }
+  };
+
+  assert.equal(renderWidget({ type: "gitChanges" }, context), "(+12,-5)");
+  assert.equal(renderWidget({ type: "gitInsertions" }, context), "+12");
+  assert.equal(renderWidget({ type: "gitDeletions" }, context), "-5");
+  assert.equal(renderWidget({ type: "gitChanges" }, zeroContext), "(+0,-0)");
+  assert.equal(renderWidget({ type: "gitInsertions" }, zeroContext), "+0");
+  assert.equal(renderWidget({ type: "gitDeletions" }, zeroContext), "-0");
+  assert.equal(renderWidget({ type: "gitChanges" }, { ...context, git: { isRepo: false } }), "(no git)");
+  assert.equal(renderWidget({ type: "gitChanges", hideNoGit: true }, { ...context, git: { isRepo: false } }), "");
+});
+
 test("renders Git fork status raw values and hideWhenNotFork metadata", () => {
   const base = {
     config: {},

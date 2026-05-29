@@ -44,10 +44,11 @@ equivalent data or extension points.
   preservation, and OSC8 link widgets including `metadata.url`/`metadata.text`
   compatibility.
 - Git branch, SHA, upstream-style status indicators, clean/dirty symbols,
-  staged/unstaged/untracked/conflict counts, ahead/behind arrows, insertions,
-  deletions, origin, upstream owner/repo, tracking remote fallback, fork status,
-  upstream-style branch/worktree icon/raw/no-git rendering, clickable branch
-  and remote owner/repo links, Git root directory IDE links for VS Code and
+  staged/unstaged/untracked/conflict counts, ahead/behind arrows,
+  upstream-style insertion/deletion count rendering, origin, upstream
+  owner/repo, tracking remote fallback, fork status, upstream-style
+  branch/worktree icon/raw/no-git rendering, clickable branch and remote
+  owner/repo links, Git root directory IDE links for VS Code and
   Cursor, remote and non-Git empty-state hiding,
   `ownerOnlyWhenFork`, `hideWhenNotFork`, and GitHub/GitLab PR/MR widgets with
   combined status/title/raw display controls.
