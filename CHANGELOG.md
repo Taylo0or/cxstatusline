@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.25
+
+- Added a Widget Options screen to the full-screen TUI.
+- Added menu-driven editing for common widget options and type-specific
+  controls, including command, link, CWD, usage/bar, reset timer, speed,
+  skills, and format settings.
+
 ## 0.2.24
 
 - Added GitHub release update checks through `cxstatusline update-check`.

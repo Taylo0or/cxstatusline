@@ -12,6 +12,22 @@ const CSI = "\x1b[";
 const RESET = "\x1b[0m";
 const FLEX_MODES = ["full", "full-minus-40", "full-until-compact"];
 const MODES = ["powerline", "plain"];
+const MERGE_MODES = ["off", "merge", "no-padding"];
+const USED_REMAINING_MODES = ["used", "remaining"];
+const TIMER_MODES = ["duration", "timestamp", "both", "bar"];
+const BAR_STYLES = ["ascii", "blocks", "dots"];
+const SPEED_WIDGETS = new Set(["tokenSpeed", "inputSpeed", "outputSpeed", "totalSpeed"]);
+const RESET_TIMER_WIDGETS = new Set(["blockResetTimer", "weeklyResetTimer"]);
+const BAR_WIDGETS = new Set(["contextBar", "blockBar", "weeklyBar"]);
+const USAGE_WIDGETS = new Set([
+  "contextPercent",
+  "contextPercentage",
+  "contextPercentageUsable",
+  "sessionUsage",
+  "weeklyUsage",
+  "weeklySonnetUsage",
+  "weeklyOpusUsage"
+]);
 const BOOLEAN_TEXT = new Map([[true, "on"], [false, "off"]]);
 
 export async function runTuiConfigEditor(options = {}) {
@@ -151,6 +167,130 @@ export function clearWidgetColors(widget) {
   return next;
 }
 
+export function describeWidgetOptions(widget) {
+  const item = typeof widget === "string" ? { type: widget } : widget || {};
+  const type = resolveWidgetType(item.type) || item.type || "unknown";
+  const parts = [];
+  if (item.label === "") parts.push("raw");
+  if (item.merge) parts.push(item.merge === "no-padding" ? "merge=no-padding" : "merge");
+  if (item.maxWidth || item.width && type === "command") parts.push(`max=${item.maxWidth || item.width}`);
+  if (item.mode) parts.push(`mode=${item.mode}`);
+  if (item.format) parts.push(`format=${item.format}`);
+  if (item.style || item.barStyle) parts.push(`style=${item.style || item.barStyle}`);
+  if (item.width) parts.push(`width=${item.width}`);
+  if (item.windowSeconds !== undefined) parts.push(`window=${item.windowSeconds}s`);
+  if (item.timeout !== undefined) parts.push(`timeout=${item.timeout}ms`);
+  if (item.preserveColors) parts.push("ansi");
+  if (item.segments !== undefined) parts.push(`segments=${item.segments}`);
+  if (item.fish) parts.push("fish");
+  if (item.home === false) parts.push("no-home");
+  if (item.limit !== undefined || item.listLimit !== undefined) parts.push(`limit=${item.limit ?? item.listLimit}`);
+  if (item.timeZone) parts.push(`tz=${item.timeZone}`);
+  if (item.locale) parts.push(`locale=${item.locale}`);
+  if (item.hour12 !== undefined || item.twelveHour !== undefined) parts.push(`hour12=${item.hour12 ?? item.twelveHour}`);
+  return parts.join(", ") || "defaults";
+}
+
+export function buildWidgetOptionRows(widget) {
+  const item = typeof widget === "string" ? { type: widget } : widget || {};
+  const type = resolveWidgetType(item.type) || item.type || "";
+  const rows = [
+    { key: "label", label: "Label", value: item.label === "" ? "(raw)" : item.label || "(auto)" },
+    { key: "raw", label: "Raw value", value: BOOLEAN_TEXT.get(item.label === "") },
+    { key: "merge", label: "Merge mode", value: mergeMode(item) },
+    { key: "maxWidth", label: "Max width", value: item.maxWidth || type === "command" && item.width || "(none)" }
+  ];
+
+  if (type === "command") {
+    rows.push(
+      { key: "command", label: "Command", value: item.command || "(empty)" },
+      { key: "timeout", label: "Timeout ms", value: item.timeout || 1000 },
+      { key: "preserveColors", label: "Preserve ANSI colors", value: BOOLEAN_TEXT.get(Boolean(item.preserveColors)) }
+    );
+  }
+  if (type === "link") {
+    rows.push(
+      { key: "href", label: "URL", value: item.href || item.url || "(empty)" },
+      { key: "text", label: "Link text", value: item.text || "(URL)" }
+    );
+  }
+  if (type === "text" || type === "symbol" || type === "separator") {
+    rows.push({ key: "text", label: primaryValueLabel(type), value: item[primaryValueKey(type)] || "(empty)" });
+  }
+  if (type === "cwd" || type === "path") {
+    rows.push(
+      { key: "segments", label: "Path segments", value: item.segments || "(all)" },
+      { key: "home", label: "Home abbreviation", value: BOOLEAN_TEXT.get(item.home !== false) },
+      { key: "fish", label: "Fish-style path", value: BOOLEAN_TEXT.get(Boolean(item.fish)) }
+    );
+  }
+  if (USAGE_WIDGETS.has(type) || type === "contextBar") {
+    rows.push({ key: "mode", label: "Used/remaining mode", value: item.mode || "used" });
+  }
+  if (USAGE_WIDGETS.has(type) || BAR_WIDGETS.has(type) || RESET_TIMER_WIDGETS.has(type)) {
+    rows.push({ key: "style", label: "Bar style", value: item.barStyle || item.style || "ascii" });
+  }
+  if (BAR_WIDGETS.has(type) || RESET_TIMER_WIDGETS.has(type)) {
+    rows.push({ key: "width", label: "Bar width", value: item.width || 16 });
+  }
+  if (RESET_TIMER_WIDGETS.has(type)) {
+    rows.push(
+      { key: "timerMode", label: "Timer mode", value: item.mode || item.format || "duration" },
+      { key: "timeZone", label: "Time zone", value: item.timeZone || "(local)" },
+      { key: "locale", label: "Locale", value: item.locale || "en" },
+      { key: "hour12", label: "12-hour clock", value: item.hour12 === undefined ? "(locale)" : BOOLEAN_TEXT.get(Boolean(item.hour12)) },
+      { key: "includeDate", label: "Include date", value: BOOLEAN_TEXT.get(Boolean(item.date || item.includeDate)) }
+    );
+  }
+  if (SPEED_WIDGETS.has(type)) {
+    rows.push({ key: "windowSeconds", label: "Speed window seconds", value: item.windowSeconds ?? 120 });
+  }
+  if (type === "skills") {
+    rows.push(
+      { key: "view", label: "Skills view", value: item.view || item.mode || "current" },
+      { key: "limit", label: "List limit", value: item.limit || item.listLimit || "(all)" },
+      { key: "hideEmpty", label: "Hide when empty", value: BOOLEAN_TEXT.get(Boolean(item.hideEmpty)) }
+    );
+  }
+  if (type === "vimMode" || type === "voiceStatus" || type === "compactions") {
+    rows.push({ key: "format", label: "Format", value: item.format || "default" });
+  }
+
+  rows.push({ key: "clear", label: "Clear widget options", value: "" });
+  return rows;
+}
+
+export function applyWidgetOption(widget, key, value = undefined) {
+  const item = typeof widget === "string" ? { type: widget } : structuredClone(widget || {});
+  if (key === "label") return value === "" ? deleteKey(item, "label") : { ...item, label: value };
+  if (key === "raw") return item.label === "" ? deleteKey(item, "label") : { ...item, label: "" };
+  if (key === "merge") return setMergeMode(item, nextValue(MERGE_MODES, mergeMode(item)));
+  if (key === "maxWidth") return setNumericField(item, "maxWidth", value);
+  if (key === "command") return value === "" ? deleteKey(item, "command") : { ...item, command: value };
+  if (key === "timeout") return setNumericField(item, "timeout", value);
+  if (key === "preserveColors") return { ...item, preserveColors: !Boolean(item.preserveColors) };
+  if (key === "href") return value === "" ? deleteKey(deleteKey(item, "href"), "url") : { ...deleteKey(item, "url"), href: value };
+  if (key === "text") return value === "" ? deleteKey(item, primaryValueKey(resolveWidgetType(item.type) || item.type)) : { ...item, [primaryValueKey(resolveWidgetType(item.type) || item.type)]: value };
+  if (key === "segments") return setNumericField(item, "segments", value);
+  if (key === "home") return item.home === false ? deleteKey(item, "home") : { ...item, home: false };
+  if (key === "fish") return toggleOrDelete(item, "fish");
+  if (key === "mode") return setModeValue(item, nextValue(USED_REMAINING_MODES, item.mode || "used"));
+  if (key === "style") return setStyleValue(item, nextValue(BAR_STYLES, item.barStyle || item.style || "ascii"));
+  if (key === "width") return setNumericField(item, "width", value);
+  if (key === "timerMode") return setModeValue(item, nextValue(TIMER_MODES, item.mode || item.format || "duration"));
+  if (key === "timeZone") return value === "" ? deleteKey(item, "timeZone") : { ...item, timeZone: value };
+  if (key === "locale") return value === "" ? deleteKey(item, "locale") : { ...item, locale: value };
+  if (key === "hour12") return item.hour12 === undefined ? { ...item, hour12: true } : item.hour12 ? { ...item, hour12: false } : deleteKey(item, "hour12");
+  if (key === "includeDate") return toggleDateOption(item);
+  if (key === "windowSeconds") return setNumericField(item, "windowSeconds", value);
+  if (key === "view") return setModeValue(item, nextValue(["current", "count", "list"], item.view || item.mode || "current"), "view");
+  if (key === "limit") return setNumericField(deleteKey(item, "listLimit"), "limit", value);
+  if (key === "hideEmpty") return toggleOrDelete(item, "hideEmpty");
+  if (key === "format") return setFormatValue(item, nextValue(["default", "word", "letter", "icon"], item.format || "default"));
+  if (key === "clear") return clearWidgetOptions(item);
+  return item;
+}
+
 class TuiEditor {
   constructor(options) {
     this.originalConfig = structuredClone(options.config || {});
@@ -165,6 +305,7 @@ class TuiEditor {
     this.selection = 0;
     this.lineIndex = 0;
     this.itemIndex = 0;
+    this.optionIndex = 0;
     this.moveMode = false;
     this.choice = null;
     this.input = null;
@@ -230,6 +371,7 @@ class TuiEditor {
     if (this.screen === "main") return this.handleMain(text, key);
     if (this.screen === "items") return this.handleItems(text, key);
     if (this.screen === "colors") return this.handleColors(text, key);
+    if (this.screen === "options") return this.handleOptions(text, key);
     if (this.screen === "updates") return this.handleMenuScreen("updates", text, key);
     if (this.screen === "terminal") return this.handleMenuScreen("terminal", text, key);
     if (this.screen === "global") return this.handleMenuScreen("global", text, key);
@@ -247,6 +389,7 @@ class TuiEditor {
     if (!item) return;
     if (item.id === "items") this.openScreen("items");
     else if (item.id === "colors") this.openScreen("colors");
+    else if (item.id === "options") this.openScreen("options");
     else if (item.id === "updates") this.openScreen("updates");
     else if (item.id === "preset") this.openChoice("Preset", Object.keys(PRESETS), this.detectPreset(), (value) => {
       this.config = applyPreset(this.config, value);
@@ -308,6 +451,7 @@ class TuiEditor {
     if (text === "b") return this.toggleWidgetBoolean("bold");
     if (text === " ") return this.cycleSeparator();
     if (text === "e") return this.editPrimaryValue();
+    if (text === "o") return this.openScreen("options");
     if (text === "u") return this.editUrlOrToggleMode();
     if (text === "w") return this.editWidthLikeValue();
     if (text === "t") return this.editTimeoutOrTimestamp();
@@ -347,6 +491,30 @@ class TuiEditor {
     } else if (text === "x") {
       this.updateSelected((item) => clearWidgetColors(item), "Cleared widget colors");
     }
+  }
+
+  handleOptions(text, key) {
+    const line = currentLine(this.config, this.lineIndex);
+    const widget = this.selectedWidget();
+    const rows = widget ? buildWidgetOptionRows(widget) : [];
+    if (key.name === "escape" || text === "q") return this.openScreen("items");
+    if (key.name === "tab") {
+      this.nextLine(key.shift ? -1 : 1);
+      this.optionIndex = 0;
+      return;
+    }
+    if (key.name === "left") return this.selectOptionWidget(-1);
+    if (key.name === "right") return this.selectOptionWidget(1);
+    if (key.name === "up" || text === "k") {
+      this.optionIndex = rows.length ? wrap(this.optionIndex - 1, rows.length) : 0;
+      return;
+    }
+    if (key.name === "down" || text === "j") {
+      this.optionIndex = rows.length ? wrap(this.optionIndex + 1, rows.length) : 0;
+      return;
+    }
+    if (!line.length || !rows.length || key.name !== "return" && text !== " ") return;
+    this.applySelectedOption(rows[this.optionIndex]);
   }
 
   handleChoice(text, key) {
@@ -456,7 +624,8 @@ class TuiEditor {
     this.input = null;
     this.confirm = null;
     this.selection = 0;
-    if (screen === "items" || screen === "colors") this.clampItemSelection();
+    if (screen === "items" || screen === "colors" || screen === "options") this.clampItemSelection();
+    if (screen === "options") this.optionIndex = 0;
   }
 
   openChoice(title, values, current, onPick) {
@@ -509,6 +678,11 @@ class TuiEditor {
   selectItem(delta) {
     const line = currentLine(this.config, this.lineIndex);
     this.itemIndex = line.length ? wrap(this.itemIndex + delta, line.length) : 0;
+  }
+
+  selectOptionWidget(delta) {
+    this.selectItem(delta);
+    this.optionIndex = 0;
   }
 
   clampItemSelection() {
@@ -692,6 +866,20 @@ class TuiEditor {
     }, "Cycled format");
   }
 
+  applySelectedOption(row) {
+    if (!row) return;
+    const inputKeys = new Set(["label", "maxWidth", "command", "timeout", "href", "text", "segments", "width", "timeZone", "locale", "windowSeconds", "limit"]);
+    if (inputKeys.has(row.key)) {
+      const widget = this.selectedWidget() || {};
+      const initial = optionInputValue(widget, row.key);
+      this.openInput(row.label, initial, (value) => {
+        this.updateSelected((item) => applyWidgetOption(item, row.key, value), `Updated ${row.label}`);
+      });
+      return;
+    }
+    this.updateSelected((item) => applyWidgetOption(item, row.key), `Updated ${row.label}`);
+  }
+
   refreshUpdateStatus() {
     try {
       this.updateStatus = getUpdateStatus();
@@ -791,6 +979,7 @@ class TuiEditor {
     else if (this.screen === "main") lines.push(...this.renderMain(width));
     else if (this.screen === "items") lines.push(...this.renderItems(width, height - lines.length - 5));
     else if (this.screen === "colors") lines.push(...this.renderColors(height - lines.length - 5));
+    else if (this.screen === "options") lines.push(...this.renderOptions(height - lines.length - 5));
     else lines.push(...this.renderMenuScreen(this.screen, width));
 
     if (this.confirm) {
@@ -860,7 +1049,7 @@ class TuiEditor {
     const line = lines[this.lineIndex] || [];
     const rows = [];
     rows.push(bold(`Line ${this.lineIndex + 1}/${lines.length}`) + (this.moveMode ? yellow("  MOVE") : ""));
-    rows.push(dim("a add, i insert, left/right change, Enter move, d delete, c clear, n new line, Tab next line"));
+    rows.push(dim("a add, i insert, left/right change, Enter move, o options, d delete, c clear, n new line"));
     rows.push(dim("l label, r raw, m merge, b bold, e edit value, w width/window, t timeout/timer, u URL/mode"));
     rows.push("");
     if (!line.length) rows.push(dim("(empty line) Press a to add a widget."));
@@ -889,11 +1078,35 @@ class TuiEditor {
     if (line.length > visible.length) rows.push(dim(`... ${line.length - visible.length} more`));
     return rows;
   }
+
+  renderOptions(maxRows) {
+    const lines = getConfigLines(this.config);
+    const line = lines[this.lineIndex] || [];
+    const widget = this.selectedWidget();
+    const rows = [];
+    rows.push(bold(`Widget Options: line ${this.lineIndex + 1}/${lines.length}, widget ${line.length ? this.itemIndex + 1 : 0}/${line.length}`));
+    rows.push(dim("left/right widget, up/down option, Enter/Space edit, Tab next line, Esc/q back to line editor"));
+    rows.push(widget ? dim(describeWidget(widget)) : dim("(no widget selected)"));
+    rows.push("");
+    if (!widget) {
+      rows.push(dim("(empty line) Add widgets from Edit lines first."));
+      return rows;
+    }
+    const options = buildWidgetOptionRows(widget);
+    this.optionIndex = options.length ? wrap(this.optionIndex, options.length) : 0;
+    const visible = options.slice(0, Math.max(1, maxRows - 5));
+    visible.forEach((option, index) => {
+      rows.push(menuLine(index === this.optionIndex, option.label, String(option.value ?? "")));
+    });
+    if (options.length > visible.length) rows.push(dim(`... ${options.length - visible.length} more`));
+    return rows;
+  }
 }
 
 function mainMenuItems(editor) {
   return [
     { id: "items", label: "Edit lines and widgets", value: lineSummary(editor.config) },
+    { id: "options", label: "Edit selected widget options", value: selectedWidgetSummary(editor) },
     { id: "colors", label: "Edit widget colors", value: colorSummary(editor.config) },
     { id: "preset", label: "Preset", value: editor.detectPreset() },
     { id: "theme", label: "Theme", value: editor.config.theme || "powerline" },
@@ -1042,6 +1255,23 @@ function currentLine(config, lineIndex) {
   return getConfigLines(config)[lineIndex] || [];
 }
 
+function optionInputValue(widget, key) {
+  const item = widget || {};
+  if (key === "label") return item.label || "";
+  if (key === "maxWidth") return item.maxWidth || "";
+  if (key === "command") return item.command || "";
+  if (key === "timeout") return item.timeout || 1000;
+  if (key === "href") return item.href || item.url || "";
+  if (key === "text") return item[primaryValueKey(resolveWidgetType(item.type) || item.type)] || "";
+  if (key === "segments") return item.segments || "";
+  if (key === "width") return item.width || 16;
+  if (key === "timeZone") return item.timeZone || "";
+  if (key === "locale") return item.locale || "en";
+  if (key === "windowSeconds") return item.windowSeconds ?? 120;
+  if (key === "limit") return item.limit ?? item.listLimit ?? "";
+  return "";
+}
+
 function primaryValueKey(type) {
   if (type === "symbol") return "symbol";
   if (type === "command") return "command";
@@ -1064,6 +1294,112 @@ function setNumericField(item, key, value) {
   if (Number.isFinite(number) && number > 0) next[key] = Math.round(number);
   else delete next[key];
   return next;
+}
+
+function mergeMode(item) {
+  if (item.merge === "no-padding") return "no-padding";
+  if (item.merge) return "merge";
+  return "off";
+}
+
+function setMergeMode(item, mode) {
+  const next = { ...item };
+  if (mode === "off") delete next.merge;
+  else next.merge = mode === "merge" ? true : mode;
+  return next;
+}
+
+function nextValue(values, current) {
+  return values[wrap(values.indexOf(current) + 1, values.length)];
+}
+
+function deleteKey(item, key) {
+  const next = { ...item };
+  delete next[key];
+  return next;
+}
+
+function toggleOrDelete(item, key) {
+  const next = { ...item };
+  if (next[key]) delete next[key];
+  else next[key] = true;
+  return next;
+}
+
+function setModeValue(item, mode, key = "mode") {
+  const next = { ...item };
+  if (mode === "used" || mode === "duration" || mode === "current") delete next[key];
+  else next[key] = mode;
+  return next;
+}
+
+function setStyleValue(item, style) {
+  const next = { ...item };
+  if (style === "ascii") {
+    delete next.style;
+    delete next.barStyle;
+  } else {
+    next.style = style;
+    delete next.barStyle;
+  }
+  return next;
+}
+
+function setFormatValue(item, format) {
+  const next = { ...item };
+  if (format === "default") delete next.format;
+  else next.format = format;
+  return next;
+}
+
+function toggleDateOption(item) {
+  const next = { ...item };
+  if (next.date || next.includeDate) {
+    delete next.date;
+    delete next.includeDate;
+  } else {
+    next.includeDate = true;
+  }
+  return next;
+}
+
+function clearWidgetOptions(item) {
+  const next = { ...item };
+  for (const key of [
+    "label",
+    "merge",
+    "maxWidth",
+    "width",
+    "timeout",
+    "preserveColors",
+    "segments",
+    "home",
+    "fish",
+    "mode",
+    "format",
+    "style",
+    "barStyle",
+    "timeZone",
+    "locale",
+    "hour12",
+    "twelveHour",
+    "date",
+    "includeDate",
+    "windowSeconds",
+    "view",
+    "limit",
+    "listLimit",
+    "hideEmpty"
+  ]) {
+    delete next[key];
+  }
+  return next;
+}
+
+function selectedWidgetSummary(editor) {
+  const line = currentLine(editor.config, editor.lineIndex);
+  if (!line.length) return "no widget";
+  return describeWidgetOptions(line[editor.itemIndex] || line[0]);
 }
 
 function ensurePowerline(config) {

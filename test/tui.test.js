@@ -1,8 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  applyWidgetOption,
+  buildWidgetOptionRows,
   clearWidgetColors,
   defaultWidgetForType,
+  describeWidgetOptions,
   describeWidgetColors,
   describeWidget,
   getConfigLines,
@@ -81,4 +84,40 @@ test("TUI color helpers edit foreground, background, and clear aliases", () => {
     clearWidgetColors({ type: "model", fg: "red", color: "cyan", bg: "blue", background: "black", backgroundColor: "gray", bold: true }),
     { type: "model" }
   );
+});
+
+test("TUI widget option helpers expose type-specific rows", () => {
+  const commandRows = buildWidgetOptionRows({ type: "command", command: "printf ok" }).map((row) => row.key);
+  assert.ok(commandRows.includes("command"));
+  assert.ok(commandRows.includes("timeout"));
+  assert.ok(commandRows.includes("preserveColors"));
+
+  const cwdRows = buildWidgetOptionRows({ type: "cwd" }).map((row) => row.key);
+  assert.ok(cwdRows.includes("segments"));
+  assert.ok(cwdRows.includes("home"));
+  assert.ok(cwdRows.includes("fish"));
+
+  const timerRows = buildWidgetOptionRows({ type: "blockResetTimer" }).map((row) => row.key);
+  assert.ok(timerRows.includes("timerMode"));
+  assert.ok(timerRows.includes("timeZone"));
+  assert.ok(timerRows.includes("hour12"));
+});
+
+test("TUI widget option helpers apply common and specific settings", () => {
+  assert.deepEqual(applyWidgetOption({ type: "model" }, "raw"), { type: "model", label: "" });
+  assert.deepEqual(applyWidgetOption({ type: "model", label: "" }, "raw"), { type: "model" });
+  assert.deepEqual(applyWidgetOption({ type: "model" }, "merge"), { type: "model", merge: true });
+  assert.deepEqual(applyWidgetOption({ type: "model", merge: true }, "merge"), { type: "model", merge: "no-padding" });
+  assert.deepEqual(applyWidgetOption({ type: "model", merge: "no-padding" }, "merge"), { type: "model" });
+
+  const command = applyWidgetOption({ type: "command" }, "timeout", "2500");
+  assert.deepEqual(command, { type: "command", timeout: 2500 });
+
+  const cwd = applyWidgetOption(applyWidgetOption({ type: "cwd" }, "segments", "2"), "fish");
+  assert.deepEqual(cwd, { type: "cwd", segments: 2, fish: true });
+
+  const timer = applyWidgetOption({ type: "blockResetTimer" }, "timerMode");
+  assert.deepEqual(timer, { type: "blockResetTimer", mode: "timestamp" });
+
+  assert.equal(describeWidgetOptions({ type: "cwd", segments: 2, fish: true, home: false }), "segments=2, fish, no-home");
 });
