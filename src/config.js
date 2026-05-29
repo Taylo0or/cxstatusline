@@ -200,6 +200,10 @@ function convertCcstatuslineWidget(widget, settings) {
   const metadata = widget.metadata && typeof widget.metadata === "object" ? widget.metadata : {};
   for (const [key, value] of Object.entries(metadata)) {
     if (value === undefined || value === null) continue;
+    if (type === "link" && ["url", "text"].includes(key) && output[key] === undefined) {
+      output[key] = coerceMetadataValue(value);
+      continue;
+    }
     if ([
       "format",
       "mode",

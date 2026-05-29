@@ -32,6 +32,7 @@ while staying honest about Codex's current extension points.
 - Multi-line rendering with manual separator collapse around empty widgets,
   Powerline auto-alignment, and optional theme continuation across lines.
 - OSC8 links and custom command ANSI color preservation.
+- `ccstatusline` Link widget metadata compatibility.
 - Configurable Powerline separators, multi-separator arrays, inverted separator
   backgrounds, and multi-cap/codepoint caps.
 - Flexible spacer/right alignment.

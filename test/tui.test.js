@@ -108,6 +108,10 @@ test("TUI widget option helpers expose type-specific rows", () => {
   const rootRows = buildWidgetOptionRows({ type: "gitRootDir" }).map((row) => row.key);
   assert.ok(rootRows.includes("linkToIDE"));
 
+  const linkRows = buildWidgetOptionRows({ type: "link", metadata: { url: "https://example.com/docs", text: "Docs" } });
+  assert.equal(linkRows.find((row) => row.key === "href")?.value, "https://example.com/docs");
+  assert.equal(linkRows.find((row) => row.key === "text")?.value, "Docs");
+
   const timerRows = buildWidgetOptionRows({ type: "blockResetTimer" }).map((row) => row.key);
   assert.ok(timerRows.includes("timerMode"));
   assert.ok(timerRows.includes("timeZone"));
@@ -138,6 +142,11 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.deepEqual(applyWidgetOption({ type: "gitRootDir" }, "linkToIDE"), { type: "gitRootDir", linkToIDE: "vscode" });
   assert.deepEqual(applyWidgetOption({ type: "gitRootDir", linkToIDE: "vscode" }, "linkToIDE"), { type: "gitRootDir", linkToIDE: "cursor" });
   assert.deepEqual(applyWidgetOption({ type: "gitRootDir", metadata: { linkToCursor: "true" } }, "linkToIDE"), { type: "gitRootDir" });
+  assert.deepEqual(applyWidgetOption({ type: "link", metadata: { url: "https://example.com/docs" } }, "text", "Docs"), {
+    type: "link",
+    metadata: { url: "https://example.com/docs" },
+    text: "Docs"
+  });
 
   assert.equal(describeWidgetOptions({ type: "cwd", segments: 2, fish: true, home: false }), "segments=2, fish, no-home");
   assert.equal(describeWidgetOptions({ type: "gitBranch", linkToRepo: true }), "repo-link");

@@ -37,6 +37,7 @@ test("converts ccstatusline settings into cxstatusline config", () => {
       [
         { type: "flex-separator" },
         { type: "git-origin-owner-repo", metadata: { linkToRepo: "true", ownerOnlyWhenFork: "true", hideNoRemote: "true" } },
+        { type: "link", metadata: { url: "https://example.com/docs", text: "Docs" } },
         { type: "reset-timer", color: "brightYellow", metadata: { format: "timestamp", timeZone: "UTC", hour12: "false" } }
       ]
     ]
@@ -87,9 +88,12 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[1][1].linkToRepo, true);
   assert.equal(config.lines[1][1].ownerOnlyWhenFork, true);
   assert.equal(config.lines[1][1].hideNoRemote, true);
-  assert.equal(config.lines[1][2].type, "blockResetTimer");
-  assert.equal(config.lines[1][2].fg, "#eab308");
-  assert.equal(config.lines[1][2].format, "timestamp");
-  assert.equal(config.lines[1][2].timeZone, "UTC");
-  assert.equal(config.lines[1][2].hour12, false);
+  assert.equal(config.lines[1][2].type, "link");
+  assert.equal(config.lines[1][2].url, "https://example.com/docs");
+  assert.equal(config.lines[1][2].text, "Docs");
+  assert.equal(config.lines[1][3].type, "blockResetTimer");
+  assert.equal(config.lines[1][3].fg, "#eab308");
+  assert.equal(config.lines[1][3].format, "timestamp");
+  assert.equal(config.lines[1][3].timeZone, "UTC");
+  assert.equal(config.lines[1][3].hour12, false);
 });

@@ -21,6 +21,24 @@ test("renders OSC8 links and strips them for visible text", () => {
   assert.equal(stripAnsi(output), "repo");
 });
 
+test("renders ccstatusline-style link metadata", () => {
+  const context = {
+    config: {},
+    state: {},
+    git: { isRepo: false },
+    codexConfig: {}
+  };
+
+  const output = renderWidget({ type: "link", metadata: { url: "https://example.com/docs", text: "Docs" } }, context);
+  assert.match(output, /\x1b]8;;https:\/\/example.com\/docs/);
+  assert.equal(stripAnsi(output), "Docs");
+
+  const urlLabel = renderWidget({ type: "link", metadata: { url: "https://example.com/docs" } }, context);
+  assert.equal(stripAnsi(urlLabel), "https://example.com/docs");
+
+  assert.equal(renderWidget({ type: "link", metadata: { text: "Docs" } }, context), "Docs");
+});
+
 test("renders Git branch and remote widgets as repo links from metadata", () => {
   const context = {
     config: {},

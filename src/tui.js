@@ -131,7 +131,7 @@ export function describeWidget(widget) {
   if (item.text) details.push(`text=${item.text}`);
   if (item.symbol) details.push(`symbol=${item.symbol}`);
   if (item.command) details.push(`cmd=${item.command}`);
-  if (item.href || item.url) details.push(`url=${item.href || item.url}`);
+  if (linkUrl(item)) details.push(`url=${linkUrl(item)}`);
   if (item.merge) details.push(item.merge === true ? "merge" : `merge=${item.merge}`);
   if (item.bold) details.push("bold");
   if (item.maxWidth || item.width && type === "command") details.push(`max=${item.maxWidth || item.width}`);
@@ -224,8 +224,8 @@ export function buildWidgetOptionRows(widget) {
   }
   if (type === "link") {
     rows.push(
-      { key: "href", label: "URL", value: item.href || item.url || "(empty)" },
-      { key: "text", label: "Link text", value: item.text || "(URL)" }
+      { key: "href", label: "URL", value: linkUrl(item) || "(empty)" },
+      { key: "text", label: "Link text", value: linkText(item) || "(URL)" }
     );
   }
   if (type === "gitBranch" || GIT_REMOTE_WIDGETS.has(type)) {
@@ -846,7 +846,7 @@ class TuiEditor {
     if (!widget) return;
     const type = resolveWidgetType(widget.type) || widget.type;
     if (type === "link") {
-      this.openInput("URL", widget.href || widget.url || "", (value) => {
+      this.openInput("URL", linkUrl(widget), (value) => {
         this.updateSelected((item) => ({ ...item, href: value }), "Updated URL");
       });
       return;
@@ -1311,8 +1311,8 @@ function optionInputValue(widget, key) {
   if (key === "maxWidth") return item.maxWidth || "";
   if (key === "command") return item.command || "";
   if (key === "timeout") return item.timeout || 1000;
-  if (key === "href") return item.href || item.url || "";
-  if (key === "text") return item[primaryValueKey(resolveWidgetType(item.type) || item.type)] || "";
+  if (key === "href") return linkUrl(item);
+  if (key === "text") return resolveWidgetType(item.type) === "link" ? linkText(item) : item[primaryValueKey(resolveWidgetType(item.type) || item.type)] || "";
   if (key === "segments") return item.segments || "";
   if (key === "width") return item.width || 16;
   if (key === "timeZone") return item.timeZone || "";
@@ -1336,6 +1336,14 @@ function primaryValueLabel(type) {
   if (type === "link") return "Link text";
   if (type === "separator") return "Separator text";
   return "Text";
+}
+
+function linkUrl(item) {
+  return item?.href || item?.url || metadataValue(item, "url") || "";
+}
+
+function linkText(item) {
+  return item?.text || metadataValue(item, "text") || "";
 }
 
 function gitLinkEnabled(item, type = resolveWidgetType(item?.type) || item?.type) {

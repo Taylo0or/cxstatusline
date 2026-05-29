@@ -583,7 +583,12 @@ export const widgetRegistry = {
   },
   link: {
     description: "OSC8 clickable link",
-    render: ({ widget }) => osc8(widget.href || widget.url, widget.text || widget.href || widget.url || "")
+    render: ({ widget }) => {
+      const url = linkUrl(widget);
+      const text = linkText(widget, url);
+      if (!url) return text;
+      return osc8(url, text) || text;
+    }
   },
   gitBranchLink: {
     description: "Clickable GitHub/GitLab branch link when origin is known",
@@ -991,6 +996,14 @@ function renderRemoteValue(remote, text, widget, emptyText) {
   if (!text) return metadataFlag(widget, "hideNoRemote") ? "" : emptyText;
   if (!metadataFlag(widget, "linkToRepo")) return text;
   return osc8(repoWebUrl(remote), text) || text;
+}
+
+function linkUrl(widget) {
+  return widget?.href || widget?.url || metadataValue(widget, "url") || "";
+}
+
+function linkText(widget, url = linkUrl(widget)) {
+  return widget?.text || metadataValue(widget, "text") || url || "";
 }
 
 function gitBranchLinkEnabled(widget) {

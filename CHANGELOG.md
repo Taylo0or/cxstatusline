@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.30
+
+- Added `ccstatusline`-style Link widget metadata support for `metadata.url`
+  and `metadata.text`.
+- Preserved Link widget URL/text metadata during `ccstatusline` settings
+  import.
+- Updated the full-screen TUI widget options to display imported Link metadata.
+
 ## 0.2.29
 
 - Added `no remote` / `no upstream` empty-state rendering for Git remote

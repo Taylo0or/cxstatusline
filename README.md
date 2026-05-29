@@ -32,12 +32,13 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   context bars, cached/cache-read/cache-write tokens, five-hour block timer,
   reset timers with timestamp/time zone modes, and local weekly timer.
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
-  links, flexible spacers/right alignment, manual separator collapse, path
-  abbreviation, default padding/separator controls, inherited separator colors,
-  global bold and color overrides, widget merge/no-padding modes, per-widget
-  color overrides, per-widget max-width truncation, custom command output with
-  timeout, max-width, and optional ANSI color preservation, configurable
-  Powerline separators/caps,
+  links including `ccstatusline` Link metadata, flexible spacers/right
+  alignment, manual separator collapse, path abbreviation, default
+  padding/separator controls, inherited separator colors, global bold and color
+  overrides, widget merge/no-padding modes, per-widget color overrides,
+  per-widget max-width truncation, custom command output with timeout,
+  max-width, and optional ANSI color preservation, configurable Powerline
+  separators/caps,
   multi-separator and inverted Powerline separator support,
   multi-cap/codepoint Powerline caps, multi-line Powerline auto-alignment,
   theme continuation, terminal width modes, width truncation, and JSON or plain
@@ -247,6 +248,12 @@ Use `ccstatusline`-style Git link metadata:
     { "type": "gitRootDir", "linkToIDE": "cursor" }
   ]
 }
+```
+
+Use `ccstatusline`-style Link metadata:
+
+```json
+{ "type": "link", "metadata": { "url": "https://example.com/docs", "text": "Docs" } }
 ```
 
 Render reset timers as exact timestamps:
