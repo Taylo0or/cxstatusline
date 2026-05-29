@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2
+
+- Added uninstall support for native Codex footer, tmux, and Starship config.
+- Added `bench` command for render performance checks.
+- Added SketchyBar integration docs.
+- Added GitHub release workflow with optional npm publishing.
+
 ## 0.2.1
 
 - Added interactive and non-interactive `configure` command.

@@ -26,20 +26,20 @@ while staying honest about Codex's current extension points.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and multi-line
   layouts.
 - tmux and Starship integration snippets, including optional config writes.
+- tmux, Starship, native footer, and hooks uninstall flows.
+- SketchyBar integration docs.
 - Persistent Git cache with TTL and `.git/HEAD`/`.git/index` invalidation.
 - Width truncation.
 - Doctor and reset commands.
+- Runtime benchmark command.
+- GitHub Actions CI and release workflow.
 
 ## Next
 
 - Richer full-screen TUI configuration editor.
-- SketchyBar example.
-- tmux config append/uninstall flow.
-- Starship uninstall flow.
 - GitHub/GitLab PR/MR richer status metadata.
-- Runtime benchmark suite.
-- npm publish workflow.
-- GitHub Actions CI and release workflow.
+- Runtime benchmark suite with threshold assertions.
+- npm publish credentials setup.
 
 ## Waiting On Codex Support
 

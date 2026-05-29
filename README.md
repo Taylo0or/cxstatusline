@@ -72,6 +72,12 @@ cxstatusline install starship --preset compact
 cxstatusline install starship --preset compact --write
 ```
 
+Use with SketchyBar:
+
+```sh
+open docs/integrations/sketchybar.md
+```
+
 Use with any shell prompt:
 
 ```sh
@@ -189,11 +195,12 @@ cxstatusline hook
 cxstatusline configure
 cxstatusline init [--force] [--preset default|compact|dense|git|usage|nofont|right|multiline]
 cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
-cxstatusline uninstall hooks
+cxstatusline uninstall [hooks|native|tmux|starship]
 cxstatusline widgets
 cxstatusline presets
 cxstatusline native-items
 cxstatusline themes
+cxstatusline bench [--iterations 500]
 cxstatusline doctor
 cxstatusline reset
 ```

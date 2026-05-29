@@ -79,11 +79,46 @@ export function upsertNativeStatusLine(text, items = DEFAULT_NATIVE_STATUS_LINE,
   return [...before, ...body, ...block, ...after].join("\n").replace(/\n{3,}/g, "\n\n");
 }
 
+export function removeNativeStatusLine(text) {
+  const lines = String(text || "").split(/\r?\n/);
+  let tuiStart = -1;
+  let nextSection = lines.length;
+  for (let index = 0; index < lines.length; index += 1) {
+    if (/^\[tui]$/.test(lines[index].trim())) {
+      tuiStart = index;
+      continue;
+    }
+    if (tuiStart !== -1 && index > tuiStart && /^\[[^\]]+]$/.test(lines[index].trim())) {
+      nextSection = index;
+      break;
+    }
+  }
+
+  if (tuiStart === -1) return text;
+  const before = lines.slice(0, tuiStart + 1);
+  const body = lines
+    .slice(tuiStart + 1, nextSection)
+    .filter((line) => !/^\s*status_line(_use_colors)?\s*=/.test(line));
+  const after = lines.slice(nextSection);
+  const kept = [...before, ...body];
+  const hasTuiBody = body.some((line) => line.trim() && !line.trim().startsWith("#"));
+  const merged = hasTuiBody ? [...kept, ...after] : [...lines.slice(0, tuiStart), ...after];
+  return merged.join("\n").replace(/\n{3,}/g, "\n\n");
+}
+
 export function installNativeStatusLine(options = {}) {
   const path = options.path || codexConfigPath();
   const before = readText(path, "");
   const items = options.items || DEFAULT_NATIVE_STATUS_LINE;
   const after = upsertNativeStatusLine(before, items, options.useColors !== false);
+  if (!options.dryRun) writeTextAtomic(path, after);
+  return { path, before, after, changed: before !== after, existed: existsSync(path) };
+}
+
+export function uninstallNativeStatusLine(options = {}) {
+  const path = options.path || codexConfigPath();
+  const before = readText(path, "");
+  const after = removeNativeStatusLine(before);
   if (!options.dryRun) writeTextAtomic(path, after);
   return { path, before, after, changed: before !== after, existed: existsSync(path) };
 }

@@ -4,7 +4,7 @@ import { dirname } from "node:path";
 import { stdin as input, stdout as output } from "node:process";
 import { CODEX_NATIVE_ITEMS, DEFAULT_NATIVE_STATUS_LINE, PRESETS, THEMES } from "./constants.js";
 import { applyPreset, defaultConfigPath, initConfig, loadConfig, saveConfig } from "./config.js";
-import { codexConfigPath, installNativeStatusLine, readCodexConfig } from "./codexConfig.js";
+import { codexConfigPath, installNativeStatusLine, readCodexConfig, uninstallNativeStatusLine } from "./codexConfig.js";
 import { getGitInfo } from "./git.js";
 import { hooksPath, installHooks, uninstallHooks } from "./install.js";
 import { renderStatusLine } from "./render.js";
@@ -26,6 +26,7 @@ export async function runCli(args) {
   if (command === "presets") return presetsCommand();
   if (command === "native-items") return nativeItemsCommand();
   if (command === "themes") return themesCommand();
+  if (command === "bench" || command === "benchmark") return benchCommand(rest);
   if (command === "doctor") return doctorCommand();
   if (command === "reset") return resetCommand();
 
@@ -156,9 +157,28 @@ function installCommand(args) {
 function uninstallCommand(args) {
   const { flags, positionals } = parseFlags(args);
   const target = flags.target || positionals[0] || "hooks";
-  if (target !== "hooks") throw new Error("Only hook uninstall is implemented. Native Codex status_line edits are left for manual review.");
-  const result = uninstallHooks({ dryRun: Boolean(flags["dry-run"]) });
-  console.log(`hooks: ${result.changed ? "updated" : "unchanged"} ${result.path}`);
+  const dryRun = Boolean(flags["dry-run"]);
+  if (target === "hooks") {
+    const result = uninstallHooks({ dryRun });
+    console.log(`hooks: ${dryRun ? "would update" : result.changed ? "updated" : "unchanged"} ${result.path}`);
+    return;
+  }
+  if (target === "native") {
+    const result = uninstallNativeStatusLine({ dryRun });
+    console.log(`native: ${dryRun ? "would update" : result.changed ? "updated" : "unchanged"} ${result.path}`);
+    return;
+  }
+  if (target === "tmux") {
+    const result = uninstallMarkedConfig("cxstatusline tmux", flags.path || homePath(".tmux.conf"), dryRun);
+    console.log(`tmux: ${dryRun ? "would update" : result.changed ? "updated" : "unchanged"} ${result.path}`);
+    return;
+  }
+  if (target === "starship") {
+    const result = uninstallMarkedConfig("cxstatusline starship", flags.path || homePath(".config", "starship.toml"), dryRun);
+    console.log(`starship: ${dryRun ? "would update" : result.changed ? "updated" : "unchanged"} ${result.path}`);
+    return;
+  }
+  throw new Error("Unknown uninstall target. Use hooks, native, tmux, or starship.");
 }
 
 function widgetsCommand() {
@@ -212,6 +232,29 @@ function resetCommand() {
   console.log(`Reset state at ${statePath()} (${state.resetAt})`);
 }
 
+function benchCommand(args) {
+  const { flags } = parseFlags(args);
+  const iterations = Number(flags.iterations || flags.n || 200);
+  let config = loadConfig({ config: flags.config });
+  if (flags.preset) config = applyPreset(config, flags.preset);
+  const state = loadState();
+  const cwd = flags.cwd || state.cwd || process.cwd();
+  const codexConfig = readCodexConfig();
+  const git = getGitInfo(cwd, { ttlMs: 0 });
+  const start = performance.now();
+  let last = "";
+  for (let index = 0; index < iterations; index += 1) {
+    last = renderStatusLine({ config, state, cwd, git, codexConfig }, { format: flags.format || "plain", width: flags.width || 120 });
+  }
+  const elapsed = performance.now() - start;
+  console.log(JSON.stringify({
+    iterations,
+    totalMs: Number(elapsed.toFixed(3)),
+    avgMs: Number((elapsed / iterations).toFixed(3)),
+    chars: last.length
+  }, null, 2));
+}
+
 function help() {
   console.log(`cxstatusline
 
@@ -221,11 +264,12 @@ Usage:
   cxstatusline configure
   cxstatusline init [--force]
   cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
-  cxstatusline uninstall hooks
+  cxstatusline uninstall [hooks|native|tmux|starship]
   cxstatusline widgets
   cxstatusline presets
   cxstatusline native-items
   cxstatusline themes
+  cxstatusline bench [--iterations 500]
   cxstatusline doctor
   cxstatusline reset
 
@@ -310,6 +354,18 @@ function upsertMarkedBlock(text, name, body) {
   if (pattern.test(text)) return text.replace(pattern, block);
   const prefix = text && !text.endsWith("\n") ? "\n\n" : text ? "\n" : "";
   return `${text}${prefix}${block}\n`;
+}
+
+function removeMarkedBlock(text, name) {
+  const pattern = new RegExp(`\\n?# >>> ${escapeRegExp(name)}[\\s\\S]*?# <<< ${escapeRegExp(name)}\\n?`);
+  return String(text || "").replace(pattern, "\n").replace(/\n{3,}/g, "\n\n");
+}
+
+function uninstallMarkedConfig(name, path, dryRun) {
+  const before = readText(path, "");
+  const after = removeMarkedBlock(before, name);
+  if (!dryRun) writeTextAtomic(path, after);
+  return { path, before, after, changed: before !== after };
 }
 
 function escapeRegExp(text) {

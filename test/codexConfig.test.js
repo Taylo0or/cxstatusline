@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseSimpleToml, upsertNativeStatusLine } from "../src/codexConfig.js";
+import { parseSimpleToml, removeNativeStatusLine, upsertNativeStatusLine } from "../src/codexConfig.js";
 
 test("parses simple Codex config values", () => {
   const parsed = parseSimpleToml(`model = "gpt-5.5"
@@ -33,5 +33,33 @@ hooks = true
 
   assert.match(output, /status_line = \["model"]/);
   assert.doesNotMatch(output, /old/);
+  assert.match(output, /\[features]/);
+});
+
+test("removes native status line keys while preserving other tui settings", () => {
+  const output = removeNativeStatusLine(`[tui]
+status_line = ["model"]
+status_line_use_colors = true
+terminal_title = ["project"]
+
+[features]
+hooks = true
+`);
+
+  assert.doesNotMatch(output, /status_line/);
+  assert.match(output, /terminal_title/);
+  assert.match(output, /\[features]/);
+});
+
+test("removes empty tui section when uninstalling native status line", () => {
+  const output = removeNativeStatusLine(`[tui]
+status_line = ["model"]
+status_line_use_colors = true
+
+[features]
+hooks = true
+`);
+
+  assert.doesNotMatch(output, /\[tui]/);
   assert.match(output, /\[features]/);
 });
