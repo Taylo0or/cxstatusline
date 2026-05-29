@@ -91,6 +91,8 @@ export function importCcstatuslineConfig(options = {}) {
 export function convertCcstatuslineSettings(settings, base = DEFAULT_CONFIG) {
   const output = structuredClone(base);
   if (typeof settings.minimalistMode === "boolean") output.minimal = settings.minimalistMode;
+  const refreshInterval = normalizeRefreshIntervalSeconds(settings.refreshInterval ?? settings.statusLine?.refreshInterval);
+  if (refreshInterval) output.refreshIntervalSeconds = refreshInterval;
   if (["full", "full-minus-40", "full-until-compact"].includes(settings.flexMode)) output.flexMode = settings.flexMode;
   if (settings.compactThreshold !== undefined) {
     const threshold = Number(settings.compactThreshold);
@@ -141,6 +143,15 @@ export function convertCcstatuslineSettings(settings, base = DEFAULT_CONFIG) {
   }
 
   return output;
+}
+
+export function normalizeRefreshIntervalSeconds(value) {
+  if (value === undefined || value === null) return null;
+  const text = String(value).trim().toLowerCase();
+  if (!text || ["0", "off", "none", "false", "remove", "disabled"].includes(text)) return null;
+  const interval = Number(text);
+  if (!Number.isFinite(interval) || interval <= 0) return null;
+  return Math.min(60, Math.max(1, Math.round(interval)));
 }
 
 function convertCcstatuslineLine(line, settings) {

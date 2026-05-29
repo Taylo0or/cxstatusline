@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.26
+
+- Added configurable external refresh intervals through
+  `refreshIntervalSeconds`, `configure --refresh-interval`, and the full-screen
+  TUI terminal options.
+- Added tmux `status-interval` generation from refresh interval settings or
+  install flags.
+- Preserved `refreshInterval` from imported `ccstatusline` settings and wired
+  configured Git cache TTL into render-time Git lookups.
+
 ## 0.2.25
 
 - Added a Widget Options screen to the full-screen TUI.

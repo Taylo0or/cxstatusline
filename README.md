@@ -52,6 +52,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   line editing, widget-specific option editing, per-widget color editing,
   global options, terminal width controls, Powerline controls, install/update
   management, and save-time hook/native install toggles.
+- External refresh interval configuration for status surfaces that support it,
+  including generated tmux `status-interval` snippets.
 - tmux and Starship integration snippets, with optional `--write` install.
 - Persistent Git cache with TTL and `.git/HEAD`/`.git/index` invalidation.
 - Zero runtime dependencies; Node.js 20+ is enough.
@@ -183,6 +185,7 @@ Persist a specific layout without prompts:
 ```sh
 cxstatusline configure --widgets model,git-branch,tokens-total --separator " :: " --yes
 cxstatusline configure --flex-mode full-until-compact --compact-threshold 70 --yes
+cxstatusline configure --refresh-interval 10 --yes
 cxstatusline configure --mode plain --default-padding " " --global-bold --override-fg cyan --yes
 cxstatusline configure --powerline-separators "U+E0B0,U+E0B1" --powerline-auto-align --yes
 ```
@@ -274,7 +277,7 @@ cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets c
 cxstatusline tui [--config path]
 cxstatusline import ccstatusline [--from path] [--dry-run]
 cxstatusline init [--force] [--preset default|compact|dense|git|usage|nofont|right|multiline]
-cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
+cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write] [--refresh-interval seconds]
 cxstatusline uninstall [hooks|native|tmux|starship]
 cxstatusline widgets
 cxstatusline presets

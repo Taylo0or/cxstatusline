@@ -38,6 +38,8 @@ while staying honest about Codex's current extension points.
   per-widget color overrides and max-width truncation.
 - Terminal width modes, compact thresholds, width truncation, and
   `CXSTATUSLINE_WIDTH`/`CCSTATUSLINE_WIDTH` overrides.
+- External refresh interval configuration for tmux and other external status
+  surfaces that honor their own refresh cadence.
 - Path abbreviation and fish-style path shortening.
 - `ccstatusline` kebab-case widget aliases for migrated widget lists.
 - `ccstatusline` settings import for common layout and widget options.
@@ -60,8 +62,8 @@ while staying honest about Codex's current extension points.
 
 ## Next
 
-- Complete advanced `ccstatusline` TUI parity: refresh-interval controls and
-  the remaining widget-specific shortcut editors that require renderer support.
+- Complete advanced `ccstatusline` TUI parity for the remaining
+  widget-specific shortcut editors that require renderer support.
 
 ## Waiting On Codex Support
 
@@ -70,7 +72,8 @@ to work inside the Codex TUI footer itself:
 
 - External command-backed statusline rendering inside Codex.
 - ANSI-preserving custom footer segments inside Codex.
-- Refresh interval control for an external statusline command.
+- Refresh interval control for an external statusline command inside the Codex
+  native footer.
 - Stable live status JSON containing complete token, context, rate-limit,
   account, voice, vim, skill, and cost fields.
 

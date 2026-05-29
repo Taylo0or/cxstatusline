@@ -3,7 +3,7 @@ import readline from "node:readline/promises";
 import { dirname } from "node:path";
 import { stdin as input, stdout as output } from "node:process";
 import { CODEX_NATIVE_ITEMS, DEFAULT_NATIVE_STATUS_LINE, PRESETS, THEMES } from "./constants.js";
-import { applyPreset, defaultConfigPath, importCcstatuslineConfig, initConfig, loadConfig, saveConfig } from "./config.js";
+import { applyPreset, defaultConfigPath, importCcstatuslineConfig, initConfig, loadConfig, normalizeRefreshIntervalSeconds, saveConfig } from "./config.js";
 import { codexConfigPath, installNativeStatusLine, readCodexConfig, uninstallNativeStatusLine } from "./codexConfig.js";
 import { getGitInfo } from "./git.js";
 import { hooksPath, installHooks, uninstallHooks } from "./install.js";
@@ -53,7 +53,7 @@ function renderCommand(args) {
   const state = loadState();
   const cwd = flags.cwd || state.cwd || process.cwd();
   const codexConfig = readCodexConfig();
-  const git = getGitInfo(cwd);
+  const git = getGitInfo(cwd, { ttlMs: config.gitCacheTtlMs });
   const output = renderStatusLine(
     { config, state, cwd, git, codexConfig },
     {
@@ -107,6 +107,7 @@ async function configureCommand(args) {
       if (flexMode === "full-until-compact") {
         flags["compact-threshold"] = await optional(rl, "Compact threshold percent", config.compactThreshold || 60);
       }
+      flags["refresh-interval"] = await optional(rl, "External refresh interval seconds (blank/off disables)", config.refreshIntervalSeconds || "");
       flags["default-padding"] = await optional(rl, "Default padding", config.defaultPadding || "");
       if (mode === "plain") {
         flags["default-separator"] = await optional(rl, "Plain separator", config.defaultSeparator ?? config.separator ?? " | ");
@@ -362,7 +363,7 @@ function benchCommand(args) {
   const state = loadState();
   const cwd = flags.cwd || state.cwd || process.cwd();
   const codexConfig = readCodexConfig();
-  const git = getGitInfo(cwd, { ttlMs: 0 });
+  const git = getGitInfo(cwd, { ttlMs: config.gitCacheTtlMs ?? 0 });
   const start = performance.now();
   let last = "";
   for (let index = 0; index < iterations; index += 1) {
@@ -393,7 +394,7 @@ Usage:
   cxstatusline import ccstatusline [--from path] [--dry-run]
   cxstatusline init [--force]
   cxstatusline tui [--config path]
-  cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
+  cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write] [--refresh-interval seconds]
   cxstatusline uninstall [hooks|native|tmux|starship]
   cxstatusline widgets
   cxstatusline presets
@@ -401,7 +402,7 @@ Usage:
   cxstatusline themes
   cxstatusline bench [--iterations 500] [--max-avg-ms 5]
   cxstatusline update-check [--json]
-  cxstatusline self-update [--dry-run] [--tag v0.2.24]
+  cxstatusline self-update [--dry-run] [--tag v0.2.26]
   cxstatusline doctor
   cxstatusline reset
 
@@ -413,12 +414,13 @@ Examples:
   cxstatusline configure --tui
   cxstatusline tui
   cxstatusline configure --flex-mode full-until-compact --compact-threshold 70 --yes
+  cxstatusline configure --refresh-interval 10 --yes
   cxstatusline configure --mode plain --default-padding ' ' --global-bold --override-fg cyan --yes
   cxstatusline configure --powerline-separators 'U+E0B0,U+E0B1' --powerline-auto-align --yes
   cxstatusline import ccstatusline --dry-run
   cxstatusline install hooks
   cxstatusline install tmux
-  cxstatusline install tmux --write --preset compact
+  cxstatusline install tmux --write --preset compact --refresh-interval 10
   cxstatusline install native --items model-with-reasoning,context-used,git-branch,run-state
   cxstatusline update-check
   cxstatusline self-update --dry-run
@@ -455,6 +457,12 @@ export function applyConfigureFlags(config, flags = {}) {
   if (flags["compact-threshold"] !== undefined || flags.compactThreshold !== undefined) {
     const threshold = Number(flags["compact-threshold"] ?? flags.compactThreshold);
     if (Number.isFinite(threshold) && threshold > 0) outputConfig.compactThreshold = Math.min(99, Math.max(1, Math.round(threshold)));
+  }
+  if (flags["refresh-interval"] !== undefined || flags.refreshInterval !== undefined || flags["refresh-interval-seconds"] !== undefined) {
+    const raw = flags["refresh-interval"] ?? flags.refreshInterval ?? flags["refresh-interval-seconds"];
+    const interval = normalizeRefreshIntervalSeconds(raw);
+    if (interval) outputConfig.refreshIntervalSeconds = interval;
+    else delete outputConfig.refreshIntervalSeconds;
   }
   if (flags["inherit-separator-colors"] !== undefined) outputConfig.inheritSeparatorColors = parseBoolean(flags["inherit-separator-colors"]);
   if (flags["no-inherit-separator-colors"] !== undefined) outputConfig.inheritSeparatorColors = false;
@@ -558,13 +566,17 @@ function summarizeToml(text) {
   return lines.slice(start, end === -1 ? undefined : end).join("\n");
 }
 
-function tmuxSnippet(flags) {
+export function tmuxSnippet(flags) {
   const width = flags.width || 90;
   const preset = flags.preset ? ` --preset ${flags.preset}` : "";
-  return `set -g status-right '#(cxstatusline render --width ${width}${preset})'`;
+  const interval = tmuxRefreshInterval(flags);
+  return [
+    interval ? `set -g status-interval ${interval}` : "",
+    `set -g status-right '#(cxstatusline render --width ${width}${preset})'`
+  ].filter(Boolean).join("\n");
 }
 
-function starshipSnippet(flags) {
+export function starshipSnippet(flags) {
   const preset = flags.preset ? ` --preset ${flags.preset}` : "";
   return `[custom.cxstatusline]
 command = "cxstatusline render --format plain${preset}"
@@ -572,6 +584,13 @@ when = "true"
 shell = ["sh", "-c"]
 style = "bold blue"
 format = "[$output]($style)"`;
+}
+
+function tmuxRefreshInterval(flags) {
+  const raw = flags["refresh-interval"] ?? flags.refreshInterval ?? flags["refresh-interval-seconds"];
+  if (raw !== undefined) return normalizeRefreshIntervalSeconds(raw);
+  const config = loadConfig({ config: flags.config });
+  return normalizeRefreshIntervalSeconds(config.refreshIntervalSeconds);
 }
 
 function installTmux(flags) {

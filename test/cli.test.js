@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { applyConfigureFlags } from "../src/cli.js";
+import { applyConfigureFlags, tmuxSnippet } from "../src/cli.js";
 import { DEFAULT_CONFIG } from "../src/constants.js";
 
 test("applies configure flags for widgets and powerline options", () => {
@@ -9,6 +9,7 @@ test("applies configure flags for widgets and powerline options", () => {
     separator: " :: ",
     "flex-mode": "full-until-compact",
     "compact-threshold": "70",
+    "refresh-interval": "10",
     "default-padding": " ",
     "inherit-separator-colors": true,
     "global-bold": true,
@@ -28,6 +29,7 @@ test("applies configure flags for widgets and powerline options", () => {
   assert.equal(config.separator, " :: ");
   assert.equal(config.flexMode, "full-until-compact");
   assert.equal(config.compactThreshold, 70);
+  assert.equal(config.refreshIntervalSeconds, 10);
   assert.equal(config.defaultSeparator, " :: ");
   assert.equal(config.defaultPadding, " ");
   assert.equal(config.inheritSeparatorColors, true);
@@ -43,6 +45,15 @@ test("applies configure flags for widgets and powerline options", () => {
   assert.deepEqual(config.powerline.endCaps, ["]"]);
   assert.equal(config.powerline.autoAlign, true);
   assert.equal(config.powerline.continueThemeAcrossLines, true);
+});
+
+test("applies refresh interval flags and tmux snippet status interval", () => {
+  const config = applyConfigureFlags({ ...structuredClone(DEFAULT_CONFIG), refreshIntervalSeconds: 10 }, {
+    "refresh-interval": "off"
+  });
+  assert.equal(config.refreshIntervalSeconds, undefined);
+  assert.match(tmuxSnippet({ width: 80, "refresh-interval": "5" }), /set -g status-interval 5/);
+  assert.match(tmuxSnippet({ width: 80, "refresh-interval": "5" }), /cxstatusline render --width 80/);
 });
 
 test("applies configure flags that disable booleans", () => {

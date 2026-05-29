@@ -20,6 +20,8 @@ equivalent data or extension points.
 - Width truncation, terminal width modes, `compactThreshold`, and explicit
   width override through `CXSTATUSLINE_WIDTH` or the `CCSTATUSLINE_WIDTH`
   compatibility alias.
+- External refresh interval configuration for status surfaces that support it,
+  including tmux `status-interval` generation.
 - JSON, ANSI, and plain output modes.
 - Interactive and non-interactive configuration command, including widget,
   separator, terminal width, global formatting, Powerline separator, and
@@ -84,5 +86,5 @@ data, the matching widget stays empty instead of inventing values.
 
 ## Remaining Enhancements
 
-- Complete `ccstatusline` TUI parity for refresh-interval management and the
-  remaining widget-specific shortcuts that require renderer support.
+- Complete `ccstatusline` TUI parity for the remaining widget-specific
+  shortcuts that require renderer support.

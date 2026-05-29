@@ -3,6 +3,7 @@ import { basename } from "node:path";
 import { stdin as input, stdout as output } from "node:process";
 import { PRESETS, THEMES } from "./constants.js";
 import { applyPreset } from "./config.js";
+import { normalizeRefreshIntervalSeconds } from "./config.js";
 import { renderStatusLine } from "./render.js";
 import { currentVersion, getUpdateStatus, runSelfUpdate } from "./update.js";
 import { listWidgets, resolveWidgetType } from "./widgets.js";
@@ -1141,6 +1142,26 @@ function screenItems(screen, editor) {
           const number = boundedNumber(value, 1, 99, 60);
           config.compactThreshold = number;
           editor.markChanged(`Compact threshold set to ${number}`);
+        })
+      },
+      {
+        label: "External refresh interval",
+        value: config.refreshIntervalSeconds ? `${config.refreshIntervalSeconds}s` : "disabled",
+        action: () => editor.openInput("External refresh interval seconds (1-60, blank/off disables)", config.refreshIntervalSeconds || "", (value) => {
+          const interval = normalizeRefreshIntervalSeconds(value);
+          if (interval) config.refreshIntervalSeconds = interval;
+          else delete config.refreshIntervalSeconds;
+          editor.markChanged(interval ? `Refresh interval set to ${interval}s` : "Refresh interval disabled");
+        })
+      },
+      {
+        label: "Git cache TTL",
+        value: config.gitCacheTtlMs === undefined ? "default" : `${Math.round(Number(config.gitCacheTtlMs || 0) / 1000)}s`,
+        action: () => editor.openInput("Git cache TTL seconds (0-60)", config.gitCacheTtlMs === undefined ? "" : Math.round(Number(config.gitCacheTtlMs || 0) / 1000), (value) => {
+          const ttl = value === "" ? null : boundedNumber(value, 0, 60, 0);
+          if (ttl === null) delete config.gitCacheTtlMs;
+          else config.gitCacheTtlMs = ttl * 1000;
+          editor.markChanged(ttl === null ? "Git cache TTL reset to default" : `Git cache TTL set to ${ttl}s`);
         })
       },
       { label: "Back", value: "", action: () => editor.openScreen("main") }
