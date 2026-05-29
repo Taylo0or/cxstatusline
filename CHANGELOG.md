@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.53
+
+- Aligned token and context widgets with upstream `ccstatusline` default/raw
+  rendering: token labels, context length/window labels, `Ctx Used`/`Ctx Left`
+  percentage labels, `inverse` metadata, and usable-context percentage based on
+  the 80% auto-compaction window.
+
 ## 0.2.52
 
 - Aligned core widget default/raw rendering with upstream `ccstatusline` for

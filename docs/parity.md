@@ -61,10 +61,10 @@ equivalent data or extension points.
   window, cost, usage remaining/utilization, session usage, weekly usage,
   weekly Sonnet/Opus usage, token speed, input speed, output speed, and total
   speed widgets when Codex hook/transcript data provides the underlying fields,
-  including upstream-compatible usage/context display metadata for progress,
-  progress-short, slider, slider-only, inverted, and cursor-marked displays,
-  upstream-style Context Bar detail displays, plus extra usage disabled-state
-  hiding.
+  including upstream-style token/context default/raw labels, usable-context
+  percentage, usage/context display metadata for progress, progress-short,
+  slider, slider-only, inverted, and cursor-marked displays, upstream-style
+  Context Bar detail displays, plus extra usage disabled-state hiding.
 - Five-hour block timer, reset timer, and local weekly timer widgets, including
   Block Timer compact/progress/slider modes and reset timestamp, time zone,
   locale, 12/24-hour, combined, progress/slider, and bar modes.

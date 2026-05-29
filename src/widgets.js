@@ -293,22 +293,28 @@ export const widgetRegistry = {
   },
   tokens: {
     description: "Total session token usage from hook or transcript state",
-    render: ({ state }) => {
+    render: ({ state, widget }) => {
       const total = state.usage?.totalTokens;
-      return total ? compactNumber(total) : "";
+      return hasUsageValue(total) ? formatRawOrLabeledValue(widget, "Total: ", compactNumber(total)) : "";
     }
   },
   inputTokens: {
     description: "Total input tokens",
-    render: ({ state }) => state.usage?.inputTokens ? compactNumber(state.usage.inputTokens) : ""
+    render: ({ state, widget }) => hasUsageValue(state.usage?.inputTokens)
+      ? formatRawOrLabeledValue(widget, "In: ", compactNumber(state.usage.inputTokens))
+      : ""
   },
   outputTokens: {
     description: "Total output tokens",
-    render: ({ state }) => state.usage?.outputTokens ? compactNumber(state.usage.outputTokens) : ""
+    render: ({ state, widget }) => hasUsageValue(state.usage?.outputTokens)
+      ? formatRawOrLabeledValue(widget, "Out: ", compactNumber(state.usage.outputTokens))
+      : ""
   },
   cachedTokens: {
     description: "Cached token count when present in hook state",
-    render: ({ state }) => state.usage?.cachedTokens ? compactNumber(state.usage.cachedTokens) : ""
+    render: ({ state, widget }) => hasUsageValue(state.usage?.cachedTokens)
+      ? formatRawOrLabeledValue(widget, "Cached: ", compactNumber(state.usage.cachedTokens))
+      : ""
   },
   cacheReadTokens: {
     description: "Cache read token count when present in hook state",
@@ -348,10 +354,11 @@ export const widgetRegistry = {
   },
   contextWindow: {
     description: "Context window size, using state or model-name inference",
-    render: ({ state, codexConfig }) => {
+    render: ({ state, codexConfig, widget }) => {
       const usage = state.usage || {};
       const inferred = inferContextWindow(state.model || codexConfig.model || "");
-      return usage.contextWindow || inferred ? compactNumber(usage.contextWindow || inferred) : "";
+      const value = usage.contextWindow || inferred;
+      return value ? formatRawOrLabeledValue(widget, "Win: ", compactNumber(value)) : "";
     }
   },
   contextPercent: {
@@ -364,7 +371,7 @@ export const widgetRegistry = {
   },
   contextPercentageUsable: {
     description: "Context window usable percentage when available, otherwise context percentage",
-    render: ({ state, widget }) => renderContextPercent(state.usage || {}, widget)
+    render: ({ state, widget }) => renderContextUsablePercent(state.usage || {}, widget)
   },
   contextBar: {
     description: "Context usage bar",
@@ -389,16 +396,16 @@ export const widgetRegistry = {
   },
   contextUsed: {
     description: "Context tokens used",
-    render: ({ state }) => {
+    render: ({ state, widget }) => {
       const { used } = contextNumbers(state.usage || {});
-      return used ? compactNumber(used) : "";
+      return used ? formatRawOrLabeledValue(widget, "Ctx: ", compactNumber(used)) : "";
     }
   },
   contextLength: {
     description: "Context tokens used",
-    render: ({ state }) => {
+    render: ({ state, widget }) => {
       const { used } = contextNumbers(state.usage || {});
-      return used ? compactNumber(used) : "";
+      return used ? formatRawOrLabeledValue(widget, "Ctx: ", compactNumber(used)) : "";
     }
   },
   contextRemaining: {
@@ -955,9 +962,35 @@ function contextNumbers(usage) {
 
 function renderContextPercent(usage, widget) {
   const { used, window, remaining } = contextNumbers(usage);
-  const value = widget.mode === "remaining" ? remaining : used;
   if (!used || !window) return "";
-  return renderPercentDisplay((value / window) * 100, widget);
+  const inverse = contextInverse(widget);
+  const value = inverse ? remaining : used;
+  const label = inverse ? "Ctx Left: " : "Ctx Used: ";
+  return formatRawOrLabeledValue(widget, label, renderContextPercentValue((value / window) * 100, widget));
+}
+
+function renderContextUsablePercent(usage, widget) {
+  const { used, window } = contextNumbers(usage);
+  const usableWindow = window * 0.8;
+  if (!used || !usableWindow) return "";
+  const usedPercent = Math.min(100, (used / usableWindow) * 100);
+  const inverse = contextInverse(widget);
+  const percent = inverse ? 100 - usedPercent : usedPercent;
+  const label = inverse ? "Ctx(u) Left: " : "Ctx(u) Used: ";
+  return formatRawOrLabeledValue(widget, label, renderContextPercentValue(percent, widget));
+}
+
+function contextInverse(widget = {}) {
+  return widget.mode === "remaining" || metadataFlag(widget, "inverse") === true;
+}
+
+function renderContextPercentValue(percent, widget = {}) {
+  if (usageDisplayMode(widget) || ["bar", "progress"].includes(widget.mode) || widget.style === "bar" || widget.display === "bar") {
+    return renderPercentDisplay(percent, widget);
+  }
+  const clamped = clampPercent(percent);
+  const displayPercent = metadataFlag(widget, "invert") === true ? 100 - clamped : clamped;
+  return formatPercent(displayPercent, 1);
 }
 
 function renderUsagePercent(usage, widget, keys) {

@@ -479,10 +479,11 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "totalSpeed", windowSeconds: 0 }, context), "120/min");
   assert.equal(renderWidget({ type: "sessionUsage" }, context), "25%");
   assert.equal(renderWidget({ type: "sessionUsage", metadata: { display: "progress-short", invert: "true" } }, context), "[████████████░░░░] 75.0%");
-  assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider" } }, context), "▓▓▓▓▓░░░░░ 50.0%");
-  assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider-only" } }, context), "▓▓▓▓▓░░░░░");
-  assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider-only", cursor: "true" } }, context), "▓▓▓▓▓│░░░░");
-  assert.equal(renderWidget({ type: "contextPercentage", display: "slider-only", cursor: true }, context), "▓▓▓▓▓│░░░░");
+  assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider" } }, context), "Ctx Used: ▓▓▓▓▓░░░░░ 50.0%");
+  assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider-only" } }, context), "Ctx Used: ▓▓▓▓▓░░░░░");
+  assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider-only", cursor: "true" } }, context), "Ctx Used: ▓▓▓▓▓│░░░░");
+  assert.equal(renderWidget({ type: "contextPercentage", display: "slider-only", cursor: true }, context), "Ctx Used: ▓▓▓▓▓│░░░░");
+  assert.equal(renderWidget({ type: "contextPercentage", metadata: { inverse: "true" } }, context), "Ctx Left: 50.0%");
   assert.equal(renderWidget({ type: "weeklyUsage" }, context), "40%");
   assert.equal(renderWidget({ type: "extraUsageRemaining" }, context), "75");
   assert.equal(renderWidget({ type: "extraUsageUtilization" }, context), "25%");
@@ -498,7 +499,8 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "blockTimer", metadata: { display: "progress-short", invert: "true" } }, blockContext), "Block [████░░░░░░░░░░░░] 25.0%");
   assert.equal(renderWidget({ type: "blockTimer", metadata: { display: "slider-only" } }, blockContext), "Block ▓▓▓▓▓▓▓▓░░");
   assert.equal(renderWidget({ type: "blockTimer" }, { ...context, state: {} }), "Block: 0hr 0m");
-  assert.equal(renderWidget({ type: "contextPercentageUsable" }, context), "50%");
+  assert.equal(renderWidget({ type: "contextPercentageUsable" }, context), "Ctx(u) Used: 62.5%");
+  assert.equal(renderWidget({ type: "contextPercentageUsable", rawValue: true }, context), "62.5%");
   assert.equal(renderWidget({ type: "claudeSessionId" }, context), "Session ID: abcdef123456");
   assert.equal(renderWidget({ type: "claudeSessionId", rawValue: true }, context), "abcdef123456");
   assert.equal(renderWidget({ type: "sessionName" }, context), "Session: Sprint");
@@ -578,6 +580,37 @@ test("renders upstream-style core labels and raw values", () => {
   assert.equal(renderWidget({ type: "claudeAccountEmail" }, context), "Account: dev@example.com");
 });
 
+test("renders upstream-style token and context labels", () => {
+  const context = {
+    config: {},
+    state: {
+      model: "GPT 5.5 (1M context)",
+      usage: {
+        totalTokens: 30600,
+        inputTokens: 15200,
+        outputTokens: 3400,
+        cachedTokens: 12000,
+        contextUsed: 42000,
+        contextWindow: 1000000
+      }
+    },
+    git: { isRepo: false },
+    codexConfig: {}
+  };
+
+  assert.equal(renderWidget({ type: "tokens" }, context), "Total: 30.6k");
+  assert.equal(renderWidget({ type: "tokens", rawValue: true }, context), "30.6k");
+  assert.equal(renderWidget({ type: "inputTokens" }, context), "In: 15.2k");
+  assert.equal(renderWidget({ type: "outputTokens" }, context), "Out: 3.4k");
+  assert.equal(renderWidget({ type: "cachedTokens" }, context), "Cached: 12.0k");
+  assert.equal(renderWidget({ type: "contextLength" }, context), "Ctx: 42.0k");
+  assert.equal(renderWidget({ type: "contextWindow" }, context), "Win: 1.0M");
+  assert.equal(renderWidget({ type: "contextPercentage" }, context), "Ctx Used: 4.2%");
+  assert.equal(renderWidget({ type: "contextPercentage", rawValue: true }, context), "4.2%");
+  assert.equal(renderWidget({ type: "contextPercentage", metadata: { inverse: "true" } }, context), "Ctx Left: 95.8%");
+  assert.equal(renderWidget({ type: "contextPercentageUsable" }, context), "Ctx(u) Used: 5.3%");
+});
+
 test("resolves ccstatusline kebab-case widget names", () => {
   assert.equal(resolveWidgetType("git-branch"), "gitBranch");
   assert.equal(resolveWidgetType("current-working-dir"), "cwd");
@@ -610,7 +643,7 @@ test("renders ccstatusline widget aliases", () => {
 
   assert.equal(renderWidget({ type: "git-branch" }, context), "\u2387 main");
   assert.equal(renderWidget({ type: "git-branch", rawValue: true }, context), "main");
-  assert.equal(renderWidget({ type: "tokens-total" }, context), "1.2k");
+  assert.equal(renderWidget({ type: "tokens-total" }, context), "Total: 1.2k");
   assert.equal(renderWidget({ type: "current-working-dir", segments: 1, home: false }, context), "/.../project");
   assert.equal(renderWidget({ type: "separator", text: "::" }, context), "::");
   assert.match(renderWidget({ type: "reset-timer" }, context), /\d+[hms]/);

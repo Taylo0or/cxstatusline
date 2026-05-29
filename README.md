@@ -38,7 +38,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   labels, and best-effort token/context/cost metrics when
   Codex exposes them through hook payloads or transcript entries.
 - Usage widgets: token/input/output/total speed, session and weekly usage,
-  Sonnet/Opus weekly usage when available, context used/remaining/window,
+  Sonnet/Opus weekly usage when available, upstream-style token and context
+  default/raw labels, context used/remaining/window,
   context bars with upstream-compatible detail display modes (`progress`,
   `progress-short`, `slider`, `slider-only`), percent display modes with
   invert/cursor controls, extra usage disabled-state hiding,
