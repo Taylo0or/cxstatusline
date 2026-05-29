@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { closeSync, existsSync, openSync, readSync, statSync } from "node:fs";
 import os from "node:os";
 import { basename, join } from "node:path";
 import { compactNumber, formatDuration, numberFormat, readJson, repoRoot, run, stripAnsi } from "./util.js";
@@ -30,6 +30,8 @@ const MODEL_STDOUT_EFFORT_REGEX = /^<local-command-stdout>Set model to[\s\S]*? w
 const EFFORT_STDOUT_PREFIX = "<local-command-stdout>Set effort level to ";
 const EFFORT_STDOUT_REGEX = /^<local-command-stdout>Set effort level to ([a-zA-Z0-9-]+)\b/i;
 const UNKNOWN_EFFORT_PATTERN = /^(?=.*[a-z0-9])[a-z0-9-]{2,20}$/;
+const TRANSCRIPT_TAIL_BYTES = 256 * 1024;
+const THINKING_EFFORT_CACHE = new Map();
 
 const WIDGET_ALIASES = {
   "current-working-dir": "cwd",
@@ -328,28 +330,28 @@ export const widgetRegistry = {
     description: "Token speed per minute from recent hook samples",
     render: ({ state, widget }) => {
       const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120), "totalTokens");
-      return speed ? `${compactNumber(Math.round(speed))}/min` : "";
+      return speed ? formatRawOrLabeledValue(widget, "Total: ", formatSpeedValue(speed)) : "";
     }
   },
   totalSpeed: {
     description: "Total token speed per minute from recent hook samples",
     render: ({ state, widget }) => {
       const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120), "totalTokens");
-      return speed ? `${compactNumber(Math.round(speed))}/min` : "";
+      return speed ? formatRawOrLabeledValue(widget, "Total: ", formatSpeedValue(speed)) : "";
     }
   },
   inputSpeed: {
     description: "Input token speed per minute from recent hook samples",
     render: ({ state, widget }) => {
       const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120), "inputTokens");
-      return speed ? `${compactNumber(Math.round(speed))}/min` : "";
+      return speed ? formatRawOrLabeledValue(widget, "In: ", formatSpeedValue(speed)) : "";
     }
   },
   outputSpeed: {
     description: "Output token speed per minute from recent hook samples",
     render: ({ state, widget }) => {
       const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120), "outputTokens");
-      return speed ? `${compactNumber(Math.round(speed))}/min` : "";
+      return speed ? formatRawOrLabeledValue(widget, "Out: ", formatSpeedValue(speed)) : "";
     }
   },
   contextWindow: {
@@ -449,7 +451,7 @@ export const widgetRegistry = {
       percent: "sessionUsagePercent",
       used: "usageLimitUsed",
       remaining: "usageLimitRemaining"
-    })
+    }, "Session: ")
   },
   weeklyUsage: {
     description: "Weekly usage percentage or bar when present in hook state",
@@ -457,7 +459,7 @@ export const widgetRegistry = {
       percent: "weeklyUsagePercent",
       used: "weeklyUsageUsed",
       remaining: "weeklyUsageRemaining"
-    })
+    }, "Weekly: ")
   },
   weeklySonnetUsage: {
     description: "Weekly Sonnet usage percentage or bar when present in hook state",
@@ -465,7 +467,7 @@ export const widgetRegistry = {
       percent: "weeklySonnetUsagePercent",
       used: "weeklySonnetUsageUsed",
       remaining: "weeklySonnetUsageRemaining"
-    })
+    }, "Weekly Sonnet: ")
   },
   weeklyOpusUsage: {
     description: "Weekly Opus usage percentage or bar when present in hook state",
@@ -473,24 +475,26 @@ export const widgetRegistry = {
       percent: "weeklyOpusUsagePercent",
       used: "weeklyOpusUsageUsed",
       remaining: "weeklyOpusUsageRemaining"
-    })
+    }, "Weekly Opus: ")
   },
   extraUsageRemaining: {
     description: "Extra usage remaining when present in hook state",
     render: ({ state, widget }) => {
       const usage = state.usage || {};
-      if (usage.extraUsageEnabled === false) return extraUsageDisabled(widget);
-      return hasUsageValue(usage.extraUsageRemaining) ? compactNumber(usage.extraUsageRemaining) : "";
+      if (usage.extraUsageEnabled === false) return extraUsageDisabled(widget, "Overage Left: ");
+      return hasUsageValue(usage.extraUsageRemaining)
+        ? formatRawOrLabeledValue(widget, "Overage Left: ", compactNumber(usage.extraUsageRemaining))
+        : "";
     }
   },
   extraUsageUtilization: {
     description: "Extra usage utilization when present in hook state",
     render: ({ state, widget }) => {
       const usage = state.usage || {};
-      if (usage.extraUsageEnabled === false) return extraUsageDisabled(widget);
+      if (usage.extraUsageEnabled === false) return extraUsageDisabled(widget, "Overage: ");
       const percent = extraUsagePercent(usage);
       if (!Number.isFinite(percent)) return "";
-      return renderPercentDisplay(percent, widget);
+      return formatRawOrLabeledValue(widget, "Overage: ", renderUsagePercentValue(percent, widget));
     }
   },
   duration: {
@@ -905,9 +909,13 @@ function tokenSpeed(samples, windowSeconds, key = "totalTokens") {
     ? samples[0]
     : [...samples].reverse().find((sample) => Date.parse(sample.at) <= Date.parse(newest.at) - windowSeconds * 1000) || samples[0];
   const deltaTokens = Number(newest[key] || 0) - Number(oldest[key] || 0);
-  const deltaMinutes = (Date.parse(newest.at) - Date.parse(oldest.at)) / 60000;
-  if (deltaTokens <= 0 || deltaMinutes <= 0) return 0;
-  return deltaTokens / deltaMinutes;
+  const deltaSeconds = (Date.parse(newest.at) - Date.parse(oldest.at)) / 1000;
+  if (deltaTokens <= 0 || deltaSeconds <= 0) return 0;
+  return deltaTokens / deltaSeconds;
+}
+
+function formatSpeedValue(speed) {
+  return `${Number(speed || 0).toFixed(1)} t/s`;
 }
 
 function jj(args, cwd) {
@@ -993,11 +1001,20 @@ function renderContextPercentValue(percent, widget = {}) {
   return formatPercent(displayPercent, 1);
 }
 
-function renderUsagePercent(usage, widget, keys) {
+function renderUsagePercent(usage, widget, keys, label = "") {
   const percent = usagePercent(usage, keys);
   if (!Number.isFinite(percent)) return "";
   const display = widget.mode === "remaining" ? 100 - percent : percent;
-  return renderPercentDisplay(display, widget);
+  return formatRawOrLabeledValue(widget, label, renderUsagePercentValue(display, widget));
+}
+
+function renderUsagePercentValue(percent, widget = {}) {
+  if (usageDisplayMode(widget) || ["bar", "progress"].includes(widget.mode) || widget.style === "bar" || widget.display === "bar") {
+    return renderPercentDisplay(percent, widget);
+  }
+  const clamped = clampPercent(percent);
+  const displayPercent = metadataFlag(widget, "invert") === true ? 100 - clamped : clamped;
+  return formatPercent(displayPercent, 1);
 }
 
 function renderPercentDisplay(percent, widget = {}) {
@@ -1108,8 +1125,8 @@ function hasUsageValue(value) {
   return value !== undefined && value !== null && Number.isFinite(Number(value));
 }
 
-function extraUsageDisabled(widget) {
-  return metadataFlag(widget, "hideIfDisabled") === true ? "" : "n/a";
+function extraUsageDisabled(widget, label = "") {
+  return metadataFlag(widget, "hideIfDisabled") === true ? "" : formatRawOrLabeledValue(widget, label, "n/a");
 }
 
 function formatStatusValue(value, label, widget = {}, options = {}) {
@@ -1180,9 +1197,14 @@ function normalizeThinkingEffort(value) {
 }
 
 function transcriptThinkingEffort(path) {
-  if (!path || !existsSync(path)) return undefined;
+  if (!path) return undefined;
+  const cached = THINKING_EFFORT_CACHE.get(path);
+  if (cached && Date.now() - cached.checkedAt < 1000) return cached.value;
+  if (!existsSync(path)) return cacheTranscriptThinkingEffort(path, null, undefined);
   try {
-    const lines = readFileSync(path, "utf8").split(/\r?\n/);
+    const stat = statSync(path);
+    if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) return cached.value;
+    const lines = readTranscriptTail(path, stat).split(/\r?\n/);
     for (let index = lines.length - 1; index >= 0; index -= 1) {
       const line = lines[index]?.trim();
       if (!line) continue;
@@ -1196,16 +1218,41 @@ function transcriptThinkingEffort(path) {
       const content = stripAnsi(entry.message.content).trim();
       if (content.startsWith(EFFORT_STDOUT_PREFIX)) {
         const match = EFFORT_STDOUT_REGEX.exec(content);
-        return normalizeThinkingEffort(match?.[1]);
+        return cacheTranscriptThinkingEffort(path, stat, normalizeThinkingEffort(match?.[1]));
       }
       if (!content.startsWith(MODEL_STDOUT_PREFIX)) continue;
       const match = MODEL_STDOUT_EFFORT_REGEX.exec(content);
-      return normalizeThinkingEffort(match?.[1]);
+      return cacheTranscriptThinkingEffort(path, stat, normalizeThinkingEffort(match?.[1]));
     }
   } catch {
     return undefined;
   }
   return undefined;
+}
+
+function readTranscriptTail(path, stat) {
+  const size = Number(stat?.size || 0);
+  const length = Math.min(size, TRANSCRIPT_TAIL_BYTES);
+  if (length <= 0) return "";
+  const buffer = Buffer.allocUnsafe(length);
+  const fd = openSync(path, "r");
+  try {
+    readSync(fd, buffer, 0, length, size - length);
+  } finally {
+    closeSync(fd);
+  }
+  return buffer.toString("utf8");
+}
+
+function cacheTranscriptThinkingEffort(path, stat, value) {
+  THINKING_EFFORT_CACHE.set(path, {
+    checkedAt: Date.now(),
+    mtimeMs: stat?.mtimeMs,
+    size: stat?.size,
+    value
+  });
+  if (THINKING_EFFORT_CACHE.size > 32) THINKING_EFFORT_CACHE.delete(THINKING_EFFORT_CACHE.keys().next().value);
+  return value;
 }
 
 function firstNonEmptyString(...values) {

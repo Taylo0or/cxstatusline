@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.54
+
+- Aligned token speed widgets with upstream `ccstatusline`: `In:`/`Out:`/
+  `Total:` labels, raw output, and token-per-second `t/s` formatting.
+- Aligned usage widgets with upstream-style labels and one-decimal percentage
+  rendering for session, weekly, per-model weekly, and extra-usage widgets.
+
 ## 0.2.53
 
 - Aligned token and context widgets with upstream `ccstatusline` default/raw

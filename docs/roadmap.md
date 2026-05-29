@@ -32,9 +32,10 @@ while staying honest about Codex's current extension points.
   where applicable.
 - Token speed, input speed, output speed, total speed, usage, weekly usage,
   reset timer timestamp modes, and cache token widgets from hook state,
-  including upstream-compatible token/context default labels, usable-context
-  percentage, usage/context progress, slider, invert, inverse, and cursor
-  display metadata, Context Bar detail display metadata, Block Timer
+  including upstream-compatible token/context/usage/speed default labels,
+  token-per-second speed formatting, usable-context percentage, usage/context
+  progress, slider, invert, inverse, and cursor display metadata, Context Bar
+  detail display metadata, Block Timer
   compact/progress/slider metadata, reset timer progress/slider metadata, and
   extra usage disabled-state hiding.
 - Custom command widget with render-context stdin JSON, timeout, max-width,

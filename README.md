@@ -37,7 +37,7 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   duration, version, and terminal width with upstream-compatible raw/default
   labels, and best-effort token/context/cost metrics when
   Codex exposes them through hook payloads or transcript entries.
-- Usage widgets: token/input/output/total speed, session and weekly usage,
+- Usage widgets: upstream-style token/input/output/total speed, session and weekly usage,
   Sonnet/Opus weekly usage when available, upstream-style token and context
   default/raw labels, context used/remaining/window,
   context bars with upstream-compatible detail display modes (`progress`,

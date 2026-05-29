@@ -476,21 +476,27 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
     codexConfig: {}
   };
 
-  assert.equal(renderWidget({ type: "totalSpeed", windowSeconds: 0 }, context), "120/min");
-  assert.equal(renderWidget({ type: "sessionUsage" }, context), "25%");
-  assert.equal(renderWidget({ type: "sessionUsage", metadata: { display: "progress-short", invert: "true" } }, context), "[████████████░░░░] 75.0%");
+  assert.equal(renderWidget({ type: "totalSpeed", windowSeconds: 0 }, context), "Total: 2.0 t/s");
+  assert.equal(renderWidget({ type: "totalSpeed", windowSeconds: 0, rawValue: true }, context), "2.0 t/s");
+  assert.equal(renderWidget({ type: "inputSpeed", windowSeconds: 0 }, context), "In: 1.3 t/s");
+  assert.equal(renderWidget({ type: "outputSpeed", windowSeconds: 0 }, context), "Out: 0.7 t/s");
+  assert.equal(renderWidget({ type: "sessionUsage" }, context), "Session: 25.0%");
+  assert.equal(renderWidget({ type: "sessionUsage", rawValue: true }, context), "25.0%");
+  assert.equal(renderWidget({ type: "sessionUsage", metadata: { display: "progress-short", invert: "true" } }, context), "Session: [████████████░░░░] 75.0%");
   assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider" } }, context), "Ctx Used: ▓▓▓▓▓░░░░░ 50.0%");
   assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider-only" } }, context), "Ctx Used: ▓▓▓▓▓░░░░░");
   assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider-only", cursor: "true" } }, context), "Ctx Used: ▓▓▓▓▓│░░░░");
   assert.equal(renderWidget({ type: "contextPercentage", display: "slider-only", cursor: true }, context), "Ctx Used: ▓▓▓▓▓│░░░░");
   assert.equal(renderWidget({ type: "contextPercentage", metadata: { inverse: "true" } }, context), "Ctx Left: 50.0%");
-  assert.equal(renderWidget({ type: "weeklyUsage" }, context), "40%");
-  assert.equal(renderWidget({ type: "extraUsageRemaining" }, context), "75");
-  assert.equal(renderWidget({ type: "extraUsageUtilization" }, context), "25%");
-  assert.equal(renderWidget({ type: "extraUsageUtilization", metadata: { display: "progress-short", invert: "true" } }, context), "[████████████░░░░] 75.0%");
-  assert.equal(renderWidget({ type: "extraUsageUtilization", metadata: { display: "slider-only", cursor: "true" } }, context), "▓▓▓│░░░░░░");
-  assert.equal(renderWidget({ type: "extraUsageRemaining" }, { ...context, state: { usage: { extraUsageRemaining: 0 } } }), "0");
-  assert.equal(renderWidget({ type: "extraUsageRemaining" }, { ...context, state: { usage: { extraUsageEnabled: false } } }), "n/a");
+  assert.equal(renderWidget({ type: "weeklyUsage" }, context), "Weekly: 40.0%");
+  assert.equal(renderWidget({ type: "weeklyUsage", rawValue: true }, context), "40.0%");
+  assert.equal(renderWidget({ type: "extraUsageRemaining" }, context), "Overage Left: 75");
+  assert.equal(renderWidget({ type: "extraUsageRemaining", rawValue: true }, context), "75");
+  assert.equal(renderWidget({ type: "extraUsageUtilization" }, context), "Overage: 25.0%");
+  assert.equal(renderWidget({ type: "extraUsageUtilization", metadata: { display: "progress-short", invert: "true" } }, context), "Overage: [████████████░░░░] 75.0%");
+  assert.equal(renderWidget({ type: "extraUsageUtilization", metadata: { display: "slider-only", cursor: "true" } }, context), "Overage: ▓▓▓│░░░░░░");
+  assert.equal(renderWidget({ type: "extraUsageRemaining" }, { ...context, state: { usage: { extraUsageRemaining: 0 } } }), "Overage Left: 0");
+  assert.equal(renderWidget({ type: "extraUsageRemaining" }, { ...context, state: { usage: { extraUsageEnabled: false } } }), "Overage Left: n/a");
   assert.equal(renderWidget({ type: "extraUsageUtilization", metadata: { hideIfDisabled: "true" } }, { ...context, state: { usage: { extraUsageEnabled: false } } }), "");
   const blockContext = { ...context, state: { startedAt: new Date(Date.now() - 13_500_000).toISOString() } };
   assert.equal(renderWidget({ type: "blockTimer" }, blockContext), "Block: 3hr 45m");
@@ -501,6 +507,8 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "blockTimer" }, { ...context, state: {} }), "Block: 0hr 0m");
   assert.equal(renderWidget({ type: "contextPercentageUsable" }, context), "Ctx(u) Used: 62.5%");
   assert.equal(renderWidget({ type: "contextPercentageUsable", rawValue: true }, context), "62.5%");
+  assert.equal(renderWidget({ type: "weeklySonnetUsage" }, { ...context, state: { usage: { weeklySonnetUsagePercent: 12.34 } } }), "Weekly Sonnet: 12.3%");
+  assert.equal(renderWidget({ type: "weeklyOpusUsage" }, { ...context, state: { usage: { weeklyOpusUsagePercent: 4.56 } } }), "Weekly Opus: 4.6%");
   assert.equal(renderWidget({ type: "claudeSessionId" }, context), "Session ID: abcdef123456");
   assert.equal(renderWidget({ type: "claudeSessionId", rawValue: true }, context), "abcdef123456");
   assert.equal(renderWidget({ type: "sessionName" }, context), "Session: Sprint");
