@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.49
+
+- Aligned Git Branch rendering with upstream `ccstatusline`: default `⎇`
+  prefix, raw branch output, linked branch text, and `⎇ no git` empty state.
+
 ## 0.2.48
 
 - Aligned Voice Status with upstream `ccstatusline`: default `icon` format,

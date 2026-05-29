@@ -21,6 +21,7 @@ const STATUS_DOT_OFF = "\u25CB";
 const JJ_BOOKMARK_ICON = "\u{1F516}";
 const JJ_WORKSPACE_ICON = "\u25C6";
 const JJ_REVISION_ICON = "\uF1FA";
+const GIT_BRANCH_ICON = "\u2387";
 const WORKTREE_ICON = "\u{16830}";
 
 const WIDGET_ALIASES = {
@@ -104,12 +105,13 @@ export const widgetRegistry = {
   gitBranch: {
     description: "Current Git branch",
     render: ({ git, widget }) => {
-      if (!git.isRepo) return gitNoGit(widget, "no git");
-      if (!git.branch) return "";
+      if (!git.isRepo) return gitNoGit(widget, `${GIT_BRANCH_ICON} no git`);
+      if (!git.branch || git.branch === "(detached)") return gitNoGit(widget, `${GIT_BRANCH_ICON} no git`);
+      const text = formatGitBranch(git.branch, widget);
       if (git.branch !== "(detached)" && gitBranchLinkEnabled(widget)) {
-        return osc8(branchWebUrl(git.origin, git.branch), git.branch) || git.branch;
+        return osc8(branchWebUrl(git.origin, git.branch), text) || text;
       }
-      return git.branch;
+      return text;
     }
   },
   gitSha: {
@@ -1455,6 +1457,10 @@ function gitBranchLinkEnabled(widget) {
   const linkToRepo = metadataFlag(widget, "linkToRepo");
   if (linkToRepo !== null) return linkToRepo;
   return metadataFlag(widget, "linkToGitHub") === true;
+}
+
+function formatGitBranch(branch, widget = {}) {
+  return widget.rawValue || widget.label === "" ? branch : `${GIT_BRANCH_ICON} ${branch}`;
 }
 
 function metadataFlag(widget, key) {

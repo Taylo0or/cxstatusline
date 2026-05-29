@@ -68,13 +68,16 @@ test("renders Git branch and remote widgets as repo links from metadata", () => 
 
   const branch = renderWidget({ type: "gitBranch", linkToRepo: true }, context);
   assert.match(branch, /\x1b]8;;https:\/\/github\.example\.com\/acme\/tool\/tree\/feature\/link%20mode/);
-  assert.equal(stripAnsi(branch), "feature/link mode");
+  assert.equal(stripAnsi(branch), "\u2387 feature/link mode");
+  assert.equal(renderWidget({ type: "gitBranch", rawValue: true }, context), "feature/link mode");
+  assert.equal(renderWidget({ type: "gitBranch", label: "" }, context), "feature/link mode");
 
   const legacy = renderWidget({ type: "gitBranch", metadata: { linkToGitHub: "true" } }, context);
   assert.match(legacy, /\x1b]8;;https:\/\/github\.example\.com\/acme\/tool\/tree\/feature\/link%20mode/);
+  assert.equal(stripAnsi(legacy), "\u2387 feature/link mode");
 
   const disabledLegacy = renderWidget({ type: "gitBranch", metadata: { linkToRepo: "false", linkToGitHub: "true" } }, context);
-  assert.equal(disabledLegacy, "feature/link mode");
+  assert.equal(disabledLegacy, "\u2387 feature/link mode");
 
   const origin = renderWidget({ type: "gitOriginOwnerRepo", metadata: { linkToRepo: "true" } }, context);
   assert.match(origin, /\x1b]8;;https:\/\/github\.example\.com\/acme\/tool/);
@@ -113,7 +116,7 @@ test("renders Git no-repo empty states and hideNoGit metadata", () => {
     codexConfig: {}
   };
 
-  assert.equal(renderWidget({ type: "gitBranch" }, context), "no git");
+  assert.equal(renderWidget({ type: "gitBranch" }, context), "\u2387 no git");
   assert.equal(renderWidget({ type: "gitStatus" }, context), "(no git)");
   assert.equal(renderWidget({ type: "gitRootDir" }, context), "no git");
   assert.equal(renderWidget({ type: "gitOriginOwnerRepo" }, context), "(no git)");
@@ -489,7 +492,8 @@ test("renders ccstatusline widget aliases", () => {
     codexConfig: {}
   };
 
-  assert.equal(renderWidget({ type: "git-branch" }, context), "main");
+  assert.equal(renderWidget({ type: "git-branch" }, context), "\u2387 main");
+  assert.equal(renderWidget({ type: "git-branch", rawValue: true }, context), "main");
   assert.equal(renderWidget({ type: "tokens-total" }, context), "1.2k");
   assert.equal(renderWidget({ type: "current-working-dir", segments: 1, home: false }, context), "/.../project");
   assert.equal(renderWidget({ type: "separator", text: "::" }, context), "::");
