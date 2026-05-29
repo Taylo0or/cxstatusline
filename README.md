@@ -30,7 +30,7 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 ## Quick Start
 
 ```sh
-git clone https://github.com/YOUR_NAME/cxstatusline.git
+git clone https://github.com/Taylo0or/cxstatusline.git
 cd cxstatusline
 npm test
 node ./bin/cxstatusline.js render --format plain

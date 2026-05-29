@@ -22,8 +22,16 @@
     "git",
     "cli"
   ],
-  "author": "",
+  "author": "Taylo0or",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Taylo0or/cxstatusline.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Taylo0or/cxstatusline/issues"
+  },
+  "homepage": "https://github.com/Taylo0or/cxstatusline#readme",
   "engines": {
     "node": ">=20"
   },
