@@ -11,28 +11,31 @@ while staying honest about Codex's current extension points.
 - Theme system.
 - JSON config.
 - Git branch, SHA, status, ahead/behind, and diff widgets.
-- Git origin owner/repo, upstream, worktree, and clickable branch widgets.
+- Git origin owner/repo, upstream, worktree, PR/MR detection, and clickable
+  branch widgets.
 - Model, reasoning, service tier, permission, sandbox, session, event, run-state,
-  compaction, duration, memory, token, context, cost, and custom text widgets.
+  compaction, duration, memory, token, context, block timer, weekly timer, cost,
+  and custom text widgets.
 - Token speed samples from hook state.
 - Multi-line rendering.
 - OSC8 links.
-- Presets for compact, Git, usage, and multi-line layouts.
-- tmux and Starship integration snippets.
+- Flexible spacer/right alignment.
+- Per-widget color overrides.
+- Path abbreviation and fish-style path shortening.
+- Presets for compact, dense, Git, usage, no-font, right-aligned, and multi-line
+  layouts.
+- tmux and Starship integration snippets, including optional config writes.
+- Persistent Git cache with TTL and `.git/HEAD`/`.git/index` invalidation.
 - Width truncation.
 - Doctor and reset commands.
 
 ## Next
 
 - Interactive TUI configuration editor.
-- More presets: compact, dense, git-heavy, usage-heavy, mono, and no-font.
-- Starship module generator.
 - SketchyBar example.
 - tmux config append/uninstall flow.
-- OSC 8 link widgets for GitHub/GitLab branches and PRs.
-- GitHub/GitLab PR/MR detection through `gh` and `glab`.
-- Persistent Git cache with TTL and `.git/index` invalidation.
-- Per-widget color overrides.
+- Starship uninstall flow.
+- GitHub/GitLab PR/MR richer status metadata.
 - Runtime benchmark suite.
 - npm publish workflow.
 - GitHub Actions CI and release workflow.

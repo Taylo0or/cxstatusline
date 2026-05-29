@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import os from "node:os";
@@ -59,6 +60,18 @@ export function writeTextAtomic(path, value) {
   renameSync(tmp, path);
 }
 
+export function safeStat(path) {
+  try {
+    return statSync(path);
+  } catch {
+    return null;
+  }
+}
+
+export function hashText(value) {
+  return createHash("sha256").update(String(value)).digest("hex").slice(0, 16);
+}
+
 export function run(command, args = [], options = {}) {
   const result = spawnSync(command, args, {
     encoding: "utf8",
@@ -100,6 +113,14 @@ export function truncateMiddle(value, width) {
   const left = Math.ceil((width - 3) / 2);
   const right = Math.floor((width - 3) / 2);
   return `${clean.slice(0, left)}...${clean.slice(clean.length - right)}`;
+}
+
+export function truncateEnd(value, width) {
+  const text = String(value);
+  if (width <= 0 || visibleLength(text) <= width) return text;
+  if (width <= 1) return ".";
+  if (width <= 3) return ".".repeat(width);
+  return `${stripAnsi(text).slice(0, width - 3)}...`;
 }
 
 export function shellQuote(value) {

@@ -78,6 +78,15 @@ export const PRESETS = {
     { type: "gitStatus", label: "" },
     { type: "runState", label: "" }
   ],
+  dense: [
+    { type: "model", label: "" },
+    { type: "reasoning", label: "" },
+    { type: "gitBranch", label: "" },
+    { type: "gitStatus", label: "" },
+    { type: "tokens", label: "" },
+    { type: "contextPercent", label: "" },
+    { type: "runState", label: "" }
+  ],
   git: [
     { type: "project", label: "Project" },
     { type: "gitBranchLink", label: "Branch" },
@@ -96,6 +105,26 @@ export const PRESETS = {
     { type: "tokenSpeed", label: "Speed" },
     { type: "cost", label: "Cost" },
     { type: "duration", label: "Time" }
+  ],
+  nofont: {
+    mode: "plain",
+    separator: " :: ",
+    widgets: [
+      { type: "model", label: "model" },
+      { type: "project", label: "dir" },
+      { type: "gitBranch", label: "git" },
+      { type: "gitStatus", label: "" },
+      { type: "tokens", label: "tok" },
+      { type: "runState", label: "" }
+    ]
+  },
+  right: [
+    { type: "model", label: "" },
+    { type: "project", label: "" },
+    { type: "spacer" },
+    { type: "gitBranch", label: "" },
+    { type: "gitStatus", label: "" },
+    { type: "runState", label: "" }
   ],
   multiline: {
     lines: [

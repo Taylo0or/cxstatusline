@@ -1,13 +1,17 @@
-import { basename } from "node:path";
-import { run } from "./util.js";
+import { basename, join, resolve } from "node:path";
+import { cacheDir, ensureDir, hashText, readJson, run, safeStat, writeJsonAtomic } from "./util.js";
 
-export function getGitInfo(cwd = process.cwd()) {
+export function getGitInfo(cwd = process.cwd(), options = {}) {
   const rootResult = git(["rev-parse", "--show-toplevel"], cwd);
   if (!rootResult.ok) {
     return { isRepo: false, cwd };
   }
 
   const root = rootResult.stdout.trim();
+  const ttlMs = Number(options.ttlMs ?? process.env.CXSTATUSLINE_GIT_CACHE_TTL_MS ?? 1500);
+  const cache = ttlMs > 0 ? readGitCache(root, ttlMs) : null;
+  if (cache) return cache;
+
   const branchResult = git(["branch", "--show-current"], root);
   const shaResult = git(["rev-parse", "--short", "HEAD"], root);
   const statusResult = git(["status", "--porcelain=v1", "--branch"], root);
@@ -25,7 +29,7 @@ export function getGitInfo(cwd = process.cwd()) {
   const gitDir = gitDirResult.stdout.trim();
   const commonDir = commonDirResult.stdout.trim();
 
-  return {
+  const info = {
     isRepo: true,
     root,
     rootName: basename(root),
@@ -41,6 +45,8 @@ export function getGitInfo(cwd = process.cwd()) {
     diff,
     stagedDiff
   };
+  if (ttlMs > 0) writeGitCache(root, info);
+  return info;
 }
 
 function git(args, cwd) {
@@ -105,4 +111,40 @@ export function parseRemote(remote) {
   const host = text.includes("gitlab.com") ? "gitlab.com" : text.includes("github.com") ? "github.com" : "";
   const httpsUrl = host ? `https://${host}/${owner}/${repo}` : "";
   return { url: text, host, owner, repo, ownerRepo: `${owner}/${repo}`, httpsUrl };
+}
+
+export function gitCacheKey(root) {
+  return join(cacheDir(), "git-cache", `${hashText(resolve(root))}.json`);
+}
+
+export function gitInvalidationStamp(root) {
+  const gitDirResult = git(["rev-parse", "--git-dir"], root);
+  const gitDir = gitDirResult.ok ? gitDirResult.stdout.trim() : join(root, ".git");
+  const absoluteGitDir = gitDir.startsWith("/") ? gitDir : join(root, gitDir);
+  const head = safeStat(join(absoluteGitDir, "HEAD"));
+  const index = safeStat(join(absoluteGitDir, "index"));
+  return {
+    headMtimeMs: head?.mtimeMs || 0,
+    indexMtimeMs: index?.mtimeMs || 0
+  };
+}
+
+function readGitCache(root, ttlMs) {
+  const path = gitCacheKey(root);
+  const cached = readJson(path, null);
+  if (!cached?.info || !cached?.createdAt || !cached?.stamp) return null;
+  if (Date.now() - cached.createdAt > ttlMs) return null;
+  const current = gitInvalidationStamp(root);
+  if (current.headMtimeMs !== cached.stamp.headMtimeMs || current.indexMtimeMs !== cached.stamp.indexMtimeMs) return null;
+  return { ...cached.info, cached: true };
+}
+
+function writeGitCache(root, info) {
+  const path = gitCacheKey(root);
+  ensureDir(join(cacheDir(), "git-cache"));
+  writeJsonAtomic(path, {
+    createdAt: Date.now(),
+    stamp: gitInvalidationStamp(root),
+    info
+  });
 }

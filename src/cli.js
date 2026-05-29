@@ -8,7 +8,7 @@ import { hooksPath, installHooks, uninstallHooks } from "./install.js";
 import { renderStatusLine } from "./render.js";
 import { listWidgets } from "./widgets.js";
 import { loadState, readHookPayload, resetState, saveState, statePath, updateStateFromHook } from "./state.js";
-import { cacheDir, codexHome, configDir, parseFlags, run } from "./util.js";
+import { cacheDir, codexHome, configDir, homePath, parseFlags, readText, run, writeTextAtomic } from "./util.js";
 
 export async function runCli(args) {
   const [command = "render", ...rest] = args;
@@ -89,12 +89,14 @@ function installCommand(args) {
   }
 
   if (target === "tmux") {
-    console.log(tmuxSnippet(flags));
+    const result = installTmux(flags);
+    console.log(result.message);
     return;
   }
 
   if (target === "starship") {
-    console.log(starshipSnippet(flags));
+    const result = installStarship(flags);
+    console.log(result.message);
     return;
   }
 
@@ -177,7 +179,7 @@ Usage:
   cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
   cxstatusline hook
   cxstatusline init [--force]
-  cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run]
+  cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
   cxstatusline uninstall hooks
   cxstatusline widgets
   cxstatusline presets
@@ -191,6 +193,7 @@ Examples:
   cxstatusline render --preset compact --format plain
   cxstatusline install hooks
   cxstatusline install tmux
+  cxstatusline install tmux --write --preset compact
   cxstatusline install native --items model-with-reasoning,context-used,git-branch,run-state
   tmux set -g status-right '#(cxstatusline render --width 80)'
 `);
@@ -207,7 +210,7 @@ function summarizeToml(text) {
 function tmuxSnippet(flags) {
   const width = flags.width || 90;
   const preset = flags.preset ? ` --preset ${flags.preset}` : "";
-  return `# Add to ~/.tmux.conf\nset -g status-right '#(cxstatusline render --width ${width}${preset})'`;
+  return `set -g status-right '#(cxstatusline render --width ${width}${preset})'`;
 }
 
 function starshipSnippet(flags) {
@@ -218,4 +221,40 @@ when = "true"
 shell = ["sh", "-c"]
 style = "bold blue"
 format = "[$output]($style)"`;
+}
+
+function installTmux(flags) {
+  const snippet = markedBlock("cxstatusline tmux", tmuxSnippet(flags));
+  const path = flags.path || homePath(".tmux.conf");
+  if (!flags.write) return { path, message: `# Add to ${path}\n${snippet}` };
+  const before = readText(path, "");
+  const after = upsertMarkedBlock(before, "cxstatusline tmux", tmuxSnippet(flags));
+  writeTextAtomic(path, after);
+  return { path, message: `tmux: updated ${path}` };
+}
+
+function installStarship(flags) {
+  const snippet = markedBlock("cxstatusline starship", starshipSnippet(flags));
+  const path = flags.path || homePath(".config", "starship.toml");
+  if (!flags.write) return { path, message: `# Add to ${path}\n${snippet}` };
+  const before = readText(path, "");
+  const after = upsertMarkedBlock(before, "cxstatusline starship", starshipSnippet(flags));
+  writeTextAtomic(path, after);
+  return { path, message: `starship: updated ${path}` };
+}
+
+function markedBlock(name, body) {
+  return `# >>> ${name}\n${body}\n# <<< ${name}`;
+}
+
+function upsertMarkedBlock(text, name, body) {
+  const block = markedBlock(name, body);
+  const pattern = new RegExp(`# >>> ${escapeRegExp(name)}[\\s\\S]*?# <<< ${escapeRegExp(name)}`);
+  if (pattern.test(text)) return text.replace(pattern, block);
+  const prefix = text && !text.endsWith("\n") ? "\n\n" : text ? "\n" : "";
+  return `${text}${prefix}${block}\n`;
+}
+
+function escapeRegExp(text) {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

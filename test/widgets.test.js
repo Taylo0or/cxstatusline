@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { inferContextWindow, renderWidget } from "../src/widgets.js";
+import { formatPath, inferContextWindow, renderWidget } from "../src/widgets.js";
 import { stripAnsi } from "../src/util.js";
 
 test("infers context windows from model suffixes", () => {
@@ -19,4 +19,9 @@ test("renders OSC8 links and strips them for visible text", () => {
 
   assert.match(output, /\x1b]8;;https:\/\/example.com/);
   assert.equal(stripAnsi(output), "repo");
+});
+
+test("formats paths with home abbreviation, segments, and fish mode", () => {
+  assert.equal(formatPath("/Users/luke/AlphaPay/ca-parent", { segments: 2, home: false }), "/.../AlphaPay/ca-parent");
+  assert.equal(formatPath("/Users/luke/AlphaPay/ca-parent", { fish: true, home: false }), "/U/l/A/ca-parent");
 });

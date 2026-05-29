@@ -23,10 +23,15 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   sandbox mode, session id, run state, last event, last tool, compaction count,
   duration, and best-effort token/context/cost metrics when Codex exposes them
   through hook payloads or transcript entries.
+- Usage widgets: token speed, context used/remaining/window, context bars,
+  five-hour block timer, and local weekly timer.
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
-  links, width truncation, and JSON or plain output.
-- Presets for compact, Git-focused, usage-focused, and multi-line layouts.
-- tmux and Starship integration snippets.
+  links, flexible spacers/right alignment, path abbreviation, per-widget color
+  overrides, width truncation, and JSON or plain output.
+- Presets for compact, dense, Git-focused, usage-focused, no-font,
+  right-aligned, and multi-line layouts.
+- tmux and Starship integration snippets, with optional `--write` install.
+- Persistent Git cache with TTL and `.git/HEAD`/`.git/index` invalidation.
 - Zero runtime dependencies; Node.js 20+ is enough.
 
 ## Quick Start
@@ -51,6 +56,20 @@ Use with tmux:
 
 ```sh
 tmux set -g status-right '#(cxstatusline render --width 90)'
+```
+
+Generate or write tmux config:
+
+```sh
+cxstatusline install tmux --preset compact
+cxstatusline install tmux --preset compact --write
+```
+
+Generate or write Starship config:
+
+```sh
+cxstatusline install starship --preset compact
+cxstatusline install starship --preset compact --write
 ```
 
 Use with any shell prompt:
@@ -161,8 +180,8 @@ cxstatusline presets
 ```text
 cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
 cxstatusline hook
-cxstatusline init [--force] [--preset default|compact|git|usage|multiline]
-cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run]
+cxstatusline init [--force] [--preset default|compact|dense|git|usage|nofont|right|multiline]
+cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
 cxstatusline uninstall hooks
 cxstatusline widgets
 cxstatusline presets

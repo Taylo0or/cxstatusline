@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0
+
+- Added persistent Git cache with TTL and `.git/HEAD`/`.git/index`
+  invalidation.
+- Added per-widget color overrides.
+- Added flexible spacer/right-aligned plain rendering.
+- Added path abbreviation and fish-style path shortening.
+- Added context token widgets, five-hour block timer widgets, and local weekly
+  timer widgets.
+- Added dense, no-font, and right-aligned presets.
+- Added optional tmux and Starship config write support.
+
 ## 0.1.0
 
 - Initial `cxstatusline` CLI.

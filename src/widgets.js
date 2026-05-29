@@ -2,6 +2,10 @@ import os from "node:os";
 import { basename } from "node:path";
 import { compactNumber, formatDuration, numberFormat, run } from "./util.js";
 
+export const SPACER = "__CXSTATUSLINE_SPACER__";
+const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
 export const widgetRegistry = {
   appName: {
     description: "Codex application label",
@@ -33,7 +37,11 @@ export const widgetRegistry = {
   },
   cwd: {
     description: "Current working directory",
-    render: ({ cwd }) => cwd || process.cwd()
+    render: ({ cwd, widget }) => formatPath(cwd || process.cwd(), widget)
+  },
+  path: {
+    description: "Alias for current working directory with path controls",
+    render: ({ cwd, widget }) => formatPath(cwd || process.cwd(), widget)
   },
   gitBranch: {
     description: "Current Git branch",
@@ -171,33 +179,53 @@ export const widgetRegistry = {
   },
   contextPercent: {
     description: "Context window used percentage",
-    render: ({ state }) => {
-      const usage = state.usage || {};
-      const used = usage.contextUsed;
-      const window = usage.contextWindow || (usage.contextRemaining && usage.contextUsed ? usage.contextRemaining + usage.contextUsed : 0);
+    render: ({ state, widget }) => {
+      const { used, window, remaining } = contextNumbers(state.usage || {});
+      const value = widget.mode === "remaining" ? remaining : used;
       if (!used || !window) return "";
-      return `${Math.round((used / window) * 100)}%`;
+      return `${Math.round((value / window) * 100)}%`;
     }
   },
   contextBar: {
     description: "Context usage bar",
     render: ({ state, widget }) => {
-      const usage = state.usage || {};
-      const used = Number(usage.contextUsed || 0);
-      const window = Number(usage.contextWindow || (usage.contextRemaining && usage.contextUsed ? usage.contextRemaining + usage.contextUsed : 0));
+      const { used, window, remaining } = contextNumbers(state.usage || {});
       if (!used || !window) return "";
       const width = Number(widget.width || 10);
-      const filled = Math.max(0, Math.min(width, Math.round((used / window) * width)));
-      return `[${"#".repeat(filled)}${"-".repeat(width - filled)}] ${Math.round((used / window) * 100)}%`;
+      const value = widget.mode === "remaining" ? remaining : used;
+      const filled = Math.max(0, Math.min(width, Math.round((value / window) * width)));
+      const chars = barChars(widget.style);
+      return `${chars.left}${chars.full.repeat(filled)}${chars.empty.repeat(width - filled)}${chars.right} ${Math.round((value / window) * 100)}%`;
+    }
+  },
+  contextTokens: {
+    description: "Context usage as used/total tokens",
+    render: ({ state }) => {
+      const { used, window } = contextNumbers(state.usage || {});
+      if (!used || !window) return "";
+      return `${compactNumber(used)}/${compactNumber(window)}`;
+    }
+  },
+  contextUsed: {
+    description: "Context tokens used",
+    render: ({ state }) => {
+      const { used } = contextNumbers(state.usage || {});
+      return used ? compactNumber(used) : "";
     }
   },
   contextRemaining: {
     description: "Context remaining percentage",
     render: ({ state }) => {
-      const usage = state.usage || {};
-      const window = usage.contextWindow || (usage.contextRemaining && usage.contextUsed ? usage.contextRemaining + usage.contextUsed : 0);
-      if (!usage.contextRemaining || !window) return "";
-      return `${Math.round((usage.contextRemaining / window) * 100)}%`;
+      const { remaining, window } = contextNumbers(state.usage || {});
+      if (!remaining || !window) return "";
+      return `${Math.round((remaining / window) * 100)}%`;
+    }
+  },
+  contextRemainingTokens: {
+    description: "Context tokens remaining",
+    render: ({ state }) => {
+      const { remaining } = contextNumbers(state.usage || {});
+      return remaining ? compactNumber(remaining) : "";
     }
   },
   cost: {
@@ -210,6 +238,34 @@ export const widgetRegistry = {
   duration: {
     description: "Elapsed time since SessionStart hook",
     render: ({ state }) => state.startedAt ? formatDuration(Date.now() - Date.parse(state.startedAt)) : ""
+  },
+  blockTimer: {
+    description: "Elapsed time within the current five-hour usage block",
+    render: ({ state }) => state.startedAt ? formatDuration(blockProgress(Date.parse(state.startedAt)).elapsed) : ""
+  },
+  blockRemaining: {
+    description: "Remaining time in the current five-hour usage block",
+    render: ({ state }) => state.startedAt ? formatDuration(blockProgress(Date.parse(state.startedAt)).remaining) : ""
+  },
+  blockBar: {
+    description: "Progress bar for the current five-hour usage block",
+    render: ({ state, widget }) => {
+      if (!state.startedAt) return "";
+      const progress = blockProgress(Date.parse(state.startedAt));
+      return renderBar(progress.ratio, Number(widget.width || 16), widget.style);
+    }
+  },
+  weeklyTimer: {
+    description: "Elapsed time within the current local calendar week",
+    render: () => formatDuration(weekProgress().elapsed)
+  },
+  weeklyRemaining: {
+    description: "Remaining time in the current local calendar week",
+    render: () => formatDuration(weekProgress().remaining)
+  },
+  weeklyBar: {
+    description: "Progress bar for the current local calendar week",
+    render: ({ widget }) => renderBar(weekProgress().ratio, Number(widget.width || 16), widget.style)
   },
   runState: {
     description: "Current best-effort run state",
@@ -242,6 +298,14 @@ export const widgetRegistry = {
   text: {
     description: "Custom literal text",
     render: ({ widget }) => widget.text || ""
+  },
+  symbol: {
+    description: "Custom symbol or short text",
+    render: ({ widget }) => widget.symbol || widget.text || ""
+  },
+  spacer: {
+    description: "Flexible spacer for right-aligned plain output",
+    render: () => SPACER
   },
   link: {
     description: "OSC8 clickable link",
@@ -277,10 +341,30 @@ export function renderWidget(widget, context) {
   if (!definition) return "";
   const value = definition.render({ ...context, widget: typeof widget === "string" ? { type } : widget });
   if (!value) return "";
+  if (value === SPACER) return SPACER;
 
   const label = typeof widget === "string" ? "" : widget.label;
   if (context.config.minimal || label === "") return String(value);
   return label ? `${label}: ${value}` : String(value);
+}
+
+export function formatPath(path, options = {}) {
+  let output = String(path || "");
+  if (options.home !== false) {
+    const home = os.homedir();
+    if (output === home) output = "~";
+    else if (output.startsWith(`${home}/`)) output = `~/${output.slice(home.length + 1)}`;
+  }
+
+  const segments = Number(options.segments || 0);
+  if (segments > 0) {
+    const prefix = output.startsWith("~/") ? "~/" : output.startsWith("/") ? "/" : "";
+    const parts = output.replace(/^~?\//, "").split("/").filter(Boolean);
+    if (parts.length > segments) output = `${prefix}.../${parts.slice(-segments).join("/")}`;
+  }
+
+  if (options.fish) output = fishPath(output);
+  return output;
 }
 
 export function inferContextWindow(model) {
@@ -301,6 +385,49 @@ function tokenSpeed(samples, windowSeconds) {
   const deltaMinutes = (Date.parse(newest.at) - Date.parse(oldest.at)) / 60000;
   if (deltaTokens <= 0 || deltaMinutes <= 0) return 0;
   return deltaTokens / deltaMinutes;
+}
+
+function contextNumbers(usage) {
+  const used = Number(usage.contextUsed || 0);
+  const window = Number(usage.contextWindow || (usage.contextRemaining && usage.contextUsed ? usage.contextRemaining + usage.contextUsed : 0));
+  const remaining = Number(usage.contextRemaining || (window && used ? window - used : 0));
+  return { used, window, remaining };
+}
+
+function blockProgress(startedAtMs, nowMs = Date.now()) {
+  const elapsedSinceStart = Math.max(0, nowMs - startedAtMs);
+  const elapsed = elapsedSinceStart % FIVE_HOURS_MS;
+  const remaining = FIVE_HOURS_MS - elapsed;
+  return { elapsed, remaining, ratio: elapsed / FIVE_HOURS_MS };
+}
+
+function weekProgress(now = new Date()) {
+  const start = new Date(now);
+  const day = (start.getDay() + 6) % 7;
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - day);
+  const elapsed = now.getTime() - start.getTime();
+  const remaining = WEEK_MS - elapsed;
+  return { elapsed, remaining, ratio: elapsed / WEEK_MS };
+}
+
+function renderBar(ratio, width, style) {
+  const chars = barChars(style);
+  const filled = Math.max(0, Math.min(width, Math.round(ratio * width)));
+  return `${chars.left}${chars.full.repeat(filled)}${chars.empty.repeat(width - filled)}${chars.right} ${Math.round(ratio * 100)}%`;
+}
+
+function barChars(style = "ascii") {
+  if (style === "blocks") return { left: "", right: "", full: "█", empty: "░" };
+  if (style === "dots") return { left: "", right: "", full: "●", empty: "○" };
+  return { left: "[", right: "]", full: "#", empty: "-" };
+}
+
+function fishPath(path) {
+  const prefix = path.startsWith("~/") ? "~/" : path.startsWith("/") ? "/" : "";
+  const parts = path.replace(/^~?\//, "").split("/").filter(Boolean);
+  if (parts.length <= 1) return path;
+  return `${prefix}${parts.slice(0, -1).map((part) => part[0] || "").join("/")}/${parts.at(-1)}`;
 }
 
 function osc8(url, text) {
