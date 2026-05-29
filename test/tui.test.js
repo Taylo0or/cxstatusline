@@ -125,10 +125,12 @@ test("TUI widget option helpers expose type-specific rows", () => {
   assert.equal(linkRows.find((row) => row.key === "href")?.value, "https://example.com/docs");
   assert.equal(linkRows.find((row) => row.key === "text")?.value, "Docs");
 
-  const timerRows = buildWidgetOptionRows({ type: "blockResetTimer" }).map((row) => row.key);
-  assert.ok(timerRows.includes("timerMode"));
-  assert.ok(timerRows.includes("timeZone"));
-  assert.ok(timerRows.includes("hour12"));
+  const timerRows = buildWidgetOptionRows({ type: "blockResetTimer", metadata: { timezone: "UTC" } });
+  assert.equal(timerRows.find((row) => row.key === "timeZone")?.value, "UTC");
+  const timerKeys = timerRows.map((row) => row.key);
+  assert.ok(timerKeys.includes("timerMode"));
+  assert.ok(timerKeys.includes("timeZone"));
+  assert.ok(timerKeys.includes("hour12"));
 
   const usageRows = buildWidgetOptionRows({ type: "sessionUsage", metadata: { display: "slider", invert: "true" } });
   assert.equal(usageRows.find((row) => row.key === "display")?.value, "slider");
@@ -212,6 +214,7 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.equal(describeWidgetOptions({ type: "jjWorkspace", hideNoJj: true }), "hide-no-jj");
   assert.equal(describeWidgetOptions({ type: "gitPullRequest", hideStatus: true, hideTitle: true }), "hide-status, hide-title");
   assert.equal(describeWidgetOptions({ type: "gitRootDir", linkToIDE: "cursor" }), "link-cursor");
+  assert.equal(describeWidgetOptions({ type: "blockResetTimer", metadata: { absolute: "true", timezone: "UTC" } }), "timestamp, tz=UTC");
   assert.equal(describeWidgetOptions({ type: "sessionUsage", display: "progress-short", invert: true, cursor: true }), "display=progress-short, invert, cursor");
   assert.equal(describeWidgetOptions({ type: "extraUsageRemaining", hideIfDisabled: true }), "hide-if-disabled");
   assert.equal(describeWidgetOptions({ type: "compactions", nerdFont: true, hideZero: true }), "nerd-font, hide-zero");

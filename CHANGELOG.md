@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.40
+
+- Added upstream-compatible reset timer `metadata.display` progress and slider
+  modes.
+- Preserved and rendered reset timer `metadata.absolute` and
+  `metadata.timezone` aliases from imported `ccstatusline` settings.
+
 ## 0.2.39
 
 - Added upstream-compatible extra usage disabled-state handling with

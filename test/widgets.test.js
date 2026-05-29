@@ -410,8 +410,11 @@ test("formats reset timers as duration, timestamp, iso, both, and progress bar",
   assert.equal(formatResetTimer(progress), "1m 30s");
   assert.equal(formatResetTimer(progress, { format: "iso" }), "2026-01-01T12:30:00.000Z");
   assert.match(formatResetTimer(progress, { format: "timestamp", timeZone: "UTC", hour12: false, locale: "en-US" }), /12:30/);
+  assert.match(formatResetTimer(progress, { metadata: { absolute: "true", timezone: "UTC" }, hour12: false, locale: "en-US" }), /12:30/);
   assert.match(formatResetTimer(progress, { format: "both", timeZone: "UTC", hour12: false, locale: "en-US" }), /^1m 30s \(.*12:30.*\)$/);
   assert.equal(formatResetTimer(progress, { format: "bar", width: 4 }), "[##--] 50%");
+  assert.equal(formatResetTimer(progress, { metadata: { display: "slider" } }), "▓▓▓▓▓░░░░░ 50.0%");
+  assert.equal(formatResetTimer(progress, { metadata: { display: "progress-short", invert: "true" } }), "[████████░░░░░░░░] 50.0%");
 });
 
 test("parses Jujutsu diff stats", () => {

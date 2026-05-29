@@ -1217,7 +1217,10 @@ function barWidth(width, fallback) {
 }
 
 export function formatResetTimer(progress, widget = {}) {
-  const mode = widget.mode || widget.format || (widget.timestamp ? "timestamp" : "duration");
+  const display = usageDisplayMode(widget);
+  if (display) return renderPercentDisplay((progress.ratio || 0) * 100, widget);
+
+  const mode = resetTimerMode(widget);
   if (mode === "timestamp" || mode === "time" || mode === "clock") return formatResetTimestamp(progress.resetAt, widget);
   if (mode === "iso") return progress.resetAt instanceof Date ? progress.resetAt.toISOString() : "";
   if (mode === "both") {
@@ -1227,6 +1230,12 @@ export function formatResetTimer(progress, widget = {}) {
   }
   if (mode === "bar" || mode === "progress") return renderBar(progress.ratio, Number(widget.width || 16), widget.style);
   return formatDuration(progress.remaining);
+}
+
+function resetTimerMode(widget = {}) {
+  if (widget.mode || widget.format) return widget.mode || widget.format;
+  if (metadataFlag(widget, "absolute") === true || widget.absolute || widget.timestamp) return "timestamp";
+  return "duration";
 }
 
 function formatResetTimestamp(date, widget = {}) {
@@ -1239,7 +1248,8 @@ function formatResetTimestamp(date, widget = {}) {
     options.month = "short";
     options.day = "numeric";
   }
-  if (widget.timeZone) options.timeZone = widget.timeZone;
+  const timeZone = metadataValue(widget, "timezone") || widget.timezone || widget.timeZone;
+  if (timeZone) options.timeZone = timeZone;
   const hour12 = parseBooleanOption(widget.hour12 ?? widget.twelveHour);
   if (hour12 !== null) options.hour12 = hour12;
 

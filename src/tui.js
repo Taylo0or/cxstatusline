@@ -248,6 +248,7 @@ export function describeWidgetOptions(widget) {
   if (metadataFlag(item, "hideZero")) parts.push("hide-zero");
   if (metadataFlag(item, "invert")) parts.push("invert");
   if (metadataFlag(item, "cursor")) parts.push("cursor");
+  if (metadataFlag(item, "absolute")) parts.push("timestamp");
   if (gitLinkEnabled(item, type)) parts.push("repo-link");
   if (ideLinkMode(item)) parts.push(`link-${ideLinkMode(item)}`);
   if (metadataFlag(item, "hideNoGit")) parts.push("hide-no-git");
@@ -262,7 +263,7 @@ export function describeWidgetOptions(widget) {
   if (item.fish) parts.push("fish");
   if (item.home === false) parts.push("no-home");
   if (item.limit !== undefined || item.listLimit !== undefined) parts.push(`limit=${item.limit ?? item.listLimit}`);
-  if (item.timeZone) parts.push(`tz=${item.timeZone}`);
+  if (timerTimeZone(item)) parts.push(`tz=${timerTimeZone(item)}`);
   if (item.locale) parts.push(`locale=${item.locale}`);
   if (item.hour12 !== undefined || item.twelveHour !== undefined) parts.push(`hour12=${item.hour12 ?? item.twelveHour}`);
   return parts.join(", ") || "defaults";
@@ -348,7 +349,7 @@ export function buildWidgetOptionRows(widget) {
   if (RESET_TIMER_WIDGETS.has(type)) {
     rows.push(
       { key: "timerMode", label: "Timer mode", value: item.mode || item.format || "duration" },
-      { key: "timeZone", label: "Time zone", value: item.timeZone || "(local)" },
+      { key: "timeZone", label: "Time zone", value: timerTimeZone(item) || "(local)" },
       { key: "locale", label: "Locale", value: item.locale || "en" },
       { key: "hour12", label: "12-hour clock", value: item.hour12 === undefined ? "(locale)" : BOOLEAN_TEXT.get(Boolean(item.hour12)) },
       { key: "includeDate", label: "Include date", value: BOOLEAN_TEXT.get(Boolean(item.date || item.includeDate)) }
@@ -1616,6 +1617,10 @@ function usageDisplayMode(item) {
   return USAGE_DISPLAY_MODES.includes(mode) ? mode : "percent";
 }
 
+function timerTimeZone(item) {
+  return metadataValue(item, "timezone") || item?.timezone || item?.timeZone || "";
+}
+
 function toggleDateOption(item) {
   const next = { ...item };
   if (next.date || next.includeDate) {
@@ -1653,10 +1658,12 @@ function clearWidgetOptions(item) {
     "mode",
     "format",
     "display",
+    "absolute",
     "invert",
     "cursor",
     "style",
     "barStyle",
+    "timezone",
     "timeZone",
     "locale",
     "hour12",

@@ -191,6 +191,8 @@ function convertCcstatuslineWidget(widget, settings) {
     "ownerOnlyWhenFork",
     "hideWhenNotFork",
     "hideIfDisabled",
+    "absolute",
+    "timezone",
     "linkToIDE",
     "linkToCursor"
   ]) {
@@ -232,6 +234,8 @@ function convertCcstatuslineWidget(widget, settings) {
       "ownerOnlyWhenFork",
       "hideWhenNotFork",
       "hideIfDisabled",
+      "absolute",
+      "timezone",
       "linkToIDE",
       "linkToCursor"
     ].includes(key)) {
