@@ -10,6 +10,7 @@ while staying honest about Codex's current extension points.
 - Powerline and plain renderers.
 - Theme system.
 - JSON config.
+- Interactive and non-interactive configuration command.
 - Git branch, SHA, status, ahead/behind, and diff widgets.
 - Git origin owner/repo, upstream, worktree, PR/MR detection, and clickable
   branch widgets.
@@ -31,7 +32,7 @@ while staying honest about Codex's current extension points.
 
 ## Next
 
-- Interactive TUI configuration editor.
+- Richer full-screen TUI configuration editor.
 - SketchyBar example.
 - tmux config append/uninstall flow.
 - Starship uninstall flow.

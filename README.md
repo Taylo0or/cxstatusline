@@ -47,7 +47,7 @@ Install locally while developing:
 
 ```sh
 npm link
-cxstatusline init --preset compact
+cxstatusline configure --preset compact --theme powerline --yes
 cxstatusline install hooks
 cxstatusline install native
 ```
@@ -130,6 +130,12 @@ hooks need review.
 
 ## Configuration
 
+Open the interactive configurator:
+
+```sh
+cxstatusline configure
+```
+
 Create the config:
 
 ```sh
@@ -180,6 +186,7 @@ cxstatusline presets
 ```text
 cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
 cxstatusline hook
+cxstatusline configure
 cxstatusline init [--force] [--preset default|compact|dense|git|usage|nofont|right|multiline]
 cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
 cxstatusline uninstall hooks

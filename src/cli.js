@@ -1,7 +1,9 @@
 import { existsSync } from "node:fs";
+import readline from "node:readline/promises";
 import { dirname } from "node:path";
+import { stdin as input, stdout as output } from "node:process";
 import { CODEX_NATIVE_ITEMS, DEFAULT_NATIVE_STATUS_LINE, PRESETS, THEMES } from "./constants.js";
-import { applyPreset, defaultConfigPath, initConfig, loadConfig } from "./config.js";
+import { applyPreset, defaultConfigPath, initConfig, loadConfig, saveConfig } from "./config.js";
 import { codexConfigPath, installNativeStatusLine, readCodexConfig } from "./codexConfig.js";
 import { getGitInfo } from "./git.js";
 import { hooksPath, installHooks, uninstallHooks } from "./install.js";
@@ -19,6 +21,7 @@ export async function runCli(args) {
   if (command === "init") return initCommand(rest);
   if (command === "install") return installCommand(rest);
   if (command === "uninstall") return uninstallCommand(rest);
+  if (command === "configure" || command === "config") return configureCommand(rest);
   if (command === "widgets") return widgetsCommand();
   if (command === "presets") return presetsCommand();
   if (command === "native-items") return nativeItemsCommand();
@@ -67,6 +70,43 @@ function initCommand(args) {
   const { flags } = parseFlags(args);
   const result = initConfig({ config: flags.config, force: flags.force, preset: flags.preset });
   console.log(result.created ? `Created ${result.path}` : `Already exists: ${result.path}`);
+}
+
+async function configureCommand(args) {
+  const { flags } = parseFlags(args);
+  let config = loadConfig({ config: flags.config });
+  const interactive = !flags.yes && !flags.preset && !flags.theme && !flags.mode;
+
+  if (interactive) {
+    const rl = readline.createInterface({ input, output });
+    try {
+      const preset = await choose(rl, "Preset", Object.keys(PRESETS), "compact");
+      const theme = await choose(rl, "Theme", Object.keys(THEMES), "powerline");
+      const mode = await choose(rl, "Mode", ["powerline", "plain"], theme === "mono" ? "plain" : "powerline");
+      flags.preset = preset;
+      flags.theme = theme;
+      flags.mode = mode;
+      flags.installHooks = await yesNo(rl, "Install Codex hooks?", false);
+      flags.installNative = await yesNo(rl, "Configure native Codex footer?", false);
+    } finally {
+      rl.close();
+    }
+  }
+
+  if (flags.preset) config = applyPreset(config, flags.preset);
+  if (flags.theme) config.theme = flags.theme;
+  if (flags.mode) config.mode = flags.mode;
+  const path = saveConfig(config, { config: flags.config });
+  console.log(`config: updated ${path}`);
+
+  if (flags.installHooks || flags.hooks) {
+    const result = installHooks({ dryRun: Boolean(flags["dry-run"]), command: flags.command });
+    console.log(`hooks: ${flags["dry-run"] ? "would update" : "updated"} ${result.path}`);
+  }
+  if (flags.installNative || flags.native) {
+    const result = installNativeStatusLine({ dryRun: Boolean(flags["dry-run"]) });
+    console.log(`native: ${flags["dry-run"] ? "would update" : "updated"} ${result.path}`);
+  }
 }
 
 function installCommand(args) {
@@ -178,6 +218,7 @@ function help() {
 Usage:
   cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
   cxstatusline hook
+  cxstatusline configure
   cxstatusline init [--force]
   cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
   cxstatusline uninstall hooks
@@ -191,12 +232,28 @@ Usage:
 Examples:
   cxstatusline render --format plain
   cxstatusline render --preset compact --format plain
+  cxstatusline configure --preset compact --theme powerline --yes
   cxstatusline install hooks
   cxstatusline install tmux
   cxstatusline install tmux --write --preset compact
   cxstatusline install native --items model-with-reasoning,context-used,git-branch,run-state
   tmux set -g status-right '#(cxstatusline render --width 80)'
 `);
+}
+
+async function choose(rl, label, values, fallback) {
+  const display = values.map((value, index) => `${index + 1}) ${value}`).join("  ");
+  const answer = (await rl.question(`${label} [${fallback}] ${display}\n> `)).trim();
+  if (!answer) return fallback;
+  const index = Number(answer);
+  if (Number.isInteger(index) && index >= 1 && index <= values.length) return values[index - 1];
+  return values.includes(answer) ? answer : fallback;
+}
+
+async function yesNo(rl, question, fallback) {
+  const answer = (await rl.question(`${question} ${fallback ? "[Y/n]" : "[y/N]"} `)).trim().toLowerCase();
+  if (!answer) return fallback;
+  return ["y", "yes"].includes(answer);
 }
 
 function summarizeToml(text) {

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Added interactive and non-interactive `configure` command.
+
 ## 0.2.0
 
 - Added persistent Git cache with TTL and `.git/HEAD`/`.git/index`
