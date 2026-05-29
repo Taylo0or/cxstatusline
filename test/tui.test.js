@@ -102,6 +102,7 @@ test("TUI widget option helpers expose type-specific rows", () => {
 
   const remoteRows = buildWidgetOptionRows({ type: "gitOriginOwnerRepo" }).map((row) => row.key);
   assert.ok(remoteRows.includes("linkToRepo"));
+  assert.ok(remoteRows.includes("hideNoRemote"));
   assert.ok(remoteRows.includes("ownerOnlyWhenFork"));
 
   const rootRows = buildWidgetOptionRows({ type: "gitRootDir" }).map((row) => row.key);
@@ -132,6 +133,7 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.deepEqual(applyWidgetOption({ type: "gitBranch", linkToGitHub: true }, "linkToRepo"), { type: "gitBranch" });
   assert.deepEqual(applyWidgetOption({ type: "gitBranch", metadata: { linkToGitHub: "true" } }, "linkToRepo"), { type: "gitBranch" });
   assert.deepEqual(applyWidgetOption({ type: "gitOriginRepo" }, "linkToRepo"), { type: "gitOriginRepo", linkToRepo: true });
+  assert.deepEqual(applyWidgetOption({ type: "gitOriginRepo" }, "hideNoRemote"), { type: "gitOriginRepo", hideNoRemote: true });
   assert.deepEqual(applyWidgetOption({ type: "gitOriginOwnerRepo" }, "ownerOnlyWhenFork"), { type: "gitOriginOwnerRepo", ownerOnlyWhenFork: true });
   assert.deepEqual(applyWidgetOption({ type: "gitRootDir" }, "linkToIDE"), { type: "gitRootDir", linkToIDE: "vscode" });
   assert.deepEqual(applyWidgetOption({ type: "gitRootDir", linkToIDE: "vscode" }, "linkToIDE"), { type: "gitRootDir", linkToIDE: "cursor" });
@@ -139,5 +141,6 @@ test("TUI widget option helpers apply common and specific settings", () => {
 
   assert.equal(describeWidgetOptions({ type: "cwd", segments: 2, fish: true, home: false }), "segments=2, fish, no-home");
   assert.equal(describeWidgetOptions({ type: "gitBranch", linkToRepo: true }), "repo-link");
+  assert.equal(describeWidgetOptions({ type: "gitOriginRepo", hideNoRemote: true }), "hide-no-remote");
   assert.equal(describeWidgetOptions({ type: "gitRootDir", linkToIDE: "cursor" }), "link-cursor");
 });

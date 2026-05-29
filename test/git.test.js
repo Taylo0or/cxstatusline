@@ -56,7 +56,7 @@ test("reports upstream remote and fork status", () => {
   const dir = mkdtempSync(join(tmpdir(), "cxstatusline-upstream-"));
   process.env.CXSTATUSLINE_CACHE_DIR = mkdtempSync(join(tmpdir(), "cxstatusline-cache-"));
   execFileSync("git", ["init", "-b", "main"], { cwd: dir, stdio: "ignore" });
-  execFileSync("git", ["config", "remote.origin.url", "git@github.com:user/fork.git"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["remote", "add", "origin", "git@github.com:user/fork.git"], { cwd: dir, stdio: "ignore" });
   execFileSync("git", ["config", "remote.upstream.url", "git@github.com:upstream/repo.git"], { cwd: dir, stdio: "ignore" });
   writeFileSync(join(dir, "README.md"), "# test\n");
 
@@ -64,6 +64,27 @@ test("reports upstream remote and fork status", () => {
 
   assert.equal(info.upstreamRemote.ownerRepo, "upstream/repo");
   assert.equal(info.isFork, true);
+});
+
+test("uses the tracking remote when no literal upstream remote exists", () => {
+  const dir = mkdtempSync(join(tmpdir(), "cxstatusline-tracking-"));
+  process.env.CXSTATUSLINE_CACHE_DIR = mkdtempSync(join(tmpdir(), "cxstatusline-cache-"));
+  execFileSync("git", ["init", "-b", "main"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["config", "user.name", "Test User"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["remote", "add", "origin", "git@github.com:user/fork.git"], { cwd: dir, stdio: "ignore" });
+  writeFileSync(join(dir, "README.md"), "# test\n");
+  execFileSync("git", ["add", "README.md"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["commit", "-m", "init"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["update-ref", "refs/remotes/origin/main", "HEAD"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["config", "branch.main.remote", "origin"], { cwd: dir, stdio: "ignore" });
+  execFileSync("git", ["config", "branch.main.merge", "refs/heads/main"], { cwd: dir, stdio: "ignore" });
+
+  const info = getGitInfo(dir, { ttlMs: 0 });
+
+  assert.equal(info.upstream, "origin/main");
+  assert.equal(info.upstreamRemote.ownerRepo, "user/fork");
+  assert.equal(info.isFork, false);
 });
 
 test("caches git info within the configured TTL", () => {

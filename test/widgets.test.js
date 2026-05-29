@@ -68,6 +68,24 @@ test("renders Git branch and remote widgets as repo links from metadata", () => 
   assert.equal(renderWidget({ type: "gitOriginOwnerRepo", ownerOnlyWhenFork: true }, context), "acme");
 });
 
+test("renders Git remote empty states and hideNoRemote metadata", () => {
+  const context = {
+    config: {},
+    state: {},
+    git: {
+      isRepo: true,
+      origin: {},
+      upstreamRemote: {}
+    },
+    codexConfig: {}
+  };
+
+  assert.equal(renderWidget({ type: "gitOriginOwner" }, context), "no remote");
+  assert.equal(renderWidget({ type: "gitOriginRepo", hideNoRemote: true }, context), "");
+  assert.equal(renderWidget({ type: "gitUpstreamOwnerRepo" }, context), "no upstream");
+  assert.equal(renderWidget({ type: "gitUpstreamOwnerRepo", metadata: { hideNoRemote: "true" } }, context), "");
+});
+
 test("renders Git root dir IDE links from metadata", () => {
   const context = {
     config: {},

@@ -20,6 +20,7 @@ export function getGitInfo(cwd = process.cwd(), options = {}) {
   const originResult = git(["config", "--get", "remote.origin.url"], root);
   const upstreamResult = git(["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], root);
   const upstreamRemoteResult = git(["config", "--get", "remote.upstream.url"], root);
+  const remotesResult = git(["remote"], root);
   const gitDirResult = git(["rev-parse", "--git-dir"], root);
   const commonDirResult = git(["rev-parse", "--git-common-dir"], root);
 
@@ -27,11 +28,11 @@ export function getGitInfo(cwd = process.cwd(), options = {}) {
   const diff = parseShortStat(diffShortResult.stdout);
   const stagedDiff = parseShortStat(stagedShortResult.stdout);
   const origin = parseRemote(originResult.stdout.trim());
-  const upstreamRemote = parseRemote(upstreamRemoteResult.stdout.trim());
   const gitDir = gitDirResult.stdout.trim();
   const commonDir = commonDirResult.stdout.trim();
   const branch = branchResult.stdout.trim() || "(detached)";
   const upstream = upstreamResult.ok ? upstreamResult.stdout.trim() : "";
+  const upstreamRemote = parseRemote(resolveUpstreamRemoteUrl(upstream, upstreamRemoteResult, remotesResult, root));
 
   const info = {
     isRepo: true,
@@ -55,6 +56,24 @@ export function getGitInfo(cwd = process.cwd(), options = {}) {
   };
   if (ttlMs > 0) writeGitCache(root, info);
   return info;
+}
+
+function resolveUpstreamRemoteUrl(upstream, upstreamRemoteResult, remotesResult, root) {
+  if (upstreamRemoteResult.ok && upstreamRemoteResult.stdout.trim()) return upstreamRemoteResult.stdout.trim();
+  const remoteName = trackingRemoteName(upstream, remotesResult.stdout);
+  if (!remoteName) return "";
+  const result = git(["config", "--get", `remote.${remoteName}.url`], root);
+  return result.ok ? result.stdout.trim() : "";
+}
+
+function trackingRemoteName(upstream, remoteOutput) {
+  if (!upstream) return "";
+  return String(remoteOutput || "")
+    .split(/\r?\n/)
+    .map((remote) => remote.trim())
+    .filter(Boolean)
+    .sort((left, right) => right.length - left.length)
+    .find((remote) => upstream === remote || upstream.startsWith(`${remote}/`)) || "";
 }
 
 function git(args, cwd) {

@@ -42,10 +42,10 @@ equivalent data or extension points.
 - Custom text, custom symbol, custom command with timeout, max-width, and
   optional ANSI preservation, and OSC8 link widgets.
 - Git branch, SHA, status, clean/dirty, staged, unstaged, untracked, conflicts,
-  ahead/behind, insertions, deletions, origin, upstream owner/repo, fork status,
-  worktree, clickable branch and remote owner/repo links, Git root directory
-  IDE links for VS Code and Cursor, `ownerOnlyWhenFork`, and GitHub/GitLab
-  PR/MR widgets.
+  ahead/behind, insertions, deletions, origin, upstream owner/repo, tracking
+  remote fallback, fork status, worktree, clickable branch and remote
+  owner/repo links, Git root directory IDE links for VS Code and Cursor, remote
+  empty-state hiding, `ownerOnlyWhenFork`, and GitHub/GitLab PR/MR widgets.
 - Persistent Git cache with TTL plus `.git/HEAD` and `.git/index`
   invalidation.
 - Current directory path abbreviation, segment limiting, and fish-style path
@@ -90,4 +90,4 @@ data, the matching widget stays empty instead of inventing values.
 ## Remaining Enhancements
 
 - Complete `ccstatusline` TUI parity for the remaining widget-specific
-  shortcuts beyond Git link and IDE-link toggles.
+  shortcuts beyond the currently supported Git link and empty-state toggles.

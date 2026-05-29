@@ -193,6 +193,7 @@ export function describeWidgetOptions(widget) {
   if (item.preserveColors) parts.push("ansi");
   if (gitLinkEnabled(item, type)) parts.push("repo-link");
   if (ideLinkMode(item)) parts.push(`link-${ideLinkMode(item)}`);
+  if (metadataFlag(item, "hideNoRemote")) parts.push("hide-no-remote");
   if (metadataFlag(item, "ownerOnlyWhenFork")) parts.push("owner-only-fork");
   if (item.segments !== undefined) parts.push(`segments=${item.segments}`);
   if (item.fish) parts.push("fish");
@@ -229,6 +230,9 @@ export function buildWidgetOptionRows(widget) {
   }
   if (type === "gitBranch" || GIT_REMOTE_WIDGETS.has(type)) {
     rows.push({ key: "linkToRepo", label: "Repo link", value: BOOLEAN_TEXT.get(gitLinkEnabled(item, type)) });
+  }
+  if (GIT_REMOTE_WIDGETS.has(type)) {
+    rows.push({ key: "hideNoRemote", label: "Hide no remote", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "hideNoRemote"))) });
   }
   if (type === "gitRootDir") {
     rows.push({ key: "linkToIDE", label: "IDE link", value: ideLinkMode(item) || "off" });
@@ -294,6 +298,7 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "href") return value === "" ? deleteKey(deleteKey(item, "href"), "url") : { ...deleteKey(item, "url"), href: value };
   if (key === "text") return value === "" ? deleteKey(item, primaryValueKey(resolveWidgetType(item.type) || item.type)) : { ...item, [primaryValueKey(resolveWidgetType(item.type) || item.type)]: value };
   if (key === "linkToRepo") return toggleLinkToRepo(item);
+  if (key === "hideNoRemote") return toggleOrDelete(item, "hideNoRemote");
   if (key === "linkToIDE") return cycleIdeLink(item);
   if (key === "ownerOnlyWhenFork") return toggleOrDelete(item, "ownerOnlyWhenFork");
   if (key === "segments") return setNumericField(item, "segments", value);

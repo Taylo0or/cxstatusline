@@ -187,17 +187,17 @@ export const widgetRegistry = {
   },
   gitOriginOwner: {
     description: "Origin remote owner",
-    render: ({ git, widget }) => renderRemoteValue(git.origin, git.origin?.owner, widget)
+    render: ({ git, widget }) => renderRemoteValue(git.origin, git.origin?.owner, widget, "no remote")
   },
   gitOriginRepo: {
     description: "Origin remote repository name",
-    render: ({ git, widget }) => renderRemoteValue(git.origin, git.origin?.repo, widget)
+    render: ({ git, widget }) => renderRemoteValue(git.origin, git.origin?.repo, widget, "no remote")
   },
   gitOriginOwnerRepo: {
     description: "Origin owner/repository",
     render: ({ git, widget }) => {
       const text = metadataFlag(widget, "ownerOnlyWhenFork") && git.isFork ? git.origin?.owner : git.origin?.ownerRepo;
-      return renderRemoteValue(git.origin, text, widget);
+      return renderRemoteValue(git.origin, text, widget, "no remote");
     }
   },
   gitUpstream: {
@@ -206,15 +206,15 @@ export const widgetRegistry = {
   },
   gitUpstreamOwner: {
     description: "Upstream remote owner",
-    render: ({ git, widget }) => renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.owner, widget)
+    render: ({ git, widget }) => renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.owner, widget, "no upstream")
   },
   gitUpstreamRepo: {
     description: "Upstream remote repository name",
-    render: ({ git, widget }) => renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.repo, widget)
+    render: ({ git, widget }) => renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.repo, widget, "no upstream")
   },
   gitUpstreamOwnerRepo: {
     description: "Upstream owner/repository",
-    render: ({ git, widget }) => renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.ownerRepo, widget)
+    render: ({ git, widget }) => renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.ownerRepo, widget, "no upstream")
   },
   gitIsFork: {
     description: "Whether origin differs from upstream remote",
@@ -987,8 +987,8 @@ function rootDirName(root) {
   return parts.at(-1) || normalized;
 }
 
-function renderRemoteValue(remote, text, widget) {
-  if (!text) return "";
+function renderRemoteValue(remote, text, widget, emptyText) {
+  if (!text) return metadataFlag(widget, "hideNoRemote") ? "" : emptyText;
   if (!metadataFlag(widget, "linkToRepo")) return text;
   return osc8(repoWebUrl(remote), text) || text;
 }

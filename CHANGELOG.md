@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.29
+
+- Added `no remote` / `no upstream` empty-state rendering for Git remote
+  widgets with `hideNoRemote` support.
+- Added TUI widget-option controls for hiding Git remote empty states.
+- Improved upstream remote detection by falling back to the current branch's
+  tracking remote when no literal `upstream` remote is configured.
+
 ## 0.2.28
 
 - Added `linkToIDE` support for `gitRootDir`, rendering repository root names
