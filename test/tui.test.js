@@ -1,12 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  clearWidgetColors,
   defaultWidgetForType,
+  describeWidgetColors,
   describeWidget,
   getConfigLines,
   moveWidget,
   sanitizePreviewConfig,
-  setConfigLines
+  setConfigLines,
+  updateWidgetColor
 } from "../src/tui.js";
 import { DEFAULT_CONFIG } from "../src/constants.js";
 
@@ -63,5 +66,19 @@ test("TUI widget descriptions expose common editor modifiers", () => {
   assert.equal(
     describeWidget({ type: "command", command: "printf ok", label: "", merge: "no-padding", bold: true, maxWidth: 8, timeout: 500 }),
     "command (raw, cmd=printf ok, merge=no-padding, bold, max=8, timeout=500)"
+  );
+});
+
+test("TUI color helpers edit foreground, background, and clear aliases", () => {
+  const foreground = updateWidgetColor({ type: "model", color: "red" }, "foreground", "#112233");
+  assert.deepEqual(foreground, { type: "model", fg: "#112233" });
+
+  const background = updateWidgetColor({ type: "model", backgroundColor: "blue" }, "background", "brightblack");
+  assert.deepEqual(background, { type: "model", bg: "brightblack" });
+
+  assert.equal(describeWidgetColors({ type: "model", fg: "#112233", bg: "brightblack", bold: true }), "fg=#112233, bg=brightblack, bold");
+  assert.deepEqual(
+    clearWidgetColors({ type: "model", fg: "red", color: "cyan", bg: "blue", background: "black", backgroundColor: "gray", bold: true }),
+    { type: "model" }
   );
 });

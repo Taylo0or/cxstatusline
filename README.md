@@ -49,8 +49,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 - Presets for compact, dense, Git-focused, usage-focused, no-font,
   right-aligned, and multi-line layouts.
 - Full-screen terminal configuration editor with live preview, widget picker,
-  line editing, global options, terminal width controls, Powerline controls,
-  and save-time hook/native install toggles.
+  line editing, per-widget color editing, global options, terminal width
+  controls, Powerline controls, and save-time hook/native install toggles.
 - tmux and Starship integration snippets, with optional `--write` install.
 - Persistent Git cache with TTL and `.git/HEAD`/`.git/index` invalidation.
 - Zero runtime dependencies; Node.js 20+ is enough.

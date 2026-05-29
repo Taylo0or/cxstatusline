@@ -112,6 +112,44 @@ export function describeWidget(widget) {
   return details.length ? `${type} (${details.join(", ")})` : String(type);
 }
 
+export function describeWidgetColors(widget) {
+  const item = typeof widget === "string" ? { type: widget } : widget || {};
+  const parts = [];
+  const foreground = item.fg || item.color;
+  const background = item.bg || item.background || item.backgroundColor;
+  if (foreground) parts.push(`fg=${foreground}`);
+  if (background) parts.push(`bg=${background}`);
+  if (item.bold) parts.push("bold");
+  return parts.join(", ") || "theme defaults";
+}
+
+export function updateWidgetColor(widget, field, value) {
+  const next = typeof widget === "string" ? { type: widget } : structuredClone(widget || {});
+  const clean = String(value || "").trim();
+  if (field === "foreground") {
+    delete next.color;
+    if (clean) next.fg = clean;
+    else delete next.fg;
+  } else if (field === "background") {
+    delete next.background;
+    delete next.backgroundColor;
+    if (clean) next.bg = clean;
+    else delete next.bg;
+  }
+  return next;
+}
+
+export function clearWidgetColors(widget) {
+  const next = typeof widget === "string" ? { type: widget } : structuredClone(widget || {});
+  delete next.fg;
+  delete next.color;
+  delete next.bg;
+  delete next.background;
+  delete next.backgroundColor;
+  delete next.bold;
+  return next;
+}
+
 class TuiEditor {
   constructor(options) {
     this.originalConfig = structuredClone(options.config || {});
@@ -189,6 +227,7 @@ class TuiEditor {
 
     if (this.screen === "main") return this.handleMain(text, key);
     if (this.screen === "items") return this.handleItems(text, key);
+    if (this.screen === "colors") return this.handleColors(text, key);
     if (this.screen === "terminal") return this.handleMenuScreen("terminal", text, key);
     if (this.screen === "global") return this.handleMenuScreen("global", text, key);
     if (this.screen === "powerline") return this.handleMenuScreen("powerline", text, key);
@@ -204,6 +243,7 @@ class TuiEditor {
     const item = items[this.selection];
     if (!item) return;
     if (item.id === "items") this.openScreen("items");
+    else if (item.id === "colors") this.openScreen("colors");
     else if (item.id === "preset") this.openChoice("Preset", Object.keys(PRESETS), this.detectPreset(), (value) => {
       this.config = applyPreset(this.config, value);
       this.markChanged(`Applied preset ${value}`);
@@ -279,6 +319,30 @@ class TuiEditor {
     if (key.name !== "return" && key.name !== "right" && text !== " ") return;
     const item = items[this.selection];
     if (item?.action) item.action();
+  }
+
+  handleColors(text, key) {
+    const line = currentLine(this.config, this.lineIndex);
+    if (key.name === "escape" || text === "q") return this.openScreen("main");
+    if (key.name === "tab") return this.nextLine(key.shift ? -1 : 1);
+    if (key.name === "up" || text === "k") return this.selectItem(-1);
+    if (key.name === "down" || text === "j") return this.selectItem(1);
+    if (!line.length) return;
+    if (text === "f") {
+      const widget = this.selectedWidget();
+      this.openInput("Foreground color (#hex, ANSI name, or blank)", widget.fg || widget.color || "", (value) => {
+        this.updateSelected((item) => updateWidgetColor(item, "foreground", value), "Updated foreground color");
+      });
+    } else if (text === "g") {
+      const widget = this.selectedWidget();
+      this.openInput("Background color (#hex, ANSI name, or blank)", widget.bg || widget.background || widget.backgroundColor || "", (value) => {
+        this.updateSelected((item) => updateWidgetColor(item, "background", value), "Updated background color");
+      });
+    } else if (text === "b") {
+      this.toggleWidgetBoolean("bold");
+    } else if (text === "x") {
+      this.updateSelected((item) => clearWidgetColors(item), "Cleared widget colors");
+    }
   }
 
   handleChoice(text, key) {
@@ -388,7 +452,7 @@ class TuiEditor {
     this.input = null;
     this.confirm = null;
     this.selection = 0;
-    if (screen === "items") this.clampItemSelection();
+    if (screen === "items" || screen === "colors") this.clampItemSelection();
   }
 
   openChoice(title, values, current, onPick) {
@@ -424,17 +488,18 @@ class TuiEditor {
     for (const key of ["label", "fg", "bg", "color", "background", "bold", "merge", "maxWidth"]) {
       if (selected[key] !== undefined && newWidget[key] === undefined) newWidget[key] = selected[key];
     }
-    if (this.picker.action === "change" && line.length) {
+    const action = this.picker.action;
+    if (action === "change" && line.length) {
       line[this.itemIndex] = newWidget;
     } else {
-      const at = this.picker.action === "insert" ? this.itemIndex : Math.min(line.length, this.itemIndex + 1);
+      const at = action === "insert" ? this.itemIndex : Math.min(line.length, this.itemIndex + 1);
       line.splice(at, 0, newWidget);
       this.itemIndex = at;
     }
     lines[this.lineIndex] = line;
     this.config = setConfigLines(this.config, lines);
     this.picker = null;
-    this.markChanged(`Widget ${this.picker?.action || "updated"}`);
+    this.markChanged(`Widget ${action}`);
   }
 
   selectItem(delta) {
@@ -699,6 +764,7 @@ class TuiEditor {
     else if (this.picker) lines.push(...this.renderPicker(width, height - lines.length - 3));
     else if (this.screen === "main") lines.push(...this.renderMain(width));
     else if (this.screen === "items") lines.push(...this.renderItems(width, height - lines.length - 5));
+    else if (this.screen === "colors") lines.push(...this.renderColors(height - lines.length - 5));
     else lines.push(...this.renderMenuScreen(this.screen, width));
 
     if (this.confirm) {
@@ -780,11 +846,29 @@ class TuiEditor {
     if (line.length > visible.length) rows.push(dim(`... ${line.length - visible.length} more`));
     return rows;
   }
+
+  renderColors(maxRows) {
+    const lines = getConfigLines(this.config);
+    const line = lines[this.lineIndex] || [];
+    const rows = [];
+    rows.push(bold(`Widget Colors: line ${this.lineIndex + 1}/${lines.length}`));
+    rows.push(dim("f foreground, g background, b bold, x clear, Tab next line, Esc/q back"));
+    rows.push("");
+    if (!line.length) rows.push(dim("(empty line) Add widgets from Edit lines first."));
+    const visible = line.slice(0, Math.max(1, maxRows - 4));
+    visible.forEach((widget, index) => {
+      const selected = index === this.itemIndex;
+      rows.push(menuLine(selected, `${index + 1}. ${describeWidget(widget)}`, describeWidgetColors(widget)));
+    });
+    if (line.length > visible.length) rows.push(dim(`... ${line.length - visible.length} more`));
+    return rows;
+  }
 }
 
 function mainMenuItems(editor) {
   return [
     { id: "items", label: "Edit lines and widgets", value: lineSummary(editor.config) },
+    { id: "colors", label: "Edit widget colors", value: colorSummary(editor.config) },
     { id: "preset", label: "Preset", value: editor.detectPreset() },
     { id: "theme", label: "Theme", value: editor.config.theme || "powerline" },
     { id: "mode", label: "Mode", value: editor.config.mode || "powerline" },
@@ -1049,6 +1133,16 @@ function powerlineSummary(config) {
   if (powerline.continueThemeAcrossLines) parts.push("continue");
   if (powerline.separators?.length) parts.push(`${powerline.separators.length} sep`);
   return parts.join(", ") || "defaults";
+}
+
+function colorSummary(config) {
+  const count = getConfigLines(config)
+    .flat()
+    .filter((widget) => {
+      const item = typeof widget === "string" ? { type: widget } : widget || {};
+      return Boolean(item.fg || item.color || item.bg || item.background || item.backgroundColor || item.bold);
+    }).length;
+  return count ? `${count} styled widget${count === 1 ? "" : "s"}` : "theme defaults";
 }
 
 function boundedNumber(value, min, max, fallback) {

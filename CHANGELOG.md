@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.23
+
+- Added an Edit Widget Colors screen to the full-screen TUI.
+- Added per-widget foreground, background, bold, and clear-style controls with
+  live preview and multi-line navigation.
+
 ## 0.2.22
 
 - Added `cxstatusline tui` and `cxstatusline configure --tui` for a
