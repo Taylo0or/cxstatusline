@@ -24,6 +24,10 @@ equivalent data or extension points.
 - Interactive and non-interactive configuration command, including widget,
   separator, terminal width, global formatting, Powerline separator, and
   Powerline alignment flags.
+- Core full-screen TUI configuration editor with live preview, main menu,
+  widget picker, line editor, preset/theme/mode selection, terminal width
+  options, global formatting options, Powerline options, and save-time
+  hook/native install toggles.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and
   multi-line layouts.
 - `ccstatusline` kebab-case widget aliases for migrated widget lists, including
@@ -77,4 +81,6 @@ data, the matching widget stays empty instead of inventing values.
 
 ## Remaining Enhancements
 
-- Richer full-screen TUI configuration editor.
+- Complete `ccstatusline` TUI parity for the advanced color editor,
+  pinned-install/update manager, refresh-interval management, and every
+  widget-specific shortcut.

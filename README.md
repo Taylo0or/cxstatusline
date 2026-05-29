@@ -48,6 +48,9 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   combined stats, insertions, and deletions.
 - Presets for compact, dense, Git-focused, usage-focused, no-font,
   right-aligned, and multi-line layouts.
+- Full-screen terminal configuration editor with live preview, widget picker,
+  line editing, global options, terminal width controls, Powerline controls,
+  and save-time hook/native install toggles.
 - tmux and Starship integration snippets, with optional `--write` install.
 - Persistent Git cache with TTL and `.git/HEAD`/`.git/index` invalidation.
 - Zero runtime dependencies; Node.js 20+ is enough.
@@ -161,7 +164,14 @@ hooks need review.
 
 ## Configuration
 
-Open the interactive configurator:
+Open the full-screen configuration editor:
+
+```sh
+cxstatusline tui
+cxstatusline configure --tui
+```
+
+Open the prompt-based configurator:
 
 ```sh
 cxstatusline configure
@@ -251,7 +261,8 @@ cxstatusline presets
 ```text
 cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
 cxstatusline hook
-cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--flex-mode mode]
+cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--flex-mode mode] [--tui]
+cxstatusline tui [--config path]
 cxstatusline import ccstatusline [--from path] [--dry-run]
 cxstatusline init [--force] [--preset default|compact|dense|git|usage|nofont|right|multiline]
 cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]

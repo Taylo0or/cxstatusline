@@ -10,6 +10,7 @@ import { hooksPath, installHooks, uninstallHooks } from "./install.js";
 import { renderStatusLine } from "./render.js";
 import { listWidgets, resolveWidgetType } from "./widgets.js";
 import { loadState, readHookPayload, resetState, saveState, statePath, updateStateFromHook } from "./state.js";
+import { runTuiConfigEditor } from "./tui.js";
 import { cacheDir, codexHome, configDir, homePath, parseFlags, readText, run, writeTextAtomic } from "./util.js";
 
 export async function runCli(args) {
@@ -23,6 +24,7 @@ export async function runCli(args) {
   if (command === "uninstall") return uninstallCommand(rest);
   if (command === "import" || command === "migrate") return importCommand(rest);
   if (command === "configure" || command === "config") return configureCommand(rest);
+  if (command === "tui") return tuiCommand(rest);
   if (command === "widgets") return widgetsCommand();
   if (command === "presets") return presetsCommand();
   if (command === "native-items") return nativeItemsCommand();
@@ -77,6 +79,9 @@ function initCommand(args) {
 async function configureCommand(args) {
   const { flags } = parseFlags(args);
   let config = loadConfig({ config: flags.config });
+  if (flags.tui || flags.fullscreen || flags["full-screen"]) {
+    return configureTui(flags, config);
+  }
   const interactive = !flags.yes && !flags.preset && !flags.theme && !flags.mode;
 
   if (interactive) {
@@ -136,6 +141,39 @@ async function configureCommand(args) {
   if (flags.installNative || flags.native) {
     const result = installNativeStatusLine({ dryRun: Boolean(flags["dry-run"]) });
     console.log(`native: ${flags["dry-run"] ? "would update" : "updated"} ${result.path}`);
+  }
+}
+
+async function tuiCommand(args) {
+  const { flags } = parseFlags(args);
+  return configureTui(flags, loadConfig({ config: flags.config }));
+}
+
+async function configureTui(flags, config) {
+  const state = loadState();
+  const cwd = flags.cwd || state.cwd || process.cwd();
+  const result = await runTuiConfigEditor({
+    config,
+    state,
+    cwd,
+    git: getGitInfo(cwd),
+    codexConfig: readCodexConfig()
+  });
+  if (!result.saved) {
+    console.log("config: unchanged");
+    return;
+  }
+
+  const path = saveConfig(result.config, { config: flags.config });
+  console.log(`config: updated ${path}`);
+
+  if (result.installHooks || flags.installHooks || flags.hooks) {
+    const hooks = installHooks({ dryRun: Boolean(flags["dry-run"]), command: flags.command });
+    console.log(`hooks: ${flags["dry-run"] ? "would update" : "updated"} ${hooks.path}`);
+  }
+  if (result.installNative || flags.installNative || flags.native) {
+    const native = installNativeStatusLine({ dryRun: Boolean(flags["dry-run"]) });
+    console.log(`native: ${flags["dry-run"] ? "would update" : "updated"} ${native.path}`);
   }
 }
 
@@ -316,9 +354,10 @@ function help() {
 Usage:
   cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
   cxstatusline hook
-  cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--flex-mode mode]
+  cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--flex-mode mode] [--tui]
   cxstatusline import ccstatusline [--from path] [--dry-run]
   cxstatusline init [--force]
+  cxstatusline tui [--config path]
   cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
   cxstatusline uninstall [hooks|native|tmux|starship]
   cxstatusline widgets
@@ -334,6 +373,8 @@ Examples:
   cxstatusline render --preset compact --format plain
   cxstatusline configure --preset compact --theme powerline --yes
   cxstatusline configure --widgets model,git-branch,tokens-total --separator ' :: ' --yes
+  cxstatusline configure --tui
+  cxstatusline tui
   cxstatusline configure --flex-mode full-until-compact --compact-threshold 70 --yes
   cxstatusline configure --mode plain --default-padding ' ' --global-bold --override-fg cyan --yes
   cxstatusline configure --powerline-separators 'U+E0B0,U+E0B1' --powerline-auto-align --yes

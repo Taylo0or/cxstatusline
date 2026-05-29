@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.22
+
+- Added `cxstatusline tui` and `cxstatusline configure --tui` for a
+  full-screen terminal configuration editor.
+- Added live preview, widget picker, multi-line widget editing, common
+  per-widget edits, preset/theme/mode selection, terminal width controls,
+  global formatting controls, Powerline controls, and save-time hook/native
+  install toggles to the TUI.
+- Documented the remaining advanced `ccstatusline` TUI parity gaps.
+
 ## 0.2.21
 
 - Added per-widget `maxWidth` truncation with visible-width accounting.
