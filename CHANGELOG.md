@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.7
+
+- Added more ccstatusline-compatible widget aliases for session ids, session
+  names, version, context percentage, reset timers, clean Git status, and Git
+  worktrees.
+- Added session, weekly, Sonnet weekly, and Opus weekly usage widgets when hook
+  state provides matching usage fields.
+- Added best-effort output style, vim mode, voice status, remote-control
+  status, skills, account email, and total speed widgets.
+- Preserved optional hook metadata for session titles, UI state, skills, and
+  account information.
+
 ## 0.2.6
 
 - Added upstream remote owner/repo and fork-status Git widgets.

@@ -1,10 +1,11 @@
 import os from "node:os";
-import { basename } from "node:path";
-import { compactNumber, formatDuration, numberFormat, run } from "./util.js";
+import { basename, join } from "node:path";
+import { compactNumber, formatDuration, numberFormat, readJson, repoRoot, run } from "./util.js";
 
 export const SPACER = "__CXSTATUSLINE_SPACER__";
 const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const PACKAGE = readJson(join(repoRoot, "package.json"), {});
 
 export const widgetRegistry = {
   appName: {
@@ -101,6 +102,10 @@ export const widgetRegistry = {
     description: "Git clean or dirty state",
     render: ({ git }) => git.isRepo ? (git.status.clean ? "clean" : "dirty") : ""
   },
+  gitCleanStatus: {
+    description: "Git clean or dirty state",
+    render: ({ git }) => git.isRepo ? (git.status.clean ? "clean" : "dirty") : ""
+  },
   gitAheadBehind: {
     description: "Git upstream ahead and behind counts",
     render: ({ git }) => {
@@ -175,6 +180,10 @@ export const widgetRegistry = {
     description: "Whether the repository is a linked worktree",
     render: ({ git }) => git.isRepo ? (git.worktree?.linked ? "worktree" : "normal") : ""
   },
+  gitWorktree: {
+    description: "Current Git worktree name when in a linked worktree",
+    render: ({ git }) => git.worktree?.linked ? git.worktree?.name || "worktree" : ""
+  },
   gitWorktreeName: {
     description: "Current worktree directory name",
     render: ({ git }) => git.worktree?.name || ""
@@ -221,6 +230,13 @@ export const widgetRegistry = {
       return speed ? `${compactNumber(Math.round(speed))}/min` : "";
     }
   },
+  totalSpeed: {
+    description: "Total token speed per minute from recent hook samples",
+    render: ({ state, widget }) => {
+      const speed = tokenSpeed(state.samples || [], Number(widget.windowSeconds || 120), "totalTokens");
+      return speed ? `${compactNumber(Math.round(speed))}/min` : "";
+    }
+  },
   inputSpeed: {
     description: "Input token speed per minute from recent hook samples",
     render: ({ state, widget }) => {
@@ -252,6 +268,14 @@ export const widgetRegistry = {
       return `${Math.round((value / window) * 100)}%`;
     }
   },
+  contextPercentage: {
+    description: "Context window used percentage",
+    render: ({ state, widget }) => renderContextPercent(state.usage || {}, widget)
+  },
+  contextPercentageUsable: {
+    description: "Context window usable percentage when available, otherwise context percentage",
+    render: ({ state, widget }) => renderContextPercent(state.usage || {}, widget)
+  },
   contextBar: {
     description: "Context usage bar",
     render: ({ state, widget }) => {
@@ -273,6 +297,13 @@ export const widgetRegistry = {
     }
   },
   contextUsed: {
+    description: "Context tokens used",
+    render: ({ state }) => {
+      const { used } = contextNumbers(state.usage || {});
+      return used ? compactNumber(used) : "";
+    }
+  },
+  contextLength: {
     description: "Context tokens used",
     render: ({ state }) => {
       const { used } = contextNumbers(state.usage || {});
@@ -314,6 +345,38 @@ export const widgetRegistry = {
       return `${Math.round((used / (used + remaining)) * 100)}%`;
     }
   },
+  sessionUsage: {
+    description: "Primary session usage percentage or bar when present in hook state",
+    render: ({ state, widget }) => renderUsagePercent(state.usage || {}, widget, {
+      percent: "sessionUsagePercent",
+      used: "usageLimitUsed",
+      remaining: "usageLimitRemaining"
+    })
+  },
+  weeklyUsage: {
+    description: "Weekly usage percentage or bar when present in hook state",
+    render: ({ state, widget }) => renderUsagePercent(state.usage || {}, widget, {
+      percent: "weeklyUsagePercent",
+      used: "weeklyUsageUsed",
+      remaining: "weeklyUsageRemaining"
+    })
+  },
+  weeklySonnetUsage: {
+    description: "Weekly Sonnet usage percentage or bar when present in hook state",
+    render: ({ state, widget }) => renderUsagePercent(state.usage || {}, widget, {
+      percent: "weeklySonnetUsagePercent",
+      used: "weeklySonnetUsageUsed",
+      remaining: "weeklySonnetUsageRemaining"
+    })
+  },
+  weeklyOpusUsage: {
+    description: "Weekly Opus usage percentage or bar when present in hook state",
+    render: ({ state, widget }) => renderUsagePercent(state.usage || {}, widget, {
+      percent: "weeklyOpusUsagePercent",
+      used: "weeklyOpusUsageUsed",
+      remaining: "weeklyOpusUsageRemaining"
+    })
+  },
   extraUsageRemaining: {
     description: "Extra usage remaining when present in hook state",
     render: ({ state }) => state.usage?.extraUsageRemaining ? compactNumber(state.usage.extraUsageRemaining) : ""
@@ -339,6 +402,10 @@ export const widgetRegistry = {
     description: "Remaining time in the current five-hour usage block",
     render: ({ state }) => state.startedAt ? formatDuration(blockProgress(Date.parse(state.startedAt)).remaining) : ""
   },
+  blockResetTimer: {
+    description: "Remaining time in the current five-hour usage block",
+    render: ({ state }) => state.startedAt ? formatDuration(blockProgress(Date.parse(state.startedAt)).remaining) : ""
+  },
   blockBar: {
     description: "Progress bar for the current five-hour usage block",
     render: ({ state, widget }) => {
@@ -352,6 +419,10 @@ export const widgetRegistry = {
     render: () => formatDuration(weekProgress().elapsed)
   },
   weeklyRemaining: {
+    description: "Remaining time in the current local calendar week",
+    render: () => formatDuration(weekProgress().remaining)
+  },
+  weeklyResetTimer: {
     description: "Remaining time in the current local calendar week",
     render: () => formatDuration(weekProgress().remaining)
   },
@@ -374,6 +445,57 @@ export const widgetRegistry = {
   session: {
     description: "Current Codex session id",
     render: ({ state }) => state.sessionId ? String(state.sessionId).slice(0, 8) : ""
+  },
+  codexSessionId: {
+    description: "Current Codex session id",
+    render: ({ state }) => state.sessionId ? String(state.sessionId).slice(0, 8) : ""
+  },
+  claudeSessionId: {
+    description: "Claude-compatible alias for the current Codex session id",
+    render: ({ state }) => state.sessionId ? String(state.sessionId).slice(0, 8) : ""
+  },
+  sessionName: {
+    description: "Current session name or thread title when present in hook state",
+    render: ({ state }) => state.sessionName || ""
+  },
+  sessionClock: {
+    description: "Elapsed time since SessionStart hook",
+    render: ({ state }) => state.startedAt ? formatDuration(Date.now() - Date.parse(state.startedAt)) : ""
+  },
+  version: {
+    description: "cxstatusline version or Codex version when present in hook state",
+    render: ({ state, widget }) => {
+      const version = widget.source === "codex" ? state.version : state.version || PACKAGE.version;
+      return version ? `v${String(version).replace(/^v/, "")}` : "";
+    }
+  },
+  outputStyle: {
+    description: "Current output style when present in hook state or config",
+    render: ({ state, codexConfig }) => state.outputStyle || codexConfig.output_style || codexConfig.outputStyle || ""
+  },
+  vimMode: {
+    description: "Current editor vim mode when present in hook state",
+    render: ({ state, widget }) => state.vimMode ? formatVimMode(state.vimMode, widget) : ""
+  },
+  voiceStatus: {
+    description: "Voice input status when present in hook state",
+    render: ({ state }) => formatOnOff(state.voiceStatus, "voice")
+  },
+  remoteControlStatus: {
+    description: "Remote control status when present in hook state",
+    render: ({ state }) => formatOnOff(state.remoteControlStatus, "remote")
+  },
+  skills: {
+    description: "Skill invocation metrics when present in hook state",
+    render: ({ state, widget }) => formatSkills(state.skills || {}, widget)
+  },
+  accountEmail: {
+    description: "Account email when present in hook state or environment",
+    render: ({ state }) => state.accountEmail || process.env.CODEX_ACCOUNT_EMAIL || ""
+  },
+  claudeAccountEmail: {
+    description: "Claude-compatible alias for account email when present",
+    render: ({ state }) => state.accountEmail || process.env.CODEX_ACCOUNT_EMAIL || ""
   },
   compactions: {
     description: "Count of observed context compactions",
@@ -563,8 +685,9 @@ export function inferContextWindow(model) {
 function tokenSpeed(samples, windowSeconds, key = "totalTokens") {
   if (!Array.isArray(samples) || samples.length < 2) return 0;
   const newest = samples[samples.length - 1];
-  const cutoff = Date.parse(newest.at) - windowSeconds * 1000;
-  const oldest = [...samples].reverse().find((sample) => Date.parse(sample.at) <= cutoff) || samples[0];
+  const oldest = windowSeconds <= 0
+    ? samples[0]
+    : [...samples].reverse().find((sample) => Date.parse(sample.at) <= Date.parse(newest.at) - windowSeconds * 1000) || samples[0];
   const deltaTokens = Number(newest[key] || 0) - Number(oldest[key] || 0);
   const deltaMinutes = (Date.parse(newest.at) - Date.parse(oldest.at)) / 60000;
   if (deltaTokens <= 0 || deltaMinutes <= 0) return 0;
@@ -593,6 +716,63 @@ function contextNumbers(usage) {
   const window = Number(usage.contextWindow || (usage.contextRemaining && usage.contextUsed ? usage.contextRemaining + usage.contextUsed : 0));
   const remaining = Number(usage.contextRemaining || (window && used ? window - used : 0));
   return { used, window, remaining };
+}
+
+function renderContextPercent(usage, widget) {
+  const { used, window, remaining } = contextNumbers(usage);
+  const value = widget.mode === "remaining" ? remaining : used;
+  if (!used || !window) return "";
+  return `${Math.round((value / window) * 100)}%`;
+}
+
+function renderUsagePercent(usage, widget, keys) {
+  const percent = usagePercent(usage, keys);
+  if (!Number.isFinite(percent)) return "";
+  const display = widget.mode === "remaining" ? 100 - percent : percent;
+  const clamped = Math.max(0, Math.min(100, display));
+  if (widget.mode === "bar" || widget.mode === "progress" || widget.style === "bar" || widget.display === "bar") {
+    return renderBar(clamped / 100, Number(widget.width || 16), widget.barStyle || widget.style);
+  }
+  return `${Math.round(clamped)}%`;
+}
+
+function usagePercent(usage, keys) {
+  if (Object.prototype.hasOwnProperty.call(usage, keys.percent)) {
+    const direct = Number(usage[keys.percent]);
+    if (Number.isFinite(direct) && direct >= 0) return direct <= 1 ? direct * 100 : direct;
+  }
+
+  const used = Number(usage[keys.used] || 0);
+  const remaining = Number(usage[keys.remaining] || 0);
+  if (used || remaining) return (used / (used + remaining)) * 100;
+  return Number.NaN;
+}
+
+function formatOnOff(value, label) {
+  if (value === true) return `${label} on`;
+  if (value === false) return `${label} off`;
+  if (typeof value === "string" && value.trim()) return `${label} ${value.trim()}`;
+  return "";
+}
+
+function formatVimMode(value, widget) {
+  const mode = String(value || "").toUpperCase();
+  if (!mode) return "";
+  if (widget.format === "word") return mode;
+  const letter = mode === "NORMAL" ? "N" : mode === "INSERT" ? "I" : mode[0];
+  return widget.format === "letter" ? letter : `v-${letter}`;
+}
+
+function formatSkills(skills, widget) {
+  const mode = widget.mode || widget.view || "current";
+  if (mode === "count") return skills.totalInvocations ? String(skills.totalInvocations) : "";
+  if (mode === "list") {
+    const unique = Array.isArray(skills.uniqueSkills) ? skills.uniqueSkills : [];
+    const limit = Number(widget.limit || widget.listLimit || 0);
+    const visible = limit > 0 ? unique.slice(0, limit) : unique;
+    return visible.join(", ");
+  }
+  return skills.lastSkill || "";
 }
 
 function blockProgress(startedAtMs, nowMs = Date.now()) {

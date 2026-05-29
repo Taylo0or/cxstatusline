@@ -27,12 +27,14 @@ equivalent data or extension points.
 - Current directory path abbreviation, segment limiting, and fish-style path
   shortening.
 - Token, input token, output token, cached token, cache-read token,
-  cache-write token, context, context bar, context window, cost, usage
-  remaining/utilization, token speed, input speed, and output speed widgets
-  when Codex hook/transcript data provides the underlying fields.
-- Five-hour block timer and local weekly timer widgets.
-- Session id, run state, last event, last tool, compaction count, duration,
-  memory, and terminal width widgets.
+  cache-write token, context, context percentage aliases, context bar, context
+  window, cost, usage remaining/utilization, session usage, weekly usage,
+  weekly Sonnet/Opus usage, token speed, input speed, output speed, and total
+  speed widgets when Codex hook/transcript data provides the underlying fields.
+- Five-hour block timer, reset timer, and local weekly timer widgets.
+- Session id/name, version, output style, vim mode, voice status,
+  remote-control status, skills, account email, run state, last event, last
+  tool, compaction count, duration, memory, and terminal width widgets.
 - Basic Jujutsu root, workspace, revision, description, bookmarks, change,
   insertion, and deletion widgets.
 - Hook/native/tmux/Starship install and uninstall flows.
@@ -48,9 +50,10 @@ not currently expose in an equivalent form:
 - A command-backed in-TUI external `statusLine.command`.
 - `statusLine.refreshInterval` for external renderers inside Codex.
 - ANSI-preserving custom segments inside Codex's native footer.
-- Claude account email, Claude voice status, Claude vim mode, and
-  Claude-specific skill metrics.
-- Claude Sonnet/Opus weekly usage buckets and Anthropic extra-usage API data.
+- Native Codex equivalents for Claude account email, Claude voice status,
+  Claude vim mode, and Claude-specific skill metrics.
+- Claude Sonnet/Opus weekly usage buckets and Anthropic extra-usage API data
+  unless equivalent values appear in Codex hooks or transcripts.
 
 Where Codex provides equivalent fields through hooks, transcripts, or native
 footer items, `cxstatusline` renders them. Where Codex does not provide the

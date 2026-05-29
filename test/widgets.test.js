@@ -80,6 +80,53 @@ test("renders custom command output", () => {
   assert.equal(output, "command-ok");
 });
 
+test("renders parity aliases for speed, usage, session, and optional metadata", () => {
+  const context = {
+    config: {},
+    state: {
+      sessionId: "abcdef123456",
+      sessionName: "Sprint",
+      outputStyle: "concise",
+      vimMode: "NORMAL",
+      voiceStatus: true,
+      remoteControlStatus: false,
+      accountEmail: "dev@example.com",
+      skills: {
+        lastSkill: "review-pr",
+        totalInvocations: 2,
+        uniqueSkills: ["review-pr", "commit"]
+      },
+      usage: {
+        contextUsed: 50,
+        contextWindow: 100,
+        usageLimitUsed: 25,
+        usageLimitRemaining: 75,
+        weeklyUsagePercent: 0.4
+      },
+      samples: [
+        { at: "2026-01-01T00:00:00.000Z", totalTokens: 100, inputTokens: 80, outputTokens: 20 },
+        { at: "2026-01-01T00:01:00.000Z", totalTokens: 220, inputTokens: 160, outputTokens: 60 }
+      ],
+      startedAt: new Date(Date.now() - 60_000).toISOString()
+    },
+    git: { isRepo: false },
+    codexConfig: {}
+  };
+
+  assert.equal(renderWidget({ type: "totalSpeed", windowSeconds: 0 }, context), "120/min");
+  assert.equal(renderWidget({ type: "sessionUsage" }, context), "25%");
+  assert.equal(renderWidget({ type: "weeklyUsage" }, context), "40%");
+  assert.equal(renderWidget({ type: "contextPercentageUsable" }, context), "50%");
+  assert.equal(renderWidget({ type: "claudeSessionId" }, context), "abcdef12");
+  assert.equal(renderWidget({ type: "sessionName" }, context), "Sprint");
+  assert.equal(renderWidget({ type: "outputStyle" }, context), "concise");
+  assert.equal(renderWidget({ type: "vimMode", format: "letter" }, context), "N");
+  assert.equal(renderWidget({ type: "voiceStatus" }, context), "voice on");
+  assert.equal(renderWidget({ type: "remoteControlStatus" }, context), "remote off");
+  assert.equal(renderWidget({ type: "skills", mode: "list" }, context), "review-pr, commit");
+  assert.equal(renderWidget({ type: "claudeAccountEmail" }, context), "dev@example.com");
+});
+
 test("parses Jujutsu diff stats", () => {
   assert.deepEqual(parseJjStat("2 files changed, 12 insertions(+), 3 deletions(-)"), {
     files: 2,

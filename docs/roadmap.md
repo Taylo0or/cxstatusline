@@ -16,10 +16,11 @@ while staying honest about Codex's current extension points.
   detection, and clickable branch widgets.
 - Rich GitHub/GitLab PR/MR state, review, branch, and diff-stat widgets.
 - Model, reasoning, service tier, permission, sandbox, session, event, run-state,
-  compaction, duration, memory, token, context, block timer, weekly timer, cost,
-  and custom text widgets.
-- Token speed, input speed, output speed, and cache token widgets from hook
-  state.
+  session name, output style, vim mode, voice status, remote-control status,
+  skills, account email, compaction, duration, memory, token, context, usage,
+  block timer, weekly timer, cost, and custom text widgets.
+- Token speed, input speed, output speed, total speed, usage, weekly usage, and
+  cache token widgets from hook state.
 - Custom command widget.
 - Basic Jujutsu root, workspace, revision, description, bookmark, change,
   insertion, and deletion widgets.
@@ -55,8 +56,8 @@ to work inside the Codex TUI footer itself:
 - External command-backed statusline rendering inside Codex.
 - ANSI-preserving custom footer segments inside Codex.
 - Refresh interval control for an external statusline command.
-- Stable live status JSON containing complete token, context, rate-limit, and
-  cost fields.
+- Stable live status JSON containing complete token, context, rate-limit,
+  account, voice, vim, skill, and cost fields.
 
 Until then, `cxstatusline` exposes those richer features to external terminal
 status surfaces and configures Codex's native fixed footer items separately.

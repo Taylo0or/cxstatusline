@@ -37,6 +37,7 @@ export function updateStateFromHook(payload, previous = loadState()) {
   const sessionId = payload.session_id || payload.sessionId || previous.sessionId || null;
   const usage = extractUsage(payload);
   const transcriptUsage = payload.transcript_path ? extractUsageFromTranscript(payload.transcript_path) : {};
+  const skillName = extractSkillName(payload);
   const eventCounts = { ...(previous.eventCounts || {}) };
   eventCounts[event] = (eventCounts[event] || 0) + 1;
 
@@ -53,7 +54,37 @@ export function updateStateFromHook(payload, previous = loadState()) {
     turnId: payload.turn_id || payload.turnId || previous.turnId || null,
     transcriptPath: payload.transcript_path || previous.transcriptPath || null,
     eventCounts,
-    usage: { ...(previous.usage || {}), ...transcriptUsage, ...usage }
+    usage: { ...(previous.usage || {}), ...transcriptUsage, ...usage },
+    version: firstString(payload.version, payload.codex_version, payload.codexVersion, payload.app_version, payload.appVersion, previous.version),
+    sessionName: firstString(
+      payload.session_name,
+      payload.sessionName,
+      payload.thread_title,
+      payload.threadTitle,
+      payload.conversation_title,
+      payload.conversationTitle,
+      payload.customTitle,
+      previous.sessionName
+    ),
+    outputStyle: extractOutputStyle(payload) || previous.outputStyle || null,
+    vimMode: firstString(payload.vim?.mode, payload.vim_mode, payload.vimMode, previous.vimMode),
+    voiceStatus: firstBoolean(payload.voice?.enabled, payload.voice_enabled, payload.voiceEnabled, payload.voiceStatus, previous.voiceStatus),
+    remoteControlStatus: firstBoolean(
+      payload.remote_control?.enabled,
+      payload.remoteControl?.enabled,
+      payload.remote_control_enabled,
+      payload.remoteControlEnabled,
+      payload.remoteControlStatus,
+      previous.remoteControlStatus
+    ),
+    accountEmail: firstString(
+      payload.account_email,
+      payload.accountEmail,
+      payload.oauthAccount?.emailAddress,
+      payload.user?.email,
+      previous.accountEmail
+    ),
+    skills: updateSkills(previous.skills || {}, skillName)
   };
   next.samples = updateSamples(previous.samples || [], next.usage, now);
 
@@ -118,6 +149,16 @@ export function extractUsage(value) {
     if (["usagelimitused", "fivehourlimitused"].includes(normalized)) output.usageLimitUsed = number;
     if (["extrausagelimit", "extrausageremaining"].includes(normalized)) output.extraUsageRemaining = number;
     if (["extrausageused", "extrausageutilized"].includes(normalized)) output.extraUsageUsed = number;
+    if (["sessionusage", "sessionusagepercent", "dailyusage", "dailyusagepercent"].includes(normalized)) output.sessionUsagePercent = number;
+    if (["weeklyusage", "weeklyusagepercent"].includes(normalized)) output.weeklyUsagePercent = number;
+    if (["weeklyusageused", "weeklylimitused"].includes(normalized)) output.weeklyUsageUsed = number;
+    if (["weeklyusageremaining", "weeklylimitremaining"].includes(normalized)) output.weeklyUsageRemaining = number;
+    if (["weeklysonnetusage", "weeklysonnetusagepercent", "sonnetweeklyusage"].includes(normalized)) output.weeklySonnetUsagePercent = number;
+    if (["weeklysonnetusageused", "sonnetweeklyusageused"].includes(normalized)) output.weeklySonnetUsageUsed = number;
+    if (["weeklysonnetusageremaining", "sonnetweeklyusageremaining"].includes(normalized)) output.weeklySonnetUsageRemaining = number;
+    if (["weeklyopususage", "weeklyopususagepercent", "opusweeklyusage"].includes(normalized)) output.weeklyOpusUsagePercent = number;
+    if (["weeklyopususageused", "opusweeklyusageused"].includes(normalized)) output.weeklyOpusUsageUsed = number;
+    if (["weeklyopususageremaining", "opusweeklyusageremaining"].includes(normalized)) output.weeklyOpusUsageRemaining = number;
   });
 
   if (!output.totalTokens && (output.inputTokens || output.outputTokens)) {
@@ -127,6 +168,60 @@ export function extractUsage(value) {
     output.contextRemaining = output.contextWindow - output.contextUsed;
   }
   return output;
+}
+
+function firstString(...values) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function firstBoolean(...values) {
+  for (const value of values) {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string" && /^(true|false|on|off|enabled|disabled)$/i.test(value.trim())) {
+      return /^(true|on|enabled)$/i.test(value.trim());
+    }
+  }
+  return null;
+}
+
+function extractOutputStyle(payload) {
+  return firstString(
+    payload.output_style?.name,
+    payload.outputStyle?.name,
+    payload.output_style,
+    payload.outputStyle
+  );
+}
+
+function extractSkillName(payload) {
+  const toolName = firstString(payload.tool_name, payload.toolName, payload.tool);
+  const explicit = firstString(
+    payload.skill?.name,
+    payload.skill_name,
+    payload.skillName,
+    payload.tool_input?.skill,
+    payload.tool_input?.name,
+    payload.toolInput?.skill,
+    payload.toolInput?.name
+  );
+  if (explicit && (!toolName || /^skill$/i.test(toolName))) return explicit;
+  return null;
+}
+
+function updateSkills(previous, skillName) {
+  const uniqueSkills = Array.isArray(previous.uniqueSkills) ? previous.uniqueSkills.slice() : [];
+  const totalInvocations = Number(previous.totalInvocations || 0);
+  if (!skillName) return { ...previous, uniqueSkills, totalInvocations };
+  const nextUnique = uniqueSkills.filter((skill) => skill !== skillName);
+  nextUnique.unshift(skillName);
+  return {
+    lastSkill: skillName,
+    totalInvocations: totalInvocations + 1,
+    uniqueSkills: nextUnique.slice(0, 50)
+  };
 }
 
 function visit(value, callback, seen = new Set()) {

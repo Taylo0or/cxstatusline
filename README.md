@@ -21,12 +21,14 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   mode/branch, fork status, clickable GitHub/GitLab branch links, and PR/MR
   metadata through `gh`/`glab` when available.
 - Codex/session widgets: model, reasoning effort, service tier, permission mode,
-  sandbox mode, session id, run state, last event, last tool, compaction count,
+  sandbox mode, session id/name, output style, vim/voice/remote-control status
+  when present, skills, run state, last event, last tool, compaction count,
   duration, and best-effort token/context/cost metrics when Codex exposes them
   through hook payloads or transcript entries.
-- Usage widgets: token speed, context used/remaining/window, context bars,
-  input/output speed, cached/cache-read/cache-write tokens, five-hour block
-  timer, and local weekly timer.
+- Usage widgets: token/input/output/total speed, session and weekly usage,
+  Sonnet/Opus weekly usage when available, context used/remaining/window,
+  context bars, cached/cache-read/cache-write tokens, five-hour block timer,
+  reset timers, and local weekly timer.
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
   links, flexible spacers/right alignment, path abbreviation, per-widget color
   overrides, custom command output, configurable Powerline separators/caps,
@@ -221,6 +223,10 @@ but does not expose a Claude-style external statusline command that receives
 live status JSON on every refresh. For now, the richer renderer is designed for
 external bars and prompts. If Codex adds command-backed statusline support later,
 the renderer can be wired directly into it.
+
+`cxstatusline` also ships compatibility aliases for many `ccstatusline` widget
+names, so existing layouts can usually be translated by changing the command and
+keeping equivalent widget names where Codex exposes the data.
 
 See [docs/roadmap.md](docs/roadmap.md) for the full parity plan.
 See [docs/parity.md](docs/parity.md) for the current ccstatusline compatibility
