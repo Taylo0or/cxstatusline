@@ -16,9 +16,10 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 - Codex hook collector for session, prompt, tool, compaction, subagent, and stop
   events.
 - Codex native footer installer for all currently known built-in status items.
-- Git widgets: branch, SHA, staged/unstaged/untracked/conflict counts,
-  ahead/behind, insertions, deletions, origin owner/repo, upstream, worktree
-  and branch icon/main/raw rendering, mode/branch, fork status, clickable Git branch and
+- Git widgets: branch, SHA, status indicators, clean/dirty state,
+  staged/unstaged/untracked/conflict counts, ahead/behind, insertions,
+  deletions, origin owner/repo, upstream, worktree and branch icon/main/raw
+  rendering, mode/branch, fork status, clickable Git branch and
   remote owner/repo links for GitHub, GitLab, and compatible self-hosted
   remotes, IDE links for Git root directories, upstream tracking-remote
   fallback, empty-state controls for non-Git and remote widgets,

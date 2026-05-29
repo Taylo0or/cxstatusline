@@ -125,87 +125,79 @@ export const widgetRegistry = {
     description: "Staged, unstaged, untracked, and conflict counts",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      const s = git.status;
-      if (s.clean) return "clean";
-      const parts = [];
-      if (s.staged) parts.push(`+${s.staged}`);
-      if (s.unstaged) parts.push(`~${s.unstaged}`);
-      if (s.untracked) parts.push(`?${s.untracked}`);
-      if (s.conflicts) parts.push(`!${s.conflicts}`);
-      return parts.join(" ");
+      return formatGitStatusIndicators(git.status);
     }
   },
   gitStaged: {
-    description: "Number of staged files",
+    description: "Staged changes indicator",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      return git.status.staged ? String(git.status.staged) : "";
+      return formatGitFlag(git.status.staged, widget, "+");
     }
   },
   gitStagedFiles: {
     description: "Number of staged files",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      return git.status.staged ? String(git.status.staged) : "";
+      return formatGitCount("S", git.status.staged, widget);
     }
   },
   gitUnstaged: {
-    description: "Number of unstaged files",
+    description: "Unstaged changes indicator",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      return git.status.unstaged ? String(git.status.unstaged) : "";
+      return formatGitFlag(git.status.unstaged, widget, "*");
     }
   },
   gitUnstagedFiles: {
     description: "Number of unstaged files",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      return git.status.unstaged ? String(git.status.unstaged) : "";
+      return formatGitCount("M", git.status.unstaged, widget);
     }
   },
   gitUntracked: {
-    description: "Number of untracked files",
+    description: "Untracked files indicator",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      return git.status.untracked ? String(git.status.untracked) : "";
+      return formatGitFlag(git.status.untracked, widget, "?");
     }
   },
   gitUntrackedFiles: {
     description: "Number of untracked files",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      return git.status.untracked ? String(git.status.untracked) : "";
+      return formatGitCount("?", git.status.untracked, widget);
     }
   },
   gitConflicts: {
     description: "Number of merge conflict files",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      return git.status.conflicts ? String(git.status.conflicts) : "";
+      const count = Number(git.status.conflicts || 0);
+      return widget.rawValue || widget.label === "" ? String(count) : `\u26A0 ${count}`;
     }
   },
   gitClean: {
     description: "Git clean or dirty state",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      return git.status.clean ? "clean" : "dirty";
+      return formatGitClean(git.status.clean, widget);
     }
   },
   gitCleanStatus: {
     description: "Git clean or dirty state",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      return git.status.clean ? "clean" : "dirty";
+      return formatGitClean(git.status.clean, widget);
     }
   },
   gitAheadBehind: {
     description: "Git upstream ahead and behind counts",
     render: ({ git, widget }) => {
       if (!git.isRepo) return gitNoGit(widget);
-      const parts = [];
-      if (git.status.ahead) parts.push(`ahead ${git.status.ahead}`);
-      if (git.status.behind) parts.push(`behind ${git.status.behind}`);
-      return parts.join(" ");
+      if (!git.upstream && !git.status.ahead && !git.status.behind) return gitNoGit(widget, "(no upstream)");
+      return formatGitAheadBehind(git.status, widget);
     }
   },
   gitChanges: {
@@ -1461,6 +1453,38 @@ function gitBranchLinkEnabled(widget) {
 
 function formatGitBranch(branch, widget = {}) {
   return widget.rawValue || widget.label === "" ? branch : `${GIT_BRANCH_ICON} ${branch}`;
+}
+
+function formatGitStatusIndicators(status = {}) {
+  const parts = [];
+  if (status.conflicts) parts.push("!");
+  if (status.staged) parts.push("+");
+  if (status.unstaged) parts.push("*");
+  if (status.untracked) parts.push("?");
+  return parts.join("");
+}
+
+function formatGitFlag(count, widget = {}, symbol) {
+  if (!count) return "";
+  return widget.rawValue || widget.label === "" ? "true" : widget.character || symbol;
+}
+
+function formatGitCount(prefix, count, widget = {}) {
+  const value = Number(count || 0);
+  return widget.rawValue || widget.label === "" ? String(value) : `${prefix}:${value}`;
+}
+
+function formatGitClean(clean, widget = {}) {
+  if (widget.rawValue || widget.label === "") return clean ? "clean" : "dirty";
+  return clean ? "\u2713" : "\u2717";
+}
+
+function formatGitAheadBehind(status = {}, widget = {}) {
+  const ahead = Number(status.ahead || 0);
+  const behind = Number(status.behind || 0);
+  if (!ahead && !behind) return "";
+  if (widget.rawValue || widget.label === "") return `${ahead},${behind}`;
+  return `${ahead ? `\u2191${ahead}` : ""}${behind ? `\u2193${behind}` : ""}`;
 }
 
 function metadataFlag(widget, key) {

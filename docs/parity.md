@@ -43,11 +43,12 @@ equivalent data or extension points.
   timeout, max-width, `commandPath` compatibility, and optional ANSI
   preservation, and OSC8 link widgets including `metadata.url`/`metadata.text`
   compatibility.
-- Git branch, SHA, status, clean/dirty, staged, unstaged, untracked, conflicts,
-  ahead/behind, insertions, deletions, origin, upstream owner/repo, tracking
-  remote fallback, fork status, upstream-style branch/worktree icon/raw/no-git
-  rendering, clickable branch and remote owner/repo links, Git root directory
-  IDE links for VS Code and Cursor, remote and non-Git empty-state hiding,
+- Git branch, SHA, upstream-style status indicators, clean/dirty symbols,
+  staged/unstaged/untracked/conflict counts, ahead/behind arrows, insertions,
+  deletions, origin, upstream owner/repo, tracking remote fallback, fork status,
+  upstream-style branch/worktree icon/raw/no-git rendering, clickable branch
+  and remote owner/repo links, Git root directory IDE links for VS Code and
+  Cursor, remote and non-Git empty-state hiding,
   `ownerOnlyWhenFork`, `hideWhenNotFork`, and GitHub/GitLab PR/MR widgets with
   combined status/title/raw display controls.
 - Persistent Git cache with TTL plus `.git/HEAD` and `.git/index`

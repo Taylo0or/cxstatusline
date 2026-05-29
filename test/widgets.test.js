@@ -124,6 +124,56 @@ test("renders Git no-repo empty states and hideNoGit metadata", () => {
   assert.equal(renderWidget({ type: "gitStatus", metadata: { hideNoGit: "true" } }, context), "");
 });
 
+test("renders upstream-style Git status indicators and file counts", () => {
+  const context = {
+    config: {},
+    state: {},
+    git: {
+      isRepo: true,
+      upstream: "origin/main",
+      status: {
+        staged: 3,
+        unstaged: 2,
+        untracked: 1,
+        conflicts: 2,
+        ahead: 4,
+        behind: 5,
+        clean: false
+      }
+    },
+    codexConfig: {}
+  };
+  const cleanContext = {
+    ...context,
+    git: {
+      ...context.git,
+      status: { staged: 0, unstaged: 0, untracked: 0, conflicts: 0, ahead: 0, behind: 0, clean: true }
+    }
+  };
+
+  assert.equal(renderWidget({ type: "gitStatus" }, context), "!+*?");
+  assert.equal(renderWidget({ type: "gitStatus" }, cleanContext), "");
+  assert.equal(renderWidget({ type: "gitCleanStatus" }, context), "\u2717");
+  assert.equal(renderWidget({ type: "gitCleanStatus", rawValue: true }, context), "dirty");
+  assert.equal(renderWidget({ type: "gitCleanStatus" }, cleanContext), "\u2713");
+  assert.equal(renderWidget({ type: "gitCleanStatus", rawValue: true }, cleanContext), "clean");
+  assert.equal(renderWidget({ type: "gitStaged" }, context), "+");
+  assert.equal(renderWidget({ type: "gitStaged", character: "S" }, context), "S");
+  assert.equal(renderWidget({ type: "gitStaged", rawValue: true }, context), "true");
+  assert.equal(renderWidget({ type: "gitUnstaged" }, context), "*");
+  assert.equal(renderWidget({ type: "gitUntracked" }, context), "?");
+  assert.equal(renderWidget({ type: "gitStagedFiles" }, context), "S:3");
+  assert.equal(renderWidget({ type: "gitStagedFiles", rawValue: true }, context), "3");
+  assert.equal(renderWidget({ type: "gitUnstagedFiles" }, context), "M:2");
+  assert.equal(renderWidget({ type: "gitUntrackedFiles" }, context), "?:1");
+  assert.equal(renderWidget({ type: "gitConflicts" }, context), "\u26A0 2");
+  assert.equal(renderWidget({ type: "gitConflicts", rawValue: true }, context), "2");
+  assert.equal(renderWidget({ type: "gitAheadBehind" }, context), "\u21914\u21935");
+  assert.equal(renderWidget({ type: "gitAheadBehind", rawValue: true }, context), "4,5");
+  assert.equal(renderWidget({ type: "gitAheadBehind" }, { ...context, git: { ...context.git, upstream: "", status: { ...context.git.status, ahead: 0, behind: 0 } } }), "(no upstream)");
+  assert.equal(renderWidget({ type: "gitAheadBehind", hideNoGit: true }, { ...context, git: { ...context.git, upstream: "", status: { ...context.git.status, ahead: 0, behind: 0 } } }), "");
+});
+
 test("renders Git fork status raw values and hideWhenNotFork metadata", () => {
   const base = {
     config: {},

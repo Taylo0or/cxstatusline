@@ -175,6 +175,7 @@ function convertCcstatuslineWidget(widget, settings) {
     "symbol",
     "command",
     "commandPath",
+    "character",
     "href",
     "url",
     "timeout",

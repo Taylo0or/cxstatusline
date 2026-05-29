@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.50
+
+- Aligned Git status widgets with upstream `ccstatusline`: compact status
+  indicators, clean `✓`/dirty `✗`, boolean staged/unstaged/untracked symbols,
+  prefixed file counts, conflict counts, and arrow-style ahead/behind output.
+
 ## 0.2.49
 
 - Aligned Git Branch rendering with upstream `ccstatusline`: default `⎇`

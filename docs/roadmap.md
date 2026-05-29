@@ -13,7 +13,8 @@ while staying honest about Codex's current extension points.
 - Interactive and non-interactive configuration command, including direct
   widget, separator, terminal width, global formatting, Powerline separator,
   and Powerline alignment flags.
-- Git branch, SHA, status, ahead/behind, and diff widgets.
+- Git branch, SHA, upstream-style status indicators, ahead/behind, and diff
+  widgets.
 - Git origin owner/repo, upstream owner/repo, fork status, upstream-style
   branch/worktree icon/raw/no-git rendering, PR/MR detection, clickable branch
   widgets, clickable Git remote owner/repo widgets, Git root directory IDE links,
