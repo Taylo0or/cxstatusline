@@ -42,7 +42,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
         { type: "reset-timer", color: "brightYellow", metadata: { format: "timestamp", timeZone: "UTC", timezone: "UTC", hour12: "false", absolute: "true" } },
         { type: "jj-workspace", metadata: { hideNoJj: "true" } },
         { type: "extra-usage-remaining", metadata: { hideIfDisabled: "true" } },
-        { type: "skills", metadata: { mode: "list", listLimit: "2", hideWhenEmpty: "true" } }
+        { type: "skills", metadata: { mode: "list", listLimit: "2", hideWhenEmpty: "true" } },
+        { type: "block-timer", metadata: { display: "slider", invert: "true", compact: "true" } }
       ]
     ]
   });
@@ -114,4 +115,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[1][6].mode, "list");
   assert.equal(config.lines[1][6].limit, 2);
   assert.equal(config.lines[1][6].hideWhenEmpty, true);
+  assert.equal(config.lines[1][7].type, "blockTimer");
+  assert.equal(config.lines[1][7].display, "slider");
+  assert.equal(config.lines[1][7].invert, true);
+  assert.equal(config.lines[1][7].compact, true);
 });

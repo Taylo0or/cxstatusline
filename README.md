@@ -39,8 +39,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   `progress-short`, `slider`, `slider-only`), percent display modes with
   invert/cursor controls, extra usage disabled-state hiding,
   cached/cache-read/cache-write tokens,
-  five-hour block timer, reset timers with timestamp/time zone aliases and
-  progress/slider modes, and local weekly timer.
+  five-hour block timer with compact/progress/slider modes, reset timers with
+  timestamp/time zone aliases and progress/slider modes, and local weekly timer.
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
   links including `ccstatusline` Link metadata, flexible spacers/right
   alignment, manual separator collapse, path abbreviation, default

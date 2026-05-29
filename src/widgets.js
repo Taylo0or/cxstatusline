@@ -494,7 +494,7 @@ export const widgetRegistry = {
   },
   blockTimer: {
     description: "Elapsed time within the current five-hour usage block",
-    render: ({ state }) => state.startedAt ? formatDuration(blockProgress(Date.parse(state.startedAt)).elapsed) : ""
+    render: ({ state, widget }) => formatBlockTimer(state.startedAt ? blockProgress(Date.parse(state.startedAt)) : null, widget)
   },
   blockRemaining: {
     description: "Remaining time in the current five-hour usage block",
@@ -1099,6 +1099,45 @@ function formatSessionDuration(durationMs) {
   if (hours === 0) return `${minutes}m`;
   if (minutes === 0) return `${hours}hr`;
   return `${hours}hr ${minutes}m`;
+}
+
+function formatBlockTimer(progress, widget = {}) {
+  const display = usageDisplayMode(widget);
+  const percent = progress ? progress.ratio * 100 : 0;
+  const displayPercent = progress && metadataFlag(widget, "invert") === true ? 100 - percent : percent;
+
+  if (display === "progress" || display === "progress-short") {
+    const width = Number(widget.width || (display === "progress" ? 32 : 16));
+    return formatRawOrLabeledValue(widget, "Block ", renderProgressBar(displayPercent, width, widget.style || widget.barStyle, {
+      decimals: 1
+    }));
+  }
+
+  if (display === "slider" || display === "slider-only") {
+    const slider = renderSlider(displayPercent, Number(widget.width || 10));
+    const output = display === "slider-only" ? slider : `${slider} ${formatPercent(displayPercent, 1)}`;
+    return formatRawOrLabeledValue(widget, "Block ", output);
+  }
+
+  const compact = metadataFlag(widget, "compact") === true;
+  const elapsed = progress ? formatUsageDuration(progress.elapsed, compact, false) : compact ? "0m" : "0hr 0m";
+  return formatRawOrLabeledValue(widget, "Block: ", elapsed);
+}
+
+function formatUsageDuration(durationMs, compact = false, useDays = true) {
+  const clampedMs = Math.max(0, Number(durationMs || 0));
+  const totalHours = Math.floor(clampedMs / 3600000);
+  const minutes = Math.floor((clampedMs % 3600000) / 60000);
+  const dayCount = useDays ? Math.floor(totalHours / 24) : 0;
+  const hours = useDays ? totalHours % 24 : totalHours;
+  const hourLabel = compact ? "h" : "hr";
+  const separator = compact ? "" : " ";
+  const parts = [
+    dayCount > 0 && `${dayCount}d`,
+    hours > 0 && `${hours}${hourLabel}`,
+    minutes > 0 && `${minutes}m`
+  ].filter(Boolean);
+  return parts.length ? parts.join(separator) : "0m";
 }
 
 function statusState(value) {

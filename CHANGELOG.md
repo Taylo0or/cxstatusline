@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.46
+
+- Added upstream-compatible Block Timer `metadata.display` rendering for
+  progress, progress-short, slider, and slider-only modes.
+- Added Block Timer raw/default labels, compact time formatting, inverted
+  progress rendering, settings import preservation, and TUI controls.
+
 ## 0.2.45
 
 - Added upstream-compatible raw/default labels for `sessionClock`, `version`,

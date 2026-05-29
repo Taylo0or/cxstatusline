@@ -30,8 +30,9 @@ while staying honest about Codex's current extension points.
 - Token speed, input speed, output speed, total speed, usage, weekly usage,
   reset timer timestamp modes, and cache token widgets from hook state,
   including upstream-compatible usage/context progress, slider, invert, and
-  cursor display metadata, Context Bar detail display metadata, reset timer
-  progress/slider metadata, and extra usage disabled-state hiding.
+  cursor display metadata, Context Bar detail display metadata, Block Timer
+  compact/progress/slider metadata, reset timer progress/slider metadata, and
+  extra usage disabled-state hiding.
 - Custom command widget with render-context stdin JSON, timeout, max-width,
   `commandPath` compatibility, and optional ANSI preservation.
 - Jujutsu root, active workspace, revision, description, bookmark list,

@@ -408,6 +408,13 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "extraUsageRemaining" }, { ...context, state: { usage: { extraUsageRemaining: 0 } } }), "0");
   assert.equal(renderWidget({ type: "extraUsageRemaining" }, { ...context, state: { usage: { extraUsageEnabled: false } } }), "n/a");
   assert.equal(renderWidget({ type: "extraUsageUtilization", metadata: { hideIfDisabled: "true" } }, { ...context, state: { usage: { extraUsageEnabled: false } } }), "");
+  const blockContext = { ...context, state: { startedAt: new Date(Date.now() - 13_500_000).toISOString() } };
+  assert.equal(renderWidget({ type: "blockTimer" }, blockContext), "Block: 3hr 45m");
+  assert.equal(renderWidget({ type: "blockTimer", rawValue: true }, blockContext), "3hr 45m");
+  assert.equal(renderWidget({ type: "blockTimer", metadata: { compact: "true" } }, blockContext), "Block: 3h45m");
+  assert.equal(renderWidget({ type: "blockTimer", metadata: { display: "progress-short", invert: "true" } }, blockContext), "Block [████░░░░░░░░░░░░] 25.0%");
+  assert.equal(renderWidget({ type: "blockTimer", metadata: { display: "slider-only" } }, blockContext), "Block ▓▓▓▓▓▓▓▓░░");
+  assert.equal(renderWidget({ type: "blockTimer" }, { ...context, state: {} }), "Block: 0hr 0m");
   assert.equal(renderWidget({ type: "contextPercentageUsable" }, context), "50%");
   assert.equal(renderWidget({ type: "claudeSessionId" }, context), "abcdef12");
   assert.equal(renderWidget({ type: "sessionName" }, context), "Sprint");

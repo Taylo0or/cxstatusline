@@ -17,6 +17,7 @@ const MERGE_MODES = ["off", "merge", "no-padding"];
 const IDE_LINK_MODES = ["off", "vscode", "cursor"];
 const USED_REMAINING_MODES = ["used", "remaining"];
 const TIMER_MODES = ["duration", "timestamp", "both", "bar"];
+const BLOCK_TIMER_DISPLAY_MODES = ["time", "progress", "progress-short", "slider", "slider-only"];
 const BAR_STYLES = ["ascii", "blocks", "dots"];
 const USAGE_DISPLAY_MODES = ["percent", "progress", "progress-short", "slider", "slider-only"];
 const DEFAULT_FORMATS = ["default", "word", "letter", "icon"];
@@ -259,6 +260,7 @@ export function describeWidgetOptions(widget) {
   if (metadataFlag(item, "hideIfDisabled")) parts.push("hide-if-disabled");
   if (metadataFlag(item, "hideStatus")) parts.push("hide-status");
   if (metadataFlag(item, "hideTitle")) parts.push("hide-title");
+  if (metadataFlag(item, "compact")) parts.push("compact");
   if (metadataValue(item, "segments") !== undefined) parts.push(`segments=${metadataValue(item, "segments")}`);
   if (item.fish || metadataFlag(item, "fishStyle")) parts.push("fish");
   if (metadataFlag(item, "abbreviateHome")) parts.push("home=~");
@@ -344,6 +346,13 @@ export function buildWidgetOptionRows(widget) {
       { key: "cursor", label: "Show cursor", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "cursor"))) }
     );
   }
+  if (type === "blockTimer") {
+    rows.push(
+      { key: "display", label: "Timer display", value: blockTimerDisplayMode(item) },
+      { key: "invert", label: "Invert progress", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "invert"))) },
+      { key: "compact", label: "Compact time", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "compact"))) }
+    );
+  }
   if (USAGE_WIDGETS.has(type) || BAR_WIDGETS.has(type) || RESET_TIMER_WIDGETS.has(type)) {
     rows.push({ key: "style", label: "Bar style", value: item.barStyle || item.style || "ascii" });
   }
@@ -408,9 +417,11 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "home") return item.home === false ? deleteKey(item, "home") : { ...item, home: false };
   if (key === "fish") return toggleOrDelete(item, "fish");
   if (key === "mode") return setModeValue(item, nextValue(USED_REMAINING_MODES, item.mode || "used"));
+  if (key === "display" && (resolveWidgetType(item.type) || item.type) === "blockTimer") return setBlockTimerDisplayValue(item, nextValue(BLOCK_TIMER_DISPLAY_MODES, blockTimerDisplayMode(item)));
   if (key === "display") return setUsageDisplayValue(item, nextValue(USAGE_DISPLAY_MODES, usageDisplayMode(item)));
   if (key === "invert") return toggleOrDeleteMetadataAware(item, "invert");
   if (key === "cursor") return toggleOrDeleteMetadataAware(item, "cursor");
+  if (key === "compact") return toggleOrDeleteMetadataAware(item, "compact");
   if (key === "style") return setStyleValue(item, nextValue(BAR_STYLES, item.barStyle || item.style || "ascii"));
   if (key === "width") return setNumericField(item, "width", value);
   if (key === "timerMode") return setModeValue(item, nextValue(TIMER_MODES, item.mode || item.format || "duration"));
@@ -1620,6 +1631,13 @@ function setUsageDisplayValue(item, display) {
   return next;
 }
 
+function setBlockTimerDisplayValue(item, display) {
+  const next = removeMetadataKeys({ ...item }, ["display"]);
+  delete next.display;
+  if (display && display !== "time") next.display = display;
+  return next;
+}
+
 function setFormatValue(item, format) {
   const type = resolveWidgetType(item.type) || item.type;
   const next = removeMetadataKeys({ ...item }, ["format"]);
@@ -1646,6 +1664,11 @@ function defaultFormatForType(type) {
 function usageDisplayMode(item) {
   const mode = String(metadataValue(item, "display") || item?.display || "percent");
   return USAGE_DISPLAY_MODES.includes(mode) ? mode : "percent";
+}
+
+function blockTimerDisplayMode(item) {
+  const mode = String(metadataValue(item, "display") || item?.display || "time");
+  return BLOCK_TIMER_DISPLAY_MODES.includes(mode) ? mode : "time";
 }
 
 function timerTimeZone(item) {
@@ -1694,6 +1717,7 @@ function clearWidgetOptions(item) {
     "absolute",
     "invert",
     "cursor",
+    "compact",
     "style",
     "barStyle",
     "timezone",
