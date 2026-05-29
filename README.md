@@ -28,7 +28,7 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 - Usage widgets: token/input/output/total speed, session and weekly usage,
   Sonnet/Opus weekly usage when available, context used/remaining/window,
   context bars, cached/cache-read/cache-write tokens, five-hour block timer,
-  reset timers, and local weekly timer.
+  reset timers with timestamp/time zone modes, and local weekly timer.
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
   links, flexible spacers/right alignment, path abbreviation, per-widget color
   overrides, custom command output, configurable Powerline separators/caps,
@@ -203,6 +203,18 @@ Render with `ccstatusline`-style widget names:
 
 ```sh
 cxstatusline render --format plain --widgets model,git-branch,tokens-total,current-working-dir
+```
+
+Render reset timers as exact timestamps:
+
+```sh
+cxstatusline render --format plain --widgets reset-timer --config ~/.config/cxstatusline/config.json
+```
+
+Example widget config:
+
+```json
+{ "type": "blockResetTimer", "format": "timestamp", "timeZone": "UTC", "hour12": false }
 ```
 
 Import an existing `ccstatusline` config:

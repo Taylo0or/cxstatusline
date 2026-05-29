@@ -432,8 +432,8 @@ export const widgetRegistry = {
     render: ({ state }) => state.startedAt ? formatDuration(blockProgress(Date.parse(state.startedAt)).remaining) : ""
   },
   blockResetTimer: {
-    description: "Remaining time in the current five-hour usage block",
-    render: ({ state }) => state.startedAt ? formatDuration(blockProgress(Date.parse(state.startedAt)).remaining) : ""
+    description: "Remaining time or reset timestamp for the current five-hour usage block",
+    render: ({ state, widget }) => state.startedAt ? formatResetTimer(blockProgress(Date.parse(state.startedAt)), widget) : ""
   },
   blockBar: {
     description: "Progress bar for the current five-hour usage block",
@@ -452,8 +452,8 @@ export const widgetRegistry = {
     render: () => formatDuration(weekProgress().remaining)
   },
   weeklyResetTimer: {
-    description: "Remaining time in the current local calendar week",
-    render: () => formatDuration(weekProgress().remaining)
+    description: "Remaining time or reset timestamp for the current local calendar week",
+    render: ({ widget }) => formatResetTimer(weekProgress(), widget)
   },
   weeklyBar: {
     description: "Progress bar for the current local calendar week",
@@ -832,7 +832,12 @@ function blockProgress(startedAtMs, nowMs = Date.now()) {
   const elapsedSinceStart = Math.max(0, nowMs - startedAtMs);
   const elapsed = elapsedSinceStart % FIVE_HOURS_MS;
   const remaining = FIVE_HOURS_MS - elapsed;
-  return { elapsed, remaining, ratio: elapsed / FIVE_HOURS_MS };
+  return {
+    elapsed,
+    remaining,
+    ratio: elapsed / FIVE_HOURS_MS,
+    resetAt: new Date(nowMs + remaining)
+  };
 }
 
 function weekProgress(now = new Date()) {
@@ -842,13 +847,60 @@ function weekProgress(now = new Date()) {
   start.setDate(start.getDate() - day);
   const elapsed = now.getTime() - start.getTime();
   const remaining = WEEK_MS - elapsed;
-  return { elapsed, remaining, ratio: elapsed / WEEK_MS };
+  return {
+    elapsed,
+    remaining,
+    ratio: elapsed / WEEK_MS,
+    resetAt: new Date(start.getTime() + WEEK_MS)
+  };
 }
 
 function renderBar(ratio, width, style) {
   const chars = barChars(style);
   const filled = Math.max(0, Math.min(width, Math.round(ratio * width)));
   return `${chars.left}${chars.full.repeat(filled)}${chars.empty.repeat(width - filled)}${chars.right} ${Math.round(ratio * 100)}%`;
+}
+
+export function formatResetTimer(progress, widget = {}) {
+  const mode = widget.mode || widget.format || (widget.timestamp ? "timestamp" : "duration");
+  if (mode === "timestamp" || mode === "time" || mode === "clock") return formatResetTimestamp(progress.resetAt, widget);
+  if (mode === "iso") return progress.resetAt instanceof Date ? progress.resetAt.toISOString() : "";
+  if (mode === "both") {
+    const duration = formatDuration(progress.remaining);
+    const timestamp = formatResetTimestamp(progress.resetAt, widget);
+    return timestamp ? `${duration} (${timestamp})` : duration;
+  }
+  if (mode === "bar" || mode === "progress") return renderBar(progress.ratio, Number(widget.width || 16), widget.style);
+  return formatDuration(progress.remaining);
+}
+
+function formatResetTimestamp(date, widget = {}) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+  const options = {
+    hour: "2-digit",
+    minute: "2-digit"
+  };
+  if (widget.date || widget.includeDate) {
+    options.month = "short";
+    options.day = "numeric";
+  }
+  if (widget.timeZone) options.timeZone = widget.timeZone;
+  const hour12 = parseBooleanOption(widget.hour12 ?? widget.twelveHour);
+  if (hour12 !== null) options.hour12 = hour12;
+
+  try {
+    return new Intl.DateTimeFormat(widget.locale || "en", options).format(date);
+  } catch {
+    const fallback = { ...options };
+    delete fallback.timeZone;
+    return new Intl.DateTimeFormat(widget.locale || "en", fallback).format(date);
+  }
+}
+
+function parseBooleanOption(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string" && /^(true|false)$/i.test(value)) return value.toLowerCase() === "true";
+  return null;
 }
 
 function barChars(style = "ascii") {

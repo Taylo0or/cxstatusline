@@ -149,7 +149,7 @@ function convertCcstatuslineWidget(widget, settings) {
   const metadata = widget.metadata && typeof widget.metadata === "object" ? widget.metadata : {};
   for (const [key, value] of Object.entries(metadata)) {
     if (value === undefined || value === null) continue;
-    if (["format", "mode", "style", "segments", "fish", "home", "limit", "listLimit"].includes(key)) {
+    if (["format", "mode", "style", "segments", "fish", "home", "limit", "listLimit", "locale", "timeZone", "hour12", "twelveHour", "date", "includeDate"].includes(key)) {
       output[key === "listLimit" ? "limit" : key] = coerceMetadataValue(value);
     }
   }

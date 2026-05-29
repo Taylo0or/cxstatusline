@@ -19,8 +19,8 @@ while staying honest about Codex's current extension points.
   session name, output style, vim mode, voice status, remote-control status,
   skills, account email, compaction, duration, memory, token, context, usage,
   block timer, weekly timer, cost, and custom text widgets.
-- Token speed, input speed, output speed, total speed, usage, weekly usage, and
-  cache token widgets from hook state.
+- Token speed, input speed, output speed, total speed, usage, weekly usage,
+  reset timer timestamp modes, and cache token widgets from hook state.
 - Custom command widget.
 - Basic Jujutsu root, workspace, revision, description, bookmark, change,
   insertion, and deletion widgets.

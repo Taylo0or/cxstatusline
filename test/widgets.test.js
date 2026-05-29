@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatPath, inferContextWindow, parseGithubPullRequest, parseGitlabMergeRequest, parseJjStat, renderWidget, resolveWidgetType } from "../src/widgets.js";
+import { formatPath, formatResetTimer, inferContextWindow, parseGithubPullRequest, parseGitlabMergeRequest, parseJjStat, renderWidget, resolveWidgetType } from "../src/widgets.js";
 import { stripAnsi } from "../src/util.js";
 
 test("infers context windows from model suffixes", () => {
@@ -161,6 +161,20 @@ test("renders ccstatusline widget aliases", () => {
   assert.equal(renderWidget({ type: "current-working-dir", segments: 1, home: false }, context), "/.../project");
   assert.equal(renderWidget({ type: "separator", text: "::" }, context), "::");
   assert.match(renderWidget({ type: "reset-timer" }, context), /\d+[hms]/);
+});
+
+test("formats reset timers as duration, timestamp, iso, both, and progress bar", () => {
+  const progress = {
+    remaining: 90_000,
+    ratio: 0.5,
+    resetAt: new Date("2026-01-01T12:30:00.000Z")
+  };
+
+  assert.equal(formatResetTimer(progress), "1m 30s");
+  assert.equal(formatResetTimer(progress, { format: "iso" }), "2026-01-01T12:30:00.000Z");
+  assert.match(formatResetTimer(progress, { format: "timestamp", timeZone: "UTC", hour12: false, locale: "en-US" }), /12:30/);
+  assert.match(formatResetTimer(progress, { format: "both", timeZone: "UTC", hour12: false, locale: "en-US" }), /^1m 30s \(.*12:30.*\)$/);
+  assert.equal(formatResetTimer(progress, { format: "bar", width: 4 }), "[##--] 50%");
 });
 
 test("parses Jujutsu diff stats", () => {

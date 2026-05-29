@@ -37,7 +37,8 @@ equivalent data or extension points.
   window, cost, usage remaining/utilization, session usage, weekly usage,
   weekly Sonnet/Opus usage, token speed, input speed, output speed, and total
   speed widgets when Codex hook/transcript data provides the underlying fields.
-- Five-hour block timer, reset timer, and local weekly timer widgets.
+- Five-hour block timer, reset timer, and local weekly timer widgets, including
+  reset timestamp, time zone, locale, 12/24-hour, combined, and bar modes.
 - Session id/name, version, output style, vim mode, voice status,
   remote-control status, skills, account email, run state, last event, last
   tool, compaction count, duration, memory, and terminal width widgets.

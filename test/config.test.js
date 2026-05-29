@@ -23,7 +23,7 @@ test("converts ccstatusline settings into cxstatusline config", () => {
       ],
       [
         { type: "flex-separator" },
-        { type: "reset-timer", color: "brightYellow" }
+        { type: "reset-timer", color: "brightYellow", metadata: { format: "timestamp", timeZone: "UTC", hour12: "false" } }
       ]
     ]
   });
@@ -46,4 +46,7 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[1][0].type, "spacer");
   assert.equal(config.lines[1][1].type, "blockResetTimer");
   assert.equal(config.lines[1][1].fg, "#eab308");
+  assert.equal(config.lines[1][1].format, "timestamp");
+  assert.equal(config.lines[1][1].timeZone, "UTC");
+  assert.equal(config.lines[1][1].hour12, false);
 });

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.12
+
+- Added reset timer display modes for duration, timestamp, ISO timestamp,
+  combined duration/timestamp, and progress bars.
+- Added locale, time zone, 12/24-hour, and include-date options for reset timer
+  timestamps.
+- Preserved reset timer timestamp metadata when importing `ccstatusline`
+  settings.
+
 ## 0.2.11
 
 - Added `cxstatusline import ccstatusline` / `migrate ccstatusline` to convert
