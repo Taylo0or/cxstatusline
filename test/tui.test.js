@@ -116,6 +116,15 @@ test("TUI widget option helpers expose type-specific rows", () => {
   assert.ok(timerRows.includes("timerMode"));
   assert.ok(timerRows.includes("timeZone"));
   assert.ok(timerRows.includes("hour12"));
+
+  const statusRows = buildWidgetOptionRows({ type: "voiceStatus", metadata: { format: "icon", nerdFont: "true" } });
+  assert.equal(statusRows.find((row) => row.key === "format")?.value, "icon");
+  assert.equal(statusRows.find((row) => row.key === "nerdFont")?.value, "on");
+
+  const compactionRows = buildWidgetOptionRows({ type: "compactions" }).map((row) => row.key);
+  assert.ok(compactionRows.includes("format"));
+  assert.ok(compactionRows.includes("nerdFont"));
+  assert.ok(compactionRows.includes("hideZero"));
 });
 
 test("TUI widget option helpers apply common and specific settings", () => {
@@ -138,6 +147,11 @@ test("TUI widget option helpers apply common and specific settings", () => {
   const timer = applyWidgetOption({ type: "blockResetTimer" }, "timerMode");
   assert.deepEqual(timer, { type: "blockResetTimer", mode: "timestamp" });
 
+  assert.deepEqual(applyWidgetOption({ type: "vimMode" }, "format"), { type: "vimMode", format: "icon-letter" });
+  assert.deepEqual(applyWidgetOption({ type: "voiceStatus", metadata: { format: "icon" } }, "format"), { type: "voiceStatus", format: "icon-text" });
+  assert.deepEqual(applyWidgetOption({ type: "voiceStatus", metadata: { nerdFont: "true" } }, "nerdFont"), { type: "voiceStatus" });
+  assert.deepEqual(applyWidgetOption({ type: "compactions" }, "hideZero"), { type: "compactions", hideZero: true });
+
   assert.deepEqual(applyWidgetOption({ type: "gitBranch", linkToGitHub: true }, "linkToRepo"), { type: "gitBranch" });
   assert.deepEqual(applyWidgetOption({ type: "gitBranch", metadata: { linkToGitHub: "true" } }, "linkToRepo"), { type: "gitBranch" });
   assert.deepEqual(applyWidgetOption({ type: "gitOriginRepo" }, "linkToRepo"), { type: "gitOriginRepo", linkToRepo: true });
@@ -156,4 +170,5 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.equal(describeWidgetOptions({ type: "gitBranch", linkToRepo: true }), "repo-link");
   assert.equal(describeWidgetOptions({ type: "gitOriginRepo", hideNoRemote: true }), "hide-no-remote");
   assert.equal(describeWidgetOptions({ type: "gitRootDir", linkToIDE: "cursor" }), "link-cursor");
+  assert.equal(describeWidgetOptions({ type: "compactions", nerdFont: true, hideZero: true }), "nerd-font, hide-zero");
 });

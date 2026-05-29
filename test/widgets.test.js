@@ -273,8 +273,19 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "vimMode", format: "letter" }, context), "N");
   assert.equal(renderWidget({ type: "voiceStatus" }, context), "voice on");
   assert.equal(renderWidget({ type: "remoteControlStatus" }, context), "remote off");
+  assert.equal(renderWidget({ type: "vimMode", metadata: { format: "icon-letter", nerdFont: "true" } }, context), "\uE62B N");
+  assert.equal(renderWidget({ type: "voiceStatus", format: "icon" }, context), "\u{1F3A4} \u25C9");
+  assert.equal(renderWidget({ type: "remoteControlStatus", format: "label-mark" }, context), "remote \u2717");
   assert.equal(renderWidget({ type: "skills", mode: "list" }, context), "review-pr, commit");
   assert.equal(renderWidget({ type: "claudeAccountEmail" }, context), "dev@example.com");
+  assert.equal(renderWidget({ type: "compactions", format: "icon-space-number", nerdFont: true }, {
+    ...context,
+    state: { compactions: 2 }
+  }), "\uF021 2");
+  assert.equal(renderWidget({ type: "compactions", hideZero: true }, {
+    ...context,
+    state: { compactions: 0 }
+  }), "");
 });
 
 test("resolves ccstatusline kebab-case widget names", () => {

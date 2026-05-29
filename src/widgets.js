@@ -6,6 +6,18 @@ export const SPACER = "__CXSTATUSLINE_SPACER__";
 const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const PACKAGE = readJson(join(repoRoot, "package.json"), {});
+const VIM_ICON = "v";
+const VIM_NERD_FONT_ICON = "\uE62B";
+const VOICE_ICON = "\u{1F3A4}";
+const VOICE_NERD_FONT_ON = "\uF130";
+const VOICE_NERD_FONT_OFF = "\uF131";
+const REMOTE_ICON = "\u{1F4E1}";
+const REMOTE_NERD_FONT_ON = "\uF1EB";
+const REMOTE_NERD_FONT_OFF = "\uF6AC";
+const COMPACTION_ICON = "\u21BB";
+const COMPACTION_NERD_FONT_ICON = "\uF021";
+const STATUS_DOT_ON = "\u25C9";
+const STATUS_DOT_OFF = "\u25CB";
 
 const WIDGET_ALIASES = {
   "current-working-dir": "cwd",
@@ -523,11 +535,22 @@ export const widgetRegistry = {
   },
   voiceStatus: {
     description: "Voice input status when present in hook state",
-    render: ({ state }) => formatOnOff(state.voiceStatus, "voice")
+    render: ({ state, widget }) => formatStatusValue(state.voiceStatus, "voice", widget, {
+      icon: VOICE_ICON,
+      nerdOn: VOICE_NERD_FONT_ON,
+      nerdOff: VOICE_NERD_FONT_OFF,
+      defaultFormat: "word"
+    })
   },
   remoteControlStatus: {
     description: "Remote control status when present in hook state",
-    render: ({ state }) => formatOnOff(state.remoteControlStatus, "remote")
+    render: ({ state, widget }) => formatStatusValue(state.remoteControlStatus, "remote", widget, {
+      icon: REMOTE_ICON,
+      nerdOn: REMOTE_NERD_FONT_ON,
+      nerdOff: REMOTE_NERD_FONT_OFF,
+      defaultFormat: "word",
+      checkFormats: true
+    })
   },
   skills: {
     description: "Skill invocation metrics when present in hook state",
@@ -543,7 +566,7 @@ export const widgetRegistry = {
   },
   compactions: {
     description: "Count of observed context compactions",
-    render: ({ state }) => state.compactions ? String(state.compactions) : ""
+    render: ({ state, widget }) => formatCompactions(state.compactions, widget)
   },
   memory: {
     description: "System memory utilization",
@@ -874,19 +897,61 @@ function usagePercent(usage, keys) {
   return Number.NaN;
 }
 
-function formatOnOff(value, label) {
-  if (value === true) return `${label} on`;
-  if (value === false) return `${label} off`;
-  if (typeof value === "string" && value.trim()) return `${label} ${value.trim()}`;
-  return "";
+function formatStatusValue(value, label, widget = {}, options = {}) {
+  const state = statusState(value);
+  if (!state) return typeof value === "string" && value.trim() ? `${label} ${value.trim()}` : "";
+  const format = widgetFormat(widget, options.defaultFormat || "word");
+  const nerdFont = widgetFlag(widget, "nerdFont");
+  const icon = nerdFont ? (state.enabled ? options.nerdOn : options.nerdOff) : options.icon;
+  if (format === "icon") return nerdFont ? icon : `${icon} ${state.enabled ? STATUS_DOT_ON : STATUS_DOT_OFF}`;
+  if (format === "icon-text") return `${icon} ${state.text}`;
+  if (format === "text") return state.text;
+  if (options.checkFormats && format === "label-check") return `${label} ${state.enabled ? "\u2705" : "\u274C"}`;
+  if (options.checkFormats && format === "label-mark") return `${label} ${state.enabled ? "\u2713" : "\u2717"}`;
+  return `${label} ${state.text}`;
+}
+
+function statusState(value) {
+  if (value === true) return { enabled: true, text: "on" };
+  if (value === false) return { enabled: false, text: "off" };
+  if (typeof value === "string") {
+    const text = value.trim().toLowerCase();
+    if (["on", "true", "enabled", "yes", "1"].includes(text)) return { enabled: true, text: "on" };
+    if (["off", "false", "disabled", "no", "0"].includes(text)) return { enabled: false, text: "off" };
+  }
+  return null;
+}
+
+function formatCompactions(value, widget = {}) {
+  const count = Number(value || 0);
+  if (!count && widgetFlag(widget, "hideZero")) return "";
+  if (!count && !value) return "";
+  const format = widgetFormat(widget, "number");
+  const icon = widgetFlag(widget, "nerdFont") ? COMPACTION_NERD_FONT_ICON : COMPACTION_ICON;
+  if (format === "icon-space-number") return `${icon} ${count}`;
+  if (format === "text-and-number") return `Compactions: ${count}`;
+  return String(count);
+}
+
+function widgetFormat(widget, fallback) {
+  return String(metadataValue(widget, "format") || widget?.format || fallback);
+}
+
+function widgetFlag(widget, key) {
+  return metadataFlag(widget, key) === true;
 }
 
 function formatVimMode(value, widget) {
   const mode = String(value || "").toUpperCase();
   if (!mode) return "";
-  if (widget.format === "word") return mode;
+  const format = widgetFormat(widget, "icon-dash-letter");
+  if (format === "word") return mode;
   const letter = mode === "NORMAL" ? "N" : mode === "INSERT" ? "I" : mode[0];
-  return widget.format === "letter" ? letter : `v-${letter}`;
+  const icon = widgetFlag(widget, "nerdFont") ? VIM_NERD_FONT_ICON : VIM_ICON;
+  if (format === "letter") return letter;
+  if (format === "icon") return icon;
+  if (format === "icon-letter") return `${icon} ${letter}`;
+  return `${icon}-${letter}`;
 }
 
 function formatSkills(skills, widget) {

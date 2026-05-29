@@ -18,6 +18,11 @@ const IDE_LINK_MODES = ["off", "vscode", "cursor"];
 const USED_REMAINING_MODES = ["used", "remaining"];
 const TIMER_MODES = ["duration", "timestamp", "both", "bar"];
 const BAR_STYLES = ["ascii", "blocks", "dots"];
+const DEFAULT_FORMATS = ["default", "word", "letter", "icon"];
+const VIM_FORMATS = ["icon-dash-letter", "icon-letter", "icon", "letter", "word"];
+const STATUS_FORMATS = ["word", "icon", "icon-text", "text"];
+const REMOTE_FORMATS = ["word", "icon", "icon-text", "text", "label-check", "label-mark"];
+const COMPACTION_FORMATS = ["number", "icon-space-number", "text-and-number"];
 const SPEED_WIDGETS = new Set(["tokenSpeed", "inputSpeed", "outputSpeed", "totalSpeed"]);
 const RESET_TIMER_WIDGETS = new Set(["blockResetTimer", "weeklyResetTimer"]);
 const BAR_WIDGETS = new Set(["contextBar", "blockBar", "weeklyBar"]);
@@ -192,6 +197,8 @@ export function describeWidgetOptions(widget) {
   if (item.windowSeconds !== undefined) parts.push(`window=${item.windowSeconds}s`);
   if (item.timeout !== undefined) parts.push(`timeout=${item.timeout}ms`);
   if (item.preserveColors) parts.push("ansi");
+  if (metadataFlag(item, "nerdFont")) parts.push("nerd-font");
+  if (metadataFlag(item, "hideZero")) parts.push("hide-zero");
   if (gitLinkEnabled(item, type)) parts.push("repo-link");
   if (ideLinkMode(item)) parts.push(`link-${ideLinkMode(item)}`);
   if (metadataFlag(item, "hideNoRemote")) parts.push("hide-no-remote");
@@ -279,8 +286,14 @@ export function buildWidgetOptionRows(widget) {
       { key: "hideEmpty", label: "Hide when empty", value: BOOLEAN_TEXT.get(Boolean(item.hideEmpty)) }
     );
   }
-  if (type === "vimMode" || type === "voiceStatus" || type === "compactions") {
-    rows.push({ key: "format", label: "Format", value: item.format || "default" });
+  if (type === "vimMode" || type === "voiceStatus" || type === "remoteControlStatus" || type === "compactions") {
+    rows.push({ key: "format", label: "Format", value: metadataValue(item, "format") || item.format || defaultFormatForType(type) });
+  }
+  if (type === "vimMode" || type === "voiceStatus" || type === "remoteControlStatus" || type === "compactions") {
+    rows.push({ key: "nerdFont", label: "Nerd Font icons", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "nerdFont"))) });
+  }
+  if (type === "compactions") {
+    rows.push({ key: "hideZero", label: "Hide when zero", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "hideZero"))) });
   }
 
   rows.push({ key: "clear", label: "Clear widget options", value: "" });
@@ -317,7 +330,9 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "view") return setModeValue(item, nextValue(["current", "count", "list"], item.view || item.mode || "current"), "view");
   if (key === "limit") return setNumericField(deleteKey(item, "listLimit"), "limit", value);
   if (key === "hideEmpty") return toggleOrDelete(item, "hideEmpty");
-  if (key === "format") return setFormatValue(item, nextValue(["default", "word", "letter", "icon"], item.format || "default"));
+  if (key === "format") return setFormatValue(item, nextValue(formatValuesForType(resolveWidgetType(item.type) || item.type), metadataValue(item, "format") || item.format || defaultFormatForType(resolveWidgetType(item.type) || item.type)));
+  if (key === "nerdFont") return toggleOrDeleteMetadataAware(item, "nerdFont");
+  if (key === "hideZero") return toggleOrDeleteMetadataAware(item, "hideZero");
   if (key === "clear") return clearWidgetOptions(item);
   return item;
 }
@@ -887,13 +902,11 @@ class TuiEditor {
 
   cycleFormat() {
     this.updateSelected((item) => {
-      const formats = ["default", "word", "letter", "icon"];
-      const current = item.format || "default";
+      const type = resolveWidgetType(item.type) || item.type;
+      const formats = formatValuesForType(type);
+      const current = metadataValue(item, "format") || item.format || defaultFormatForType(type);
       const next = formats[wrap(formats.indexOf(current) + 1, formats.length)];
-      const outputItem = { ...item };
-      if (next === "default") delete outputItem.format;
-      else outputItem.format = next;
-      return outputItem;
+      return setFormatValue(item, next);
     }, "Cycled format");
   }
 
@@ -1454,6 +1467,14 @@ function toggleOrDelete(item, key) {
   return next;
 }
 
+function toggleOrDeleteMetadataAware(item, key) {
+  const enabled = metadataFlag(item, key) === true;
+  const next = removeMetadataKeys({ ...item }, [key]);
+  delete next[key];
+  if (!enabled) next[key] = true;
+  return next;
+}
+
 function setModeValue(item, mode, key = "mode") {
   const next = { ...item };
   if (mode === "used" || mode === "duration" || mode === "current") delete next[key];
@@ -1474,10 +1495,26 @@ function setStyleValue(item, style) {
 }
 
 function setFormatValue(item, format) {
-  const next = { ...item };
-  if (format === "default") delete next.format;
-  else next.format = format;
+  const type = resolveWidgetType(item.type) || item.type;
+  const next = removeMetadataKeys({ ...item }, ["format"]);
+  delete next.format;
+  if (format !== defaultFormatForType(type) && format !== "default") next.format = format;
   return next;
+}
+
+function formatValuesForType(type) {
+  if (type === "vimMode") return VIM_FORMATS;
+  if (type === "voiceStatus") return STATUS_FORMATS;
+  if (type === "remoteControlStatus") return REMOTE_FORMATS;
+  if (type === "compactions") return COMPACTION_FORMATS;
+  return DEFAULT_FORMATS;
+}
+
+function defaultFormatForType(type) {
+  if (type === "vimMode") return "icon-dash-letter";
+  if (type === "voiceStatus" || type === "remoteControlStatus") return "word";
+  if (type === "compactions") return "number";
+  return "default";
 }
 
 function toggleDateOption(item) {
@@ -1524,7 +1561,9 @@ function clearWidgetOptions(item) {
     "view",
     "limit",
     "listLimit",
-    "hideEmpty"
+    "hideEmpty",
+    "nerdFont",
+    "hideZero"
   ]) {
     delete next[key];
   }

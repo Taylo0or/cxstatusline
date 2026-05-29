@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.34
+
+- Added upstream-compatible status widget format options for Vim, voice,
+  remote-control, and compaction widgets, including Nerd Font and hide-zero
+  controls where applicable.
+
 ## 0.2.33
 
 - Preserved successful custom command output when commands exit before reading

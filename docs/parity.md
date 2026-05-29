@@ -61,7 +61,9 @@ equivalent data or extension points.
   reset timestamp, time zone, locale, 12/24-hour, combined, and bar modes.
 - Session id/name, version, output style, vim mode, voice status,
   remote-control status, skills, account email, run state, last event, last
-  tool, compaction count, duration, memory, and terminal width widgets.
+  tool, compaction count, duration, memory, and terminal width widgets, with
+  upstream-compatible format, Nerd Font, and hide-zero controls where
+  applicable.
 - Jujutsu root, active workspace, revision, description, bookmark list,
   bookmark count, changed files, insertion/deletion summary, combined stats,
   insertion, and deletion widgets.
@@ -92,4 +94,5 @@ data, the matching widget stays empty instead of inventing values.
 ## Remaining Enhancements
 
 - Complete `ccstatusline` TUI parity for the remaining widget-specific
-  shortcuts beyond the currently supported Git link and empty-state toggles.
+  shortcuts beyond the currently supported Git, status-format, and
+  empty-state toggles.

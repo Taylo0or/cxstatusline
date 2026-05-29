@@ -22,7 +22,9 @@ while staying honest about Codex's current extension points.
 - Model, reasoning, service tier, permission, sandbox, session, event, run-state,
   session name, output style, vim mode, voice status, remote-control status,
   skills, account email, compaction, duration, memory, token, context, usage,
-  block timer, weekly timer, cost, and custom text widgets.
+  block timer, weekly timer, cost, and custom text widgets, including
+  upstream-compatible status format, Nerd Font, and compaction hide-zero
+  controls where applicable.
 - Token speed, input speed, output speed, total speed, usage, weekly usage,
   reset timer timestamp modes, and cache token widgets from hook state.
 - Custom command widget with render-context stdin JSON, timeout, max-width,
@@ -50,8 +52,8 @@ while staying honest about Codex's current extension points.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and multi-line
   layouts.
 - Full-screen TUI configuration editor with live preview, widget picker, line
-  editor, widget-specific option editor including Git link, IDE-link, and
-  remote empty-state toggles, per-widget color editor,
+  editor, widget-specific option editor including Git link, IDE-link,
+  status-format, Nerd Font, and remote empty-state toggles, per-widget color editor,
   preset/theme/mode selection, terminal width controls, global formatting
   controls, Powerline controls, install/update management, and save-time
   hook/native install toggles.
