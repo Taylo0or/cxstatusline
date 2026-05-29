@@ -91,7 +91,17 @@ export function importCcstatuslineConfig(options = {}) {
 export function convertCcstatuslineSettings(settings, base = DEFAULT_CONFIG) {
   const output = structuredClone(base);
   if (typeof settings.minimalistMode === "boolean") output.minimal = settings.minimalistMode;
-  if (typeof settings.defaultSeparator === "string") output.separator = settings.defaultSeparator;
+  if (typeof settings.defaultSeparator === "string") {
+    output.defaultSeparator = settings.defaultSeparator;
+    output.separator = settings.defaultSeparator;
+  }
+  if (typeof settings.defaultPadding === "string") output.defaultPadding = settings.defaultPadding;
+  if (typeof settings.inheritSeparatorColors === "boolean") output.inheritSeparatorColors = settings.inheritSeparatorColors;
+  if (typeof settings.globalBold === "boolean") output.globalBold = settings.globalBold;
+  const overrideForegroundColor = normalizeColor(settings.overrideForegroundColor);
+  const overrideBackgroundColor = normalizeColor(settings.overrideBackgroundColor);
+  if (overrideForegroundColor) output.overrideForegroundColor = overrideForegroundColor;
+  if (overrideBackgroundColor) output.overrideBackgroundColor = overrideBackgroundColor;
   if (settings.gitCacheTtlSeconds !== undefined) {
     output.gitCacheTtlMs = Math.max(0, Number(settings.gitCacheTtlSeconds) || 0) * 1000;
   }
@@ -179,6 +189,7 @@ function normalizeColor(value) {
   const text = value.trim();
   if (/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(text)) return text;
   if (/^hex:[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(text)) return `#${text.slice(4)}`;
+  if (/^bg:/i.test(text)) return normalizeColor(text.slice(3));
   return NAMED_COLORS[text.toLowerCase()] || "";
 }
 

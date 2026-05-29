@@ -55,6 +55,9 @@ function buildSegments(context, config, theme, themeOffset = 0) {
       ...segmentTheme,
       fg: rawWidget.fg || rawWidget.color || segmentTheme.fg,
       bg: rawWidget.bg || rawWidget.background || segmentTheme.bg,
+      plainBg: rawWidget.bg || rawWidget.background || rawWidget.backgroundColor || "",
+      bold: Boolean(rawWidget.bold),
+      merge: rawWidget.merge,
       pad: rawWidget.pad,
       spacer: text === SPACER,
       separator: resolvedType === "separator",
@@ -73,7 +76,7 @@ function renderPreparedLine(rendered, theme, config, options = {}, alignWidths =
   const raw = isPlainMode(config, options);
   const width = Number(options.width || process.env.CXSTATUSLINE_WIDTH || process.env.CCSTATUSLINE_WIDTH || process.env.COLUMNS || 0);
   let output = raw
-    ? renderPlain(rendered, config.separator || " | ", width)
+    ? renderPlain(rendered, config, width, color)
     : renderPowerline(rendered, theme, color, width, config, alignWidths);
 
   if (width > 0 && visibleLength(output) > width) {
@@ -87,29 +90,69 @@ function isPlainMode(config, options = {}) {
   return mode === "plain" || options.format === "plain";
 }
 
-function renderPlain(segments, separator, width) {
+function renderPlain(segments, config, width, color) {
   const spacerIndex = segments.findIndex((segment) => segment.spacer);
   if (spacerIndex === -1 || width <= 0) {
-    return renderPlainSegments(segments, separator);
+    return renderPlainSegments(segments, config, color);
   }
 
-  const left = renderPlainSegments(segments.slice(0, spacerIndex), separator);
-  const right = renderPlainSegments(segments.slice(spacerIndex + 1), separator);
+  const left = renderPlainSegments(segments.slice(0, spacerIndex), config, color);
+  const right = renderPlainSegments(segments.slice(spacerIndex + 1), config, color);
   const gap = Math.max(1, width - visibleLength(left) - visibleLength(right));
   const output = `${left}${" ".repeat(gap)}${right}`;
   return visibleLength(output) > width ? truncateEnd(output, width) : output;
 }
 
-function renderPlainSegments(segments, separator) {
+function renderPlainSegments(segments, config, color) {
+  const separator = plainSeparator(config);
   const parts = [];
   for (const segment of segments.filter((item) => !item.spacer && item.text)) {
     const previous = parts.at(-1);
-    if (parts.length > 0 && !segment.separator && !previous?.separator) {
-      parts.push({ text: separator, separator: true });
+    if (separator && parts.length > 0 && !segment.separator && !previous?.separator && !previous?.merge) {
+      parts.push({
+        text: separator,
+        separator: true,
+        fg: config.inheritSeparatorColors ? previous?.fg : "",
+        plainBg: config.inheritSeparatorColors ? previous?.plainBg : "",
+        bold: config.inheritSeparatorColors ? previous?.bold : false
+      });
     }
     parts.push(segment);
   }
-  return parts.map((segment) => segment.text).join("");
+  return parts.map((segment, index) => renderPlainPart(segment, config, color, parts[index - 1], parts[index + 1])).join("");
+}
+
+function plainSeparator(config) {
+  if (Object.prototype.hasOwnProperty.call(config, "defaultSeparator")) return config.defaultSeparator || "";
+  return config.separator || " | ";
+}
+
+function renderPlainPart(segment, config, color, previous, next) {
+  let text = segment.text;
+  if (!segment.separator) {
+    const padding = config.defaultPadding || "";
+    const leading = previous?.merge === "no-padding" ? "" : padding;
+    const trailing = segment.merge === "no-padding" && next ? "" : padding;
+    text = `${leading}${text}${trailing}`;
+  }
+  if (!color) return text;
+  return stylePlainText(text, segment, config);
+}
+
+function stylePlainText(text, segment, config) {
+  if (segment.preserveColors && !hasGlobalStyle(config)) return text;
+  const foreground = config.overrideForegroundColor || segment.fg;
+  const background = config.overrideBackgroundColor || segment.plainBg;
+  const boldText = Boolean(config.globalBold || segment.bold);
+  const codes = [];
+  if (boldText) codes.push("\x1b[1m");
+  if (background) codes.push(bg(background));
+  if (foreground) codes.push(fg(foreground));
+  return codes.length ? `${codes.join("")}${text}${reset()}` : text;
+}
+
+function hasGlobalStyle(config) {
+  return Boolean(config.overrideForegroundColor || config.overrideBackgroundColor || config.globalBold);
 }
 
 function renderPowerline(segments, theme, color, width, config = {}, alignWidths = null) {
@@ -219,7 +262,7 @@ function reset() {
 }
 
 function rgb(hex) {
-  const clean = String(hex || "#ffffff").replace("#", "");
+  const clean = normalizeColorValue(hex).replace("#", "");
   const value = clean.length === 3
     ? clean.split("").map((char) => `${char}${char}`).join("")
     : clean.padEnd(6, "f").slice(0, 6);
@@ -228,6 +271,13 @@ function rgb(hex) {
     Number.parseInt(value.slice(2, 4), 16),
     Number.parseInt(value.slice(4, 6), 16)
   ];
+}
+
+function normalizeColorValue(value) {
+  const text = String(value || "#ffffff").trim().replace(/^bg:/i, "").replace(/^hex:/i, "");
+  if (/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(text)) return text;
+  if (/^[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(text)) return `#${text}`;
+  return NAMED_COLORS[text.toLowerCase()] || "#ffffff";
 }
 
 function powerlineSeparators(config = {}) {
@@ -273,3 +323,24 @@ function formatCap(value) {
   const codePoint = Number.parseInt(match[1], 16);
   return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : "";
 }
+
+const NAMED_COLORS = {
+  black: "#000000",
+  red: "#dc2626",
+  green: "#16a34a",
+  yellow: "#ca8a04",
+  blue: "#2563eb",
+  magenta: "#c026d3",
+  cyan: "#0891b2",
+  white: "#f8fafc",
+  gray: "#64748b",
+  grey: "#64748b",
+  brightblack: "#475569",
+  brightred: "#ef4444",
+  brightgreen: "#22c55e",
+  brightyellow: "#eab308",
+  brightblue: "#3b82f6",
+  brightmagenta: "#d946ef",
+  brightcyan: "#06b6d4",
+  brightwhite: "#ffffff"
+};

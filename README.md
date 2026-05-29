@@ -31,8 +31,9 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   reset timers with timestamp/time zone modes, and local weekly timer.
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
   links, flexible spacers/right alignment, manual separator collapse, path
-  abbreviation, per-widget color overrides, custom command output with optional
-  ANSI color preservation, configurable Powerline separators/caps,
+  abbreviation, default padding/separator controls, inherited separator colors,
+  global bold and color overrides, per-widget color overrides, custom command
+  output with optional ANSI color preservation, configurable Powerline separators/caps,
   multi-separator and inverted Powerline separator support,
   multi-cap/codepoint Powerline caps, multi-line Powerline auto-alignment,
   theme continuation, width truncation, and JSON or plain output.
@@ -167,6 +168,7 @@ Persist a specific layout without prompts:
 
 ```sh
 cxstatusline configure --widgets model,git-branch,tokens-total --separator " :: " --yes
+cxstatusline configure --mode plain --default-padding " " --global-bold --override-fg cyan --yes
 cxstatusline configure --powerline-separators "U+E0B0,U+E0B1" --powerline-auto-align --yes
 ```
 
@@ -245,7 +247,7 @@ cxstatusline presets
 ```text
 cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
 cxstatusline hook
-cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv]
+cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--default-padding text]
 cxstatusline import ccstatusline [--from path] [--dry-run]
 cxstatusline init [--force] [--preset default|compact|dense|git|usage|nofont|right|multiline]
 cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]

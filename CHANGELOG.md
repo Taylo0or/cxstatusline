@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.18
+
+- Added ccstatusline-style global plain renderer options for default padding,
+  default separators, inherited separator colors, global bold, and global
+  foreground/background color overrides.
+- Preserved ccstatusline global formatting options during settings import and
+  exposed matching non-interactive `configure` flags.
+- Added no-padding merge handling for adjacent plain widgets.
+
 ## 0.2.17
 
 - Expanded `configure` so widget lists, plain separators, Powerline separator

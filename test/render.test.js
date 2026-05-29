@@ -238,6 +238,87 @@ test("uses manual separators without adding automatic plain separators", () => {
   assert.equal(output, "left <> right");
 });
 
+test("supports default plain padding and separators", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      mode: "plain",
+      defaultPadding: "_",
+      defaultSeparator: "·",
+      widgets: [{ type: "text", text: "left" }, { type: "text", text: "right" }]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { format: "plain" });
+
+  assert.equal(output, "_left_·_right_");
+});
+
+test("supports plain global color and bold overrides", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      mode: "plain",
+      globalBold: true,
+      overrideForegroundColor: "#010203",
+      overrideBackgroundColor: "#040506",
+      widgets: [{ type: "text", text: "hot" }]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { format: "ansi" });
+
+  assert.equal(stripAnsi(output), "hot");
+  assert.match(output, /\x1b\[1m\x1b\[48;2;4;5;6m\x1b\[38;2;1;2;3mhot\x1b\[0m/);
+});
+
+test("supports inherited plain separator colors", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      mode: "plain",
+      defaultSeparator: "|",
+      inheritSeparatorColors: true,
+      widgets: [
+        { type: "text", text: "a", fg: "#010203", bg: "#040506" },
+        { type: "text", text: "b", fg: "#070809" }
+      ]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { format: "ansi" });
+
+  assert.equal(stripAnsi(output), "a|b");
+  assert.match(output, /\x1b\[48;2;4;5;6m\x1b\[38;2;1;2;3m\|/);
+});
+
+test("supports no-padding merge in plain rendering", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      mode: "plain",
+      defaultPadding: "_",
+      defaultSeparator: "|",
+      widgets: [
+        { type: "text", text: "a", merge: "no-padding" },
+        { type: "text", text: "b" }
+      ]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { format: "plain" });
+
+  assert.equal(output, "_ab_");
+});
+
 test("preserves custom command ANSI colors when requested", () => {
   const output = renderStatusLine({
     config: {

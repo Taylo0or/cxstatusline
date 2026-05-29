@@ -6,6 +6,11 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   const config = convertCcstatuslineSettings({
     minimalistMode: true,
     defaultSeparator: " :: ",
+    defaultPadding: " ",
+    inheritSeparatorColors: true,
+    globalBold: true,
+    overrideForegroundColor: "cyan",
+    overrideBackgroundColor: "bg:brightBlack",
     gitCacheTtlSeconds: 7,
     powerline: {
       enabled: true,
@@ -33,7 +38,13 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   });
 
   assert.equal(config.minimal, true);
+  assert.equal(config.defaultSeparator, " :: ");
   assert.equal(config.separator, " :: ");
+  assert.equal(config.defaultPadding, " ");
+  assert.equal(config.inheritSeparatorColors, true);
+  assert.equal(config.globalBold, true);
+  assert.equal(config.overrideForegroundColor, "#0891b2");
+  assert.equal(config.overrideBackgroundColor, "#475569");
   assert.equal(config.gitCacheTtlMs, 7000);
   assert.equal(config.mode, "powerline");
   assert.equal(config.powerline.separator, "U+E0B0");

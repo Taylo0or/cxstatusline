@@ -94,8 +94,15 @@ async function configureCommand(args) {
       flags[minimal ? "minimal" : "no-minimal"] = true;
       const hideEmpty = await yesNo(rl, "Hide empty widgets?", config.hideEmpty !== false);
       flags[hideEmpty ? "hide-empty" : "show-empty"] = true;
+      flags["default-padding"] = await optional(rl, "Default padding", config.defaultPadding || "");
       if (mode === "plain") {
-        flags.separator = await optional(rl, "Plain separator", config.separator || " | ");
+        flags["default-separator"] = await optional(rl, "Plain separator", config.defaultSeparator ?? config.separator ?? " | ");
+        const inherit = await yesNo(rl, "Inherit separator colors?", Boolean(config.inheritSeparatorColors));
+        flags[inherit ? "inherit-separator-colors" : "no-inherit-separator-colors"] = true;
+        const globalBold = await yesNo(rl, "Global bold?", Boolean(config.globalBold));
+        flags[globalBold ? "global-bold" : "no-global-bold"] = true;
+        flags["override-fg"] = await optional(rl, "Override foreground color", config.overrideForegroundColor || "");
+        flags["override-bg"] = await optional(rl, "Override background color", config.overrideBackgroundColor || "");
       } else {
         flags["powerline-separators"] = await optional(rl, "Powerline separators CSV", capCsv(config.powerline?.separators || config.powerline?.separator || "\uE0B0"));
         flags["powerline-start-caps"] = await optional(rl, "Powerline start caps CSV", capCsv(config.powerline?.startCaps || config.powerline?.startCap || ""));
@@ -304,7 +311,7 @@ function help() {
 Usage:
   cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
   cxstatusline hook
-  cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv]
+  cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--default-padding text]
   cxstatusline import ccstatusline [--from path] [--dry-run]
   cxstatusline init [--force]
   cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
@@ -322,6 +329,7 @@ Examples:
   cxstatusline render --preset compact --format plain
   cxstatusline configure --preset compact --theme powerline --yes
   cxstatusline configure --widgets model,git-branch,tokens-total --separator ' :: ' --yes
+  cxstatusline configure --mode plain --default-padding ' ' --global-bold --override-fg cyan --yes
   cxstatusline configure --powerline-separators 'U+E0B0,U+E0B1' --powerline-auto-align --yes
   cxstatusline import ccstatusline --dry-run
   cxstatusline install hooks
@@ -341,11 +349,31 @@ export function applyConfigureFlags(config, flags = {}) {
     outputConfig.widgets = splitCsv(flags.widgets).map((type) => ({ type: resolveWidgetType(type) || type }));
     delete outputConfig.lines;
   }
-  if (flags.separator !== undefined) outputConfig.separator = String(flags.separator);
+  if (flags.separator !== undefined) {
+    outputConfig.separator = String(flags.separator);
+    outputConfig.defaultSeparator = String(flags.separator);
+  }
+  if (flags["default-separator"] !== undefined) {
+    outputConfig.defaultSeparator = String(flags["default-separator"]);
+    outputConfig.separator = String(flags["default-separator"]);
+  }
+  if (flags["default-padding"] !== undefined) outputConfig.defaultPadding = String(flags["default-padding"]);
   if (flags.minimal !== undefined) outputConfig.minimal = parseBoolean(flags.minimal);
   if (flags["no-minimal"] !== undefined) outputConfig.minimal = false;
   if (flags["hide-empty"] !== undefined) outputConfig.hideEmpty = parseBoolean(flags["hide-empty"]);
   if (flags["show-empty"] !== undefined) outputConfig.hideEmpty = false;
+  if (flags["inherit-separator-colors"] !== undefined) outputConfig.inheritSeparatorColors = parseBoolean(flags["inherit-separator-colors"]);
+  if (flags["no-inherit-separator-colors"] !== undefined) outputConfig.inheritSeparatorColors = false;
+  if (flags["global-bold"] !== undefined) outputConfig.globalBold = parseBoolean(flags["global-bold"]);
+  if (flags["no-global-bold"] !== undefined) outputConfig.globalBold = false;
+  if (flags["override-fg"] !== undefined || flags["override-foreground"] !== undefined) {
+    outputConfig.overrideForegroundColor = String(flags["override-fg"] ?? flags["override-foreground"]);
+  }
+  if (flags["override-bg"] !== undefined || flags["override-background"] !== undefined) {
+    outputConfig.overrideBackgroundColor = String(flags["override-bg"] ?? flags["override-background"]);
+  }
+  if (flags["clear-override-fg"] !== undefined) delete outputConfig.overrideForegroundColor;
+  if (flags["clear-override-bg"] !== undefined) delete outputConfig.overrideBackgroundColor;
 
   const powerline = { ...(outputConfig.powerline || {}) };
   let hasPowerlineUpdate = false;

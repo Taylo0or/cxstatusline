@@ -7,6 +7,11 @@ test("applies configure flags for widgets and powerline options", () => {
   const config = applyConfigureFlags(structuredClone(DEFAULT_CONFIG), {
     widgets: "model,git-branch,tokens-total",
     separator: " :: ",
+    "default-padding": " ",
+    "inherit-separator-colors": true,
+    "global-bold": true,
+    "override-fg": "cyan",
+    "override-bg": "bg:black",
     minimal: true,
     "show-empty": true,
     "powerline-separators": "U+E0B0,>",
@@ -19,6 +24,12 @@ test("applies configure flags for widgets and powerline options", () => {
 
   assert.deepEqual(config.widgets, [{ type: "model" }, { type: "gitBranch" }, { type: "tokens" }]);
   assert.equal(config.separator, " :: ");
+  assert.equal(config.defaultSeparator, " :: ");
+  assert.equal(config.defaultPadding, " ");
+  assert.equal(config.inheritSeparatorColors, true);
+  assert.equal(config.globalBold, true);
+  assert.equal(config.overrideForegroundColor, "cyan");
+  assert.equal(config.overrideBackgroundColor, "bg:black");
   assert.equal(config.minimal, true);
   assert.equal(config.hideEmpty, false);
   assert.equal(config.powerline.separator, "U+E0B0");
@@ -42,12 +53,16 @@ test("applies configure flags that disable booleans", () => {
   }, {
     minimal: "false",
     "show-empty": true,
+    "no-inherit-separator-colors": true,
+    "no-global-bold": true,
     "no-powerline-auto-align": true,
     "powerline-continue-theme": "false"
   });
 
   assert.equal(config.minimal, false);
   assert.equal(config.hideEmpty, false);
+  assert.equal(config.inheritSeparatorColors, false);
+  assert.equal(config.globalBold, false);
   assert.equal(config.powerline.autoAlign, false);
   assert.equal(config.powerline.continueThemeAcrossLines, false);
 });
