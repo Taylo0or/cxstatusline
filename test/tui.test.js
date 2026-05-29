@@ -156,6 +156,8 @@ test("TUI widget option helpers expose type-specific rows", () => {
   const statusRows = buildWidgetOptionRows({ type: "voiceStatus", metadata: { format: "icon", nerdFont: "true" } });
   assert.equal(statusRows.find((row) => row.key === "format")?.value, "icon");
   assert.equal(statusRows.find((row) => row.key === "nerdFont")?.value, "on");
+  assert.equal(buildWidgetOptionRows({ type: "voiceStatus" }).find((row) => row.key === "format")?.value, "icon");
+  assert.equal(buildWidgetOptionRows({ type: "voiceStatus", metadata: { format: "unknown" } }).find((row) => row.key === "format")?.value, "icon");
 
   const compactionOptionRows = buildWidgetOptionRows({ type: "compactions" });
   const compactionRows = compactionOptionRows.map((row) => row.key);
@@ -204,6 +206,8 @@ test("TUI widget option helpers apply common and specific settings", () => {
 
   assert.deepEqual(applyWidgetOption({ type: "vimMode" }, "format"), { type: "vimMode", format: "icon-letter" });
   assert.deepEqual(applyWidgetOption({ type: "voiceStatus", metadata: { format: "icon" } }, "format"), { type: "voiceStatus", format: "icon-text" });
+  assert.deepEqual(applyWidgetOption({ type: "voiceStatus", metadata: { format: "word" } }, "format"), { type: "voiceStatus" });
+  assert.deepEqual(applyWidgetOption({ type: "voiceStatus", metadata: { format: "unknown" } }, "format"), { type: "voiceStatus", format: "icon-text" });
   assert.deepEqual(applyWidgetOption({ type: "voiceStatus", metadata: { nerdFont: "true" } }, "nerdFont"), { type: "voiceStatus" });
   assert.deepEqual(applyWidgetOption({ type: "compactions" }, "format"), { type: "compactions", format: "text-and-number" });
   assert.deepEqual(applyWidgetOption({ type: "compactions", metadata: { format: "text-and-number", nerdFont: "true" } }, "format"), { type: "compactions", format: "number" });

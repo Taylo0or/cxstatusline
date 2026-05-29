@@ -420,7 +420,11 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "sessionName" }, context), "Sprint");
   assert.equal(renderWidget({ type: "outputStyle" }, context), "concise");
   assert.equal(renderWidget({ type: "vimMode", format: "letter" }, context), "N");
-  assert.equal(renderWidget({ type: "voiceStatus" }, context), "voice on");
+  assert.equal(renderWidget({ type: "voiceStatus" }, context), "\u{1F3A4} \u25C9");
+  assert.equal(renderWidget({ type: "voiceStatus", rawValue: true }, context), "on");
+  assert.equal(renderWidget({ type: "voiceStatus", metadata: { format: "unknown" } }, context), "\u{1F3A4} \u25C9");
+  assert.equal(renderWidget({ type: "voiceStatus", metadata: { nerdFont: "true" } }, context), "\uF130");
+  assert.equal(renderWidget({ type: "voiceStatus", metadata: { format: "word" } }, context), "voice on");
   assert.equal(renderWidget({ type: "remoteControlStatus" }, context), "remote off");
   assert.equal(renderWidget({ type: "vimMode", metadata: { format: "icon-letter", nerdFont: "true" } }, context), "\uE62B N");
   assert.equal(renderWidget({ type: "voiceStatus", format: "icon" }, context), "\u{1F3A4} \u25C9");

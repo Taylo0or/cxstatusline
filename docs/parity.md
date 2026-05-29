@@ -69,8 +69,8 @@ equivalent data or extension points.
 - Session id/name, version, output style, vim mode, voice status,
   remote-control status, skills, account email, run state, last event, last
   tool, compaction count, duration, memory, and terminal width widgets, with
-  upstream-compatible format, raw/default label, Compaction Counter zero
-  display, Nerd Font, and hide-zero controls where applicable, plus Skills
+  upstream-compatible default formats, raw/default label, Compaction Counter
+  zero display, Nerd Font, and hide-zero controls where applicable, plus Skills
   mode/list-limit/hide-when-empty metadata.
 - Jujutsu root, active workspace, revision, description, bookmark list,
   bookmark count, changed files, insertion/deletion summary, combined stats,

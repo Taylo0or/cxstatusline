@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.48
+
+- Aligned Voice Status with upstream `ccstatusline`: default `icon` format,
+  invalid-format fallback, raw `on`/`off` rendering, and icon-first TUI format
+  cycling.
+
 ## 0.2.47
 
 - Aligned Compaction Counter defaults with upstream `ccstatusline`: render

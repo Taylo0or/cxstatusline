@@ -591,7 +591,8 @@ export const widgetRegistry = {
       icon: VOICE_ICON,
       nerdOn: VOICE_NERD_FONT_ON,
       nerdOff: VOICE_NERD_FONT_OFF,
-      defaultFormat: "word"
+      defaultFormat: "icon",
+      formats: ["icon", "icon-text", "text", "word"]
     })
   },
   remoteControlStatus: {
@@ -601,6 +602,7 @@ export const widgetRegistry = {
       nerdOn: REMOTE_NERD_FONT_ON,
       nerdOff: REMOTE_NERD_FONT_OFF,
       defaultFormat: "word",
+      formats: ["word", "icon", "icon-text", "text", "label-check", "label-mark"],
       checkFormats: true
     })
   },
@@ -1077,7 +1079,8 @@ function extraUsageDisabled(widget) {
 function formatStatusValue(value, label, widget = {}, options = {}) {
   const state = statusState(value);
   if (!state) return typeof value === "string" && value.trim() ? `${label} ${value.trim()}` : "";
-  const format = widgetFormat(widget, options.defaultFormat || "word");
+  if (widget.rawValue || widget.label === "") return state.text;
+  const format = statusFormat(widget, options.defaultFormat || "word", options.formats);
   const nerdFont = widgetFlag(widget, "nerdFont");
   const icon = nerdFont ? (state.enabled ? options.nerdOn : options.nerdOff) : options.icon;
   if (format === "icon") return nerdFont ? icon : `${icon} ${state.enabled ? STATUS_DOT_ON : STATUS_DOT_OFF}`;
@@ -1086,6 +1089,11 @@ function formatStatusValue(value, label, widget = {}, options = {}) {
   if (options.checkFormats && format === "label-check") return `${label} ${state.enabled ? "\u2705" : "\u274C"}`;
   if (options.checkFormats && format === "label-mark") return `${label} ${state.enabled ? "\u2713" : "\u2717"}`;
   return `${label} ${state.text}`;
+}
+
+function statusFormat(widget, fallback, formats) {
+  const format = widgetFormat(widget, fallback);
+  return Array.isArray(formats) && formats.length && !formats.includes(format) ? fallback : format;
 }
 
 function formatRawOrLabeledValue(widget, prefix, value) {

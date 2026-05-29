@@ -22,7 +22,7 @@ const BAR_STYLES = ["ascii", "blocks", "dots"];
 const USAGE_DISPLAY_MODES = ["percent", "progress", "progress-short", "slider", "slider-only"];
 const DEFAULT_FORMATS = ["default", "word", "letter", "icon"];
 const VIM_FORMATS = ["icon-dash-letter", "icon-letter", "icon", "letter", "word"];
-const STATUS_FORMATS = ["word", "icon", "icon-text", "text"];
+const STATUS_FORMATS = ["icon", "icon-text", "text", "word"];
 const REMOTE_FORMATS = ["word", "icon", "icon-text", "text", "label-check", "label-mark"];
 const COMPACTION_FORMATS = ["icon-space-number", "text-and-number", "number"];
 const SPEED_WIDGETS = new Set(["tokenSpeed", "inputSpeed", "outputSpeed", "totalSpeed"]);
@@ -1020,9 +1020,9 @@ class TuiEditor {
     this.updateSelected((item) => {
       const type = resolveWidgetType(item.type) || item.type;
       const formats = formatValuesForType(type);
-      const current = metadataValue(item, "format") || item.format || defaultFormatForType(type);
+      const current = displayFormatForType(item, type);
       const next = formats[wrap(formats.indexOf(current) + 1, formats.length)];
-      return setFormatValue(item, next);
+      return type === "compactions" ? setCompactionFormatValue(item, next) : setFormatValue(item, next);
     }, "Cycled format");
   }
 
@@ -1680,7 +1680,8 @@ function formatValuesForType(type) {
 
 function defaultFormatForType(type) {
   if (type === "vimMode") return "icon-dash-letter";
-  if (type === "voiceStatus" || type === "remoteControlStatus") return "word";
+  if (type === "voiceStatus") return "icon";
+  if (type === "remoteControlStatus") return "word";
   if (type === "compactions") return "icon-space-number";
   return "default";
 }
