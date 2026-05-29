@@ -1,0 +1,40 @@
+{
+  "name": "cxstatusline",
+  "version": "0.1.0",
+  "description": "A Codex-aware statusline renderer with hooks, Powerline themes, and native Codex footer configuration.",
+  "type": "module",
+  "bin": {
+    "cxstatusline": "./bin/cxstatusline.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "lint": "node --check bin/cxstatusline.js && node --check src/*.js && node --check test/*.js",
+    "doctor": "node ./bin/cxstatusline.js doctor",
+    "render": "node ./bin/cxstatusline.js render"
+  },
+  "keywords": [
+    "codex",
+    "openai",
+    "statusline",
+    "statusbar",
+    "powerline",
+    "terminal",
+    "git",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "bin",
+    "docs",
+    "src",
+    "templates",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "README.md",
+    "LICENSE"
+  ]
+}

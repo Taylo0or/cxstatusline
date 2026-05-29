@@ -1,0 +1,29 @@
+{
+  "theme": "powerline",
+  "mode": "powerline",
+  "minimal": false,
+  "hideEmpty": true,
+  "separator": " | ",
+  "widgets": [
+    { "type": "model", "label": "Model" },
+    { "type": "reasoning", "label": "Think" },
+    { "type": "project", "label": "Project" },
+    { "type": "gitBranch", "label": "Git" },
+    { "type": "gitStatus", "label": "" },
+    { "type": "contextBar", "label": "Ctx", "width": 12 },
+    { "type": "tokens", "label": "Tokens" },
+    { "type": "duration", "label": "Time" },
+    { "type": "runState", "label": "" }
+  ],
+  "nativeCodex": {
+    "status_line_use_colors": true,
+    "status_line": [
+      "model-with-reasoning",
+      "context-used",
+      "used-tokens",
+      "project-name",
+      "git-branch",
+      "run-state"
+    ]
+  }
+}

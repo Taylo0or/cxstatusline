@@ -1,0 +1,61 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { renderStatusLine } from "../src/render.js";
+import { DEFAULT_CONFIG } from "../src/constants.js";
+import { stripAnsi, visibleLength } from "../src/util.js";
+
+test("renders a plain status line from configured widgets", () => {
+  const output = renderStatusLine({
+    config: { ...DEFAULT_CONFIG, mode: "plain", widgets: [{ type: "model", label: "Model" }, { type: "runState", label: "" }] },
+    state: { model: "gpt-5.5", runState: "Ready" },
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { format: "plain" });
+
+  assert.equal(output, "Model: gpt-5.5 | Ready");
+});
+
+test("renders colored powerline output with visible text", () => {
+  const output = renderStatusLine({
+    config: { ...DEFAULT_CONFIG, widgets: [{ type: "model", label: "Model" }] },
+    state: { model: "gpt-5.5" },
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  });
+
+  assert.match(output, /\x1b\[38;2;/);
+  assert.match(stripAnsi(output), /Model: gpt-5.5/);
+});
+
+test("respects width truncation in visible cells", () => {
+  const output = renderStatusLine({
+    config: { ...DEFAULT_CONFIG, mode: "plain", widgets: [{ type: "text", text: "abcdefghijklmnopqrstuvwxyz" }] },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { format: "plain", width: 10 });
+
+  assert.ok(visibleLength(output) <= 10);
+});
+
+test("renders multiple configured lines", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      mode: "plain",
+      lines: [
+        [{ type: "model", label: "" }],
+        [{ type: "runState", label: "" }]
+      ]
+    },
+    state: { model: "gpt-5.5", runState: "Ready" },
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { format: "plain" });
+
+  assert.equal(output, "gpt-5.5\nReady");
+});

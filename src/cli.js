@@ -1,0 +1,186 @@
+import { existsSync } from "node:fs";
+import { dirname } from "node:path";
+import { CODEX_NATIVE_ITEMS, DEFAULT_NATIVE_STATUS_LINE, THEMES } from "./constants.js";
+import { defaultConfigPath, initConfig, loadConfig } from "./config.js";
+import { codexConfigPath, installNativeStatusLine, readCodexConfig } from "./codexConfig.js";
+import { getGitInfo } from "./git.js";
+import { hooksPath, installHooks, uninstallHooks } from "./install.js";
+import { renderStatusLine } from "./render.js";
+import { listWidgets } from "./widgets.js";
+import { loadState, readHookPayload, resetState, saveState, statePath, updateStateFromHook } from "./state.js";
+import { cacheDir, codexHome, configDir, parseFlags, run } from "./util.js";
+
+export async function runCli(args) {
+  const [command = "render", ...rest] = args;
+  if (command === "help" || command === "--help" || command === "-h") return help();
+
+  if (command === "render") return renderCommand(rest);
+  if (command === "hook") return hookCommand(rest);
+  if (command === "init") return initCommand(rest);
+  if (command === "install") return installCommand(rest);
+  if (command === "uninstall") return uninstallCommand(rest);
+  if (command === "widgets") return widgetsCommand();
+  if (command === "native-items") return nativeItemsCommand();
+  if (command === "themes") return themesCommand();
+  if (command === "doctor") return doctorCommand();
+  if (command === "reset") return resetCommand();
+
+  throw new Error(`Unknown command: ${command}\nRun "cxstatusline help" for usage.`);
+}
+
+function renderCommand(args) {
+  const { flags } = parseFlags(args);
+  const config = loadConfig({ config: flags.config });
+  if (flags.theme) config.theme = flags.theme;
+  if (flags.mode) config.mode = flags.mode;
+  if (flags.minimal) config.minimal = true;
+  if (flags.widgets) {
+    config.widgets = String(flags.widgets).split(",").map((type) => ({ type: type.trim() })).filter((widget) => widget.type);
+  }
+
+  const state = loadState();
+  const cwd = flags.cwd || state.cwd || process.cwd();
+  const codexConfig = readCodexConfig();
+  const git = getGitInfo(cwd);
+  const output = renderStatusLine(
+    { config, state, cwd, git, codexConfig },
+    {
+      theme: flags.theme,
+      mode: flags.mode,
+      format: flags.format,
+      width: flags.width,
+      color: flags["no-color"] ? false : flags.color !== "false"
+    }
+  );
+  process.stdout.write(`${output}\n`);
+}
+
+async function hookCommand(args) {
+  const payload = await readHookPayload(args);
+  const next = updateStateFromHook(payload, loadState());
+  saveState(next);
+}
+
+function initCommand(args) {
+  const { flags } = parseFlags(args);
+  const result = initConfig({ config: flags.config, force: flags.force });
+  console.log(result.created ? `Created ${result.path}` : `Already exists: ${result.path}`);
+}
+
+function installCommand(args) {
+  const { flags, positionals } = parseFlags(args);
+  const target = flags.target || positionals[0] || "all";
+  const dryRun = Boolean(flags["dry-run"]);
+  const results = [];
+
+  if (target === "all" || target === "hooks") {
+    results.push(["hooks", installHooks({ dryRun, command: flags.command })]);
+  }
+
+  if (target === "all" || target === "native") {
+    const items = flags.items ? String(flags.items).split(",").map((item) => item.trim()).filter(Boolean) : DEFAULT_NATIVE_STATUS_LINE;
+    results.push(["native", installNativeStatusLine({ dryRun, items, useColors: flags.colors !== "false" })]);
+  }
+
+  if (target === "all" || target === "config") {
+    results.push(["config", initConfig({ force: flags.force })]);
+  }
+
+  if (!results.length) {
+    throw new Error(`Unknown install target: ${target}. Use all, hooks, native, or config.`);
+  }
+
+  for (const [name, result] of results) {
+    const mode = dryRun ? "would update" : result.changed || result.created ? "updated" : "unchanged";
+    console.log(`${name}: ${mode} ${result.path}`);
+    if (dryRun && result.after) {
+      console.log(typeof result.after === "string" ? summarizeToml(result.after) : JSON.stringify(result.after, null, 2));
+    }
+  }
+}
+
+function uninstallCommand(args) {
+  const { flags, positionals } = parseFlags(args);
+  const target = flags.target || positionals[0] || "hooks";
+  if (target !== "hooks") throw new Error("Only hook uninstall is implemented. Native Codex status_line edits are left for manual review.");
+  const result = uninstallHooks({ dryRun: Boolean(flags["dry-run"]) });
+  console.log(`hooks: ${result.changed ? "updated" : "unchanged"} ${result.path}`);
+}
+
+function widgetsCommand() {
+  for (const widget of listWidgets()) {
+    console.log(`${widget.name.padEnd(16)} ${widget.description}`);
+  }
+}
+
+function nativeItemsCommand() {
+  for (const item of CODEX_NATIVE_ITEMS) {
+    console.log(`${item.id.padEnd(22)} ${item.description}`);
+  }
+}
+
+function themesCommand() {
+  for (const name of Object.keys(THEMES)) console.log(name);
+}
+
+function doctorCommand() {
+  const codex = run("codex", ["--version"], { timeout: 2000 });
+  const codexVersion = codex.ok ? codex.stdout.trim() : "not found";
+  const hooks = existsSync(hooksPath());
+  const config = existsSync(defaultConfigPath());
+  const state = existsSync(statePath());
+  const codexConfig = existsSync(codexConfigPath());
+
+  const checks = [
+    ["node", process.version],
+    ["codex", codexVersion],
+    ["CODEX_HOME", codexHome()],
+    ["config dir", configDir()],
+    ["cache dir", cacheDir()],
+    ["cx config", `${config ? "present" : "missing"} ${defaultConfigPath()}`],
+    ["codex config", `${codexConfig ? "present" : "missing"} ${codexConfigPath()}`],
+    ["hooks", `${hooks ? "present" : "missing"} ${hooksPath()}`],
+    ["state", `${state ? "present" : "missing"} ${statePath()}`],
+    ["project root", dirname(dirname(new URL(import.meta.url).pathname))]
+  ];
+
+  for (const [label, value] of checks) {
+    console.log(`${label.padEnd(13)} ${value}`);
+  }
+}
+
+function resetCommand() {
+  const state = resetState();
+  console.log(`Reset state at ${statePath()} (${state.resetAt})`);
+}
+
+function help() {
+  console.log(`cxstatusline
+
+Usage:
+  cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
+  cxstatusline hook
+  cxstatusline init [--force]
+  cxstatusline install [all|hooks|native|config] [--dry-run]
+  cxstatusline uninstall hooks
+  cxstatusline widgets
+  cxstatusline native-items
+  cxstatusline themes
+  cxstatusline doctor
+  cxstatusline reset
+
+Examples:
+  cxstatusline render --format plain
+  cxstatusline install hooks
+  cxstatusline install native --items model-with-reasoning,context-used,git-branch,run-state
+  tmux set -g status-right '#(cxstatusline render --width 80)'
+`);
+}
+
+function summarizeToml(text) {
+  const lines = String(text).split(/\r?\n/);
+  const start = lines.findIndex((line) => line.trim() === "[tui]");
+  if (start === -1) return text;
+  const end = lines.findIndex((line, index) => index > start && /^\[[^\]]+]$/.test(line.trim()));
+  return lines.slice(start, end === -1 ? undefined : end).join("\n");
+}
