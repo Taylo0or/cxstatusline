@@ -104,6 +104,39 @@ test("renders Git remote empty states and hideNoRemote metadata", () => {
   assert.equal(renderWidget({ type: "gitUpstreamOwnerRepo", metadata: { hideNoRemote: "true" } }, context), "");
 });
 
+test("renders Git no-repo empty states and hideNoGit metadata", () => {
+  const context = {
+    config: {},
+    state: {},
+    git: { isRepo: false },
+    codexConfig: {}
+  };
+
+  assert.equal(renderWidget({ type: "gitBranch" }, context), "no git");
+  assert.equal(renderWidget({ type: "gitStatus" }, context), "(no git)");
+  assert.equal(renderWidget({ type: "gitRootDir" }, context), "no git");
+  assert.equal(renderWidget({ type: "gitOriginOwnerRepo" }, context), "(no git)");
+  assert.equal(renderWidget({ type: "gitBranch", hideNoGit: true }, context), "");
+  assert.equal(renderWidget({ type: "gitStatus", metadata: { hideNoGit: "true" } }, context), "");
+});
+
+test("renders Git fork status raw values and hideWhenNotFork metadata", () => {
+  const base = {
+    config: {},
+    state: {},
+    git: {
+      isRepo: true,
+      isFork: false,
+      upstreamRemote: { ownerRepo: "upstream/tool" }
+    },
+    codexConfig: {}
+  };
+
+  assert.equal(renderWidget({ type: "gitIsFork" }, base), "isFork: false");
+  assert.equal(renderWidget({ type: "gitIsFork", rawValue: true }, { ...base, git: { ...base.git, isFork: true } }), "true");
+  assert.equal(renderWidget({ type: "gitIsFork", metadata: { hideWhenNotFork: "true" } }, base), "");
+});
+
 test("renders Git root dir IDE links from metadata", () => {
   const context = {
     config: {},

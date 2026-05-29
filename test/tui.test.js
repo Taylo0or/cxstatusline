@@ -99,9 +99,11 @@ test("TUI widget option helpers expose type-specific rows", () => {
 
   const gitRows = buildWidgetOptionRows({ type: "gitBranch" }).map((row) => row.key);
   assert.ok(gitRows.includes("linkToRepo"));
+  assert.ok(gitRows.includes("hideNoGit"));
 
   const remoteRows = buildWidgetOptionRows({ type: "gitOriginOwnerRepo" }).map((row) => row.key);
   assert.ok(remoteRows.includes("linkToRepo"));
+  assert.ok(remoteRows.includes("hideNoGit"));
   assert.ok(remoteRows.includes("hideNoRemote"));
   assert.ok(remoteRows.includes("ownerOnlyWhenFork"));
 
@@ -109,8 +111,12 @@ test("TUI widget option helpers expose type-specific rows", () => {
   assert.ok(rootRows.includes("linkToIDE"));
 
   const prRows = buildWidgetOptionRows({ type: "gitPullRequest" }).map((row) => row.key);
+  assert.ok(prRows.includes("hideNoGit"));
   assert.ok(prRows.includes("hideStatus"));
   assert.ok(prRows.includes("hideTitle"));
+
+  const forkRows = buildWidgetOptionRows({ type: "gitIsFork" }).map((row) => row.key);
+  assert.ok(forkRows.includes("hideWhenNotFork"));
 
   const linkRows = buildWidgetOptionRows({ type: "link", metadata: { url: "https://example.com/docs", text: "Docs" } });
   assert.equal(linkRows.find((row) => row.key === "href")?.value, "https://example.com/docs");
@@ -168,9 +174,11 @@ test("TUI widget option helpers apply common and specific settings", () => {
 
   assert.deepEqual(applyWidgetOption({ type: "gitBranch", linkToGitHub: true }, "linkToRepo"), { type: "gitBranch" });
   assert.deepEqual(applyWidgetOption({ type: "gitBranch", metadata: { linkToGitHub: "true" } }, "linkToRepo"), { type: "gitBranch" });
+  assert.deepEqual(applyWidgetOption({ type: "gitBranch" }, "hideNoGit"), { type: "gitBranch", hideNoGit: true });
   assert.deepEqual(applyWidgetOption({ type: "gitOriginRepo" }, "linkToRepo"), { type: "gitOriginRepo", linkToRepo: true });
   assert.deepEqual(applyWidgetOption({ type: "gitOriginRepo" }, "hideNoRemote"), { type: "gitOriginRepo", hideNoRemote: true });
   assert.deepEqual(applyWidgetOption({ type: "gitOriginOwnerRepo" }, "ownerOnlyWhenFork"), { type: "gitOriginOwnerRepo", ownerOnlyWhenFork: true });
+  assert.deepEqual(applyWidgetOption({ type: "gitIsFork" }, "hideWhenNotFork"), { type: "gitIsFork", hideWhenNotFork: true });
   assert.deepEqual(applyWidgetOption({ type: "gitPullRequest" }, "hideStatus"), { type: "gitPullRequest", hideStatus: true });
   assert.deepEqual(applyWidgetOption({ type: "gitPullRequest", metadata: { hideTitle: "true" } }, "hideTitle"), { type: "gitPullRequest" });
   assert.deepEqual(applyWidgetOption({ type: "gitRootDir" }, "linkToIDE"), { type: "gitRootDir", linkToIDE: "vscode" });
@@ -187,8 +195,9 @@ test("TUI widget option helpers apply common and specific settings", () => {
   });
 
   assert.equal(describeWidgetOptions({ type: "cwd", segments: 2, fish: true, home: false }), "segments=2, fish, no-home");
-  assert.equal(describeWidgetOptions({ type: "gitBranch", linkToRepo: true }), "repo-link");
+  assert.equal(describeWidgetOptions({ type: "gitBranch", linkToRepo: true, hideNoGit: true }), "repo-link, hide-no-git");
   assert.equal(describeWidgetOptions({ type: "gitOriginRepo", hideNoRemote: true }), "hide-no-remote");
+  assert.equal(describeWidgetOptions({ type: "gitIsFork", hideWhenNotFork: true }), "hide-not-fork");
   assert.equal(describeWidgetOptions({ type: "gitPullRequest", hideStatus: true, hideTitle: true }), "hide-status, hide-title");
   assert.equal(describeWidgetOptions({ type: "gitRootDir", linkToIDE: "cursor" }), "link-cursor");
   assert.equal(describeWidgetOptions({ type: "sessionUsage", display: "progress-short", invert: true, cursor: true }), "display=progress-short, invert, cursor");

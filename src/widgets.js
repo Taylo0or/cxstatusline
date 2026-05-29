@@ -80,6 +80,7 @@ export const widgetRegistry = {
   gitRootDir: {
     description: "Git repository root directory name",
     render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget, "no git");
       const text = rootDirName(git.root) || git.rootName || "";
       if (!text) return "";
       const mode = ideLinkMode(widget);
@@ -98,7 +99,8 @@ export const widgetRegistry = {
   gitBranch: {
     description: "Current Git branch",
     render: ({ git, widget }) => {
-      if (!git.isRepo || !git.branch) return "";
+      if (!git.isRepo) return gitNoGit(widget, "no git");
+      if (!git.branch) return "";
       if (git.branch !== "(detached)" && gitBranchLinkEnabled(widget)) {
         return osc8(branchWebUrl(git.origin, git.branch), git.branch) || git.branch;
       }
@@ -107,12 +109,15 @@ export const widgetRegistry = {
   },
   gitSha: {
     description: "Short Git commit SHA",
-    render: ({ git }) => (git.isRepo ? git.sha : "")
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
+      return git.sha || gitNoGit(widget, "(no commit)");
+    }
   },
   gitStatus: {
     description: "Staged, unstaged, untracked, and conflict counts",
-    render: ({ git }) => {
-      if (!git.isRepo) return "";
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
       const s = git.status;
       if (s.clean) return "clean";
       const parts = [];
@@ -125,44 +130,71 @@ export const widgetRegistry = {
   },
   gitStaged: {
     description: "Number of staged files",
-    render: ({ git }) => git.isRepo && git.status.staged ? String(git.status.staged) : ""
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
+      return git.status.staged ? String(git.status.staged) : "";
+    }
   },
   gitStagedFiles: {
     description: "Number of staged files",
-    render: ({ git }) => git.isRepo && git.status.staged ? String(git.status.staged) : ""
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
+      return git.status.staged ? String(git.status.staged) : "";
+    }
   },
   gitUnstaged: {
     description: "Number of unstaged files",
-    render: ({ git }) => git.isRepo && git.status.unstaged ? String(git.status.unstaged) : ""
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
+      return git.status.unstaged ? String(git.status.unstaged) : "";
+    }
   },
   gitUnstagedFiles: {
     description: "Number of unstaged files",
-    render: ({ git }) => git.isRepo && git.status.unstaged ? String(git.status.unstaged) : ""
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
+      return git.status.unstaged ? String(git.status.unstaged) : "";
+    }
   },
   gitUntracked: {
     description: "Number of untracked files",
-    render: ({ git }) => git.isRepo && git.status.untracked ? String(git.status.untracked) : ""
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
+      return git.status.untracked ? String(git.status.untracked) : "";
+    }
   },
   gitUntrackedFiles: {
     description: "Number of untracked files",
-    render: ({ git }) => git.isRepo && git.status.untracked ? String(git.status.untracked) : ""
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
+      return git.status.untracked ? String(git.status.untracked) : "";
+    }
   },
   gitConflicts: {
     description: "Number of merge conflict files",
-    render: ({ git }) => git.isRepo && git.status.conflicts ? String(git.status.conflicts) : ""
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
+      return git.status.conflicts ? String(git.status.conflicts) : "";
+    }
   },
   gitClean: {
     description: "Git clean or dirty state",
-    render: ({ git }) => git.isRepo ? (git.status.clean ? "clean" : "dirty") : ""
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
+      return git.status.clean ? "clean" : "dirty";
+    }
   },
   gitCleanStatus: {
     description: "Git clean or dirty state",
-    render: ({ git }) => git.isRepo ? (git.status.clean ? "clean" : "dirty") : ""
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
+      return git.status.clean ? "clean" : "dirty";
+    }
   },
   gitAheadBehind: {
     description: "Git upstream ahead and behind counts",
-    render: ({ git }) => {
-      if (!git.isRepo) return "";
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
       const parts = [];
       if (git.status.ahead) parts.push(`ahead ${git.status.ahead}`);
       if (git.status.behind) parts.push(`behind ${git.status.behind}`);
@@ -171,8 +203,8 @@ export const widgetRegistry = {
   },
   gitChanges: {
     description: "Uncommitted insertions and deletions",
-    render: ({ git }) => {
-      if (!git.isRepo) return "";
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
       const parts = [];
       const inserted = git.diff.insertions + git.stagedDiff.insertions;
       const deleted = git.diff.deletions + git.stagedDiff.deletions;
@@ -183,62 +215,70 @@ export const widgetRegistry = {
   },
   gitInsertions: {
     description: "Uncommitted insertion count",
-    render: ({ git }) => {
-      if (!git.isRepo) return "";
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
       const inserted = git.diff.insertions + git.stagedDiff.insertions;
       return inserted ? `+${inserted}` : "";
     }
   },
   gitDeletions: {
     description: "Uncommitted deletion count",
-    render: ({ git }) => {
-      if (!git.isRepo) return "";
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
       const deleted = git.diff.deletions + git.stagedDiff.deletions;
       return deleted ? `-${deleted}` : "";
     }
   },
   gitOriginOwner: {
     description: "Origin remote owner",
-    render: ({ git, widget }) => renderRemoteValue(git.origin, git.origin?.owner, widget, "no remote")
+    render: ({ git, widget }) => git.isRepo ? renderRemoteValue(git.origin, git.origin?.owner, widget, "no remote") : gitNoGit(widget)
   },
   gitOriginRepo: {
     description: "Origin remote repository name",
-    render: ({ git, widget }) => renderRemoteValue(git.origin, git.origin?.repo, widget, "no remote")
+    render: ({ git, widget }) => git.isRepo ? renderRemoteValue(git.origin, git.origin?.repo, widget, "no remote") : gitNoGit(widget)
   },
   gitOriginOwnerRepo: {
     description: "Origin owner/repository",
     render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget);
       const text = metadataFlag(widget, "ownerOnlyWhenFork") && git.isFork ? git.origin?.owner : git.origin?.ownerRepo;
       return renderRemoteValue(git.origin, text, widget, "no remote");
     }
   },
   gitUpstream: {
     description: "Configured upstream branch",
-    render: ({ git }) => git.upstream || ""
+    render: ({ git, widget }) => git.isRepo ? git.upstream || "" : gitNoGit(widget)
   },
   gitUpstreamOwner: {
     description: "Upstream remote owner",
-    render: ({ git, widget }) => renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.owner, widget, "no upstream")
+    render: ({ git, widget }) => git.isRepo ? renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.owner, widget, "no upstream") : gitNoGit(widget)
   },
   gitUpstreamRepo: {
     description: "Upstream remote repository name",
-    render: ({ git, widget }) => renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.repo, widget, "no upstream")
+    render: ({ git, widget }) => git.isRepo ? renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.repo, widget, "no upstream") : gitNoGit(widget)
   },
   gitUpstreamOwnerRepo: {
     description: "Upstream owner/repository",
-    render: ({ git, widget }) => renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.ownerRepo, widget, "no upstream")
+    render: ({ git, widget }) => git.isRepo ? renderRemoteValue(git.upstreamRemote, git.upstreamRemote?.ownerRepo, widget, "no upstream") : gitNoGit(widget)
   },
   gitIsFork: {
     description: "Whether origin differs from upstream remote",
-    render: ({ git }) => git.isRepo && git.upstreamRemote?.ownerRepo ? (git.isFork ? "fork" : "upstream") : ""
+    render: ({ git, widget }) => {
+      const isFork = Boolean(git.isRepo && git.upstreamRemote?.ownerRepo && git.isFork);
+      if (!isFork && metadataFlag(widget, "hideWhenNotFork")) return "";
+      return widget.rawValue || widget.label !== undefined ? String(isFork) : `isFork: ${isFork}`;
+    }
   },
   gitWorktreeMode: {
     description: "Whether the repository is a linked worktree",
-    render: ({ git }) => git.isRepo ? (git.worktree?.linked ? "worktree" : "normal") : ""
+    render: ({ git, widget }) => git.isRepo ? (git.worktree?.linked ? "worktree" : "normal") : gitNoGit(widget, "no git")
   },
   gitWorktree: {
     description: "Current Git worktree name when in a linked worktree",
-    render: ({ git }) => git.worktree?.linked ? git.worktree?.name || "worktree" : ""
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget, "no git");
+      return git.worktree?.linked ? git.worktree?.name || "worktree" : "";
+    }
   },
   gitWorktreeName: {
     description: "Current worktree directory name",
@@ -615,15 +655,16 @@ export const widgetRegistry = {
   },
   gitBranchLink: {
     description: "Clickable GitHub/GitLab branch link when origin is known",
-    render: ({ git }) => {
-      if (!git.isRepo || !git.branch || git.branch === "(detached)") return "";
+    render: ({ git, widget }) => {
+      if (!git.isRepo) return gitNoGit(widget, "no git");
+      if (!git.branch || git.branch === "(detached)") return "";
       return osc8(branchWebUrl(git.origin, git.branch), git.branch);
     }
   },
   gitPullRequest: {
     description: "Current GitHub pull request or GitLab merge request when gh/glab is available",
     render: ({ git, cwd, widget }) => {
-      if (!git.isRepo) return "";
+      if (!git.isRepo) return gitNoGit(widget, "(no PR)");
       const item = getPullRequestInfo(cwd || git.root);
       if (!item) return "";
       return formatPullRequestInfo(item, widget);
@@ -1192,6 +1233,10 @@ function renderRemoteValue(remote, text, widget, emptyText) {
   if (!text) return metadataFlag(widget, "hideNoRemote") ? "" : emptyText;
   if (!metadataFlag(widget, "linkToRepo")) return text;
   return osc8(repoWebUrl(remote), text) || text;
+}
+
+function gitNoGit(widget, text = "(no git)") {
+  return metadataFlag(widget, "hideNoGit") === true ? "" : text;
 }
 
 function linkUrl(widget) {

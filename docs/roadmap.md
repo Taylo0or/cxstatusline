@@ -17,7 +17,7 @@ while staying honest about Codex's current extension points.
 - Git origin owner/repo, upstream owner/repo, fork status, worktree, PR/MR
   detection, clickable branch widgets, clickable Git remote owner/repo widgets,
   Git root directory IDE links, upstream tracking-remote fallback, remote
-  empty-state hiding, and `ownerOnlyWhenFork`.
+  and non-Git empty-state hiding, `ownerOnlyWhenFork`, and `hideWhenNotFork`.
 - Rich GitHub/GitLab PR/MR state, review, branch, diff-stat, and combined
   status/title display widgets.
 - Model, reasoning, service tier, permission, sandbox, session, event, run-state,
@@ -56,8 +56,8 @@ while staying honest about Codex's current extension points.
   layouts.
 - Full-screen TUI configuration editor with live preview, widget picker, line
   editor, widget-specific option editor including Git link, IDE-link,
-  PR/MR status/title, usage display, status-format, Nerd Font, and remote
-  empty-state toggles,
+  PR/MR status/title, Git empty-state, usage display, status-format, Nerd Font,
+  and remote empty-state toggles,
   per-widget color editor,
   preset/theme/mode selection, terminal width controls, global formatting
   controls, Powerline controls, install/update management, and save-time

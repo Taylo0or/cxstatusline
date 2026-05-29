@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.37
+
+- Added upstream-compatible `hideNoGit` rendering for Git widgets so non-Git
+  directories can either show the matching no-git empty state or hide it.
+- Added `gitIsFork` raw-value and `hideWhenNotFork` metadata support.
+- Exposed Git no-git and fork visibility controls in the full-screen TUI.
+
 ## 0.2.36
 
 - Added upstream-compatible usage/context display metadata for progress,

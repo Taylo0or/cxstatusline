@@ -32,7 +32,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
         { type: "custom-command", commandPath: "printf ok", maxWidth: 8, preserveColors: true },
         { type: "tokens-total", rawValue: true },
         { type: "current-working-dir", metadata: { segments: "2", fish: "true" } },
-        { type: "git-root-dir", metadata: { linkToIDE: "cursor", linkToCursor: "true" } }
+        { type: "git-root-dir", metadata: { linkToIDE: "cursor", linkToCursor: "true" } },
+        { type: "git-is-fork", metadata: { hideWhenNotFork: "true" } }
       ],
       [
         { type: "flex-separator" },
@@ -83,6 +84,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[0][6].type, "gitRootDir");
   assert.equal(config.lines[0][6].linkToIDE, "cursor");
   assert.equal(config.lines[0][6].linkToCursor, true);
+  assert.equal(config.lines[0][7].type, "gitIsFork");
+  assert.equal(config.lines[0][7].hideWhenNotFork, true);
   assert.equal(config.lines[1][0].type, "spacer");
   assert.equal(config.lines[1][1].type, "gitOriginOwnerRepo");
   assert.equal(config.lines[1][1].linkToRepo, true);

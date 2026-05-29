@@ -188,6 +188,7 @@ function convertCcstatuslineWidget(widget, settings) {
     "hideNoGit",
     "hideNoRemote",
     "ownerOnlyWhenFork",
+    "hideWhenNotFork",
     "linkToIDE",
     "linkToCursor"
   ]) {
@@ -226,6 +227,7 @@ function convertCcstatuslineWidget(widget, settings) {
       "hideNoGit",
       "hideNoRemote",
       "ownerOnlyWhenFork",
+      "hideWhenNotFork",
       "linkToIDE",
       "linkToCursor"
     ].includes(key)) {
