@@ -9,11 +9,13 @@ equivalent data or extension points.
 - Codex hook collector and external renderer for tmux, Starship, SketchyBar,
   prompts, and command runners.
 - Powerline and plain renderers.
-- Custom Powerline separators and caps.
+- Custom Powerline separators and caps, including multiple caps and Unicode
+  codepoint input.
 - Built-in themes and per-widget foreground/background overrides.
 - Multi-line rendering.
 - Flexible spacer/right-aligned plain rendering.
-- Width truncation and explicit width override.
+- Width truncation and explicit width override through `CXSTATUSLINE_WIDTH` or
+  the `CCSTATUSLINE_WIDTH` compatibility alias.
 - JSON, ANSI, and plain output modes.
 - Interactive and non-interactive configuration command.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and

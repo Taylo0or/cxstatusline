@@ -122,3 +122,42 @@ test("supports custom powerline separators and caps", () => {
 
   assert.equal(output, "< a   b !");
 });
+
+test("supports ccstatusline width env alias", () => {
+  const previousCx = process.env.CXSTATUSLINE_WIDTH;
+  const previousCc = process.env.CCSTATUSLINE_WIDTH;
+  delete process.env.CXSTATUSLINE_WIDTH;
+  process.env.CCSTATUSLINE_WIDTH = "8";
+  try {
+    const output = renderStatusLine({
+      config: { ...DEFAULT_CONFIG, mode: "plain", widgets: [{ type: "text", text: "abcdefghijklmnop" }] },
+      state: {},
+      git: { isRepo: false },
+      cwd: "/tmp/project",
+      codexConfig: {}
+    }, { format: "plain" });
+
+    assert.ok(visibleLength(output) <= 8);
+  } finally {
+    if (previousCx === undefined) delete process.env.CXSTATUSLINE_WIDTH;
+    else process.env.CXSTATUSLINE_WIDTH = previousCx;
+    if (previousCc === undefined) delete process.env.CCSTATUSLINE_WIDTH;
+    else process.env.CCSTATUSLINE_WIDTH = previousCc;
+  }
+});
+
+test("supports multiple powerline caps and Unicode codepoint caps", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      powerline: { separator: "U+003E", startCaps: ["<", "["], endCaps: ["]", "U+0021"] },
+      widgets: [{ type: "text", text: "a" }, { type: "text", text: "b" }]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { color: false });
+
+  assert.equal(output, "<[ a   b ]!");
+});

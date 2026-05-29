@@ -39,7 +39,7 @@ export function renderStatusLine(context, options = {}) {
   const mode = options.mode || config.mode || "powerline";
   const color = options.color !== false && options.format !== "plain";
   const raw = mode === "plain" || options.format === "plain";
-  const width = Number(options.width || process.env.CXSTATUSLINE_WIDTH || process.env.COLUMNS || 0);
+  const width = Number(options.width || process.env.CXSTATUSLINE_WIDTH || process.env.CCSTATUSLINE_WIDTH || process.env.COLUMNS || 0);
   let output = raw
     ? renderPlain(rendered, config.separator || " | ", width)
     : renderPowerline(rendered, theme, color, width, config);
@@ -65,9 +65,9 @@ function renderPlain(segments, separator, width) {
 
 function renderPowerline(segments, theme, color, width, config = {}) {
   if (!segments.length) return "";
-  const arrow = config.powerline?.separator || config.powerlineSeparator || "\uE0B0";
-  const startCap = config.powerline?.startCap || config.powerlineStartCap || "";
-  const endCap = config.powerline?.endCap || config.powerlineEndCap || arrow;
+  const arrow = firstCap(config.powerline?.separator, config.powerlineSeparator, "\uE0B0");
+  const startCap = caps(config.powerline?.startCaps, config.powerline?.startCap, config.powerlineStartCaps, config.powerlineStartCap).join("");
+  const endCap = caps(config.powerline?.endCaps, config.powerline?.endCap, config.powerlineEndCaps, config.powerlineEndCap, arrow).join("");
   const fallbackSeparator = " ";
   const parts = [];
   const visibleSegments = segments.filter((segment) => !segment.spacer);
@@ -123,4 +123,28 @@ function rgb(hex) {
     Number.parseInt(value.slice(2, 4), 16),
     Number.parseInt(value.slice(4, 6), 16)
   ];
+}
+
+function firstCap(...values) {
+  for (const value of values) {
+    const [cap] = caps(value);
+    if (cap) return cap;
+  }
+  return "";
+}
+
+function caps(...values) {
+  for (const value of values) {
+    if (Array.isArray(value)) return value.map(formatCap).filter(Boolean);
+    if (typeof value === "string" && value) return [formatCap(value)].filter(Boolean);
+  }
+  return [];
+}
+
+function formatCap(value) {
+  const text = String(value || "");
+  const match = text.match(/^(?:U\+|0x)([0-9a-f]{1,6})$/i);
+  if (!match) return text;
+  const codePoint = Number.parseInt(match[1], 16);
+  return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : "";
 }

@@ -511,7 +511,7 @@ export const widgetRegistry = {
   },
   terminalWidth: {
     description: "Detected terminal width",
-    render: () => process.env.CXSTATUSLINE_WIDTH || process.env.COLUMNS || ""
+    render: () => process.env.CXSTATUSLINE_WIDTH || process.env.CCSTATUSLINE_WIDTH || process.env.COLUMNS || ""
   },
   text: {
     description: "Custom literal text",

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.8
+
+- Added `CCSTATUSLINE_WIDTH` as a compatibility alias for explicit render
+  width.
+- Added multi-cap Powerline start/end configuration and Unicode codepoint cap
+  parsing such as `U+E0B0` or `0xE0B0`.
+
 ## 0.2.7
 
 - Added more ccstatusline-compatible widget aliases for session ids, session

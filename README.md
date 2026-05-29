@@ -32,7 +32,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
   links, flexible spacers/right alignment, path abbreviation, per-widget color
   overrides, custom command output, configurable Powerline separators/caps,
-  width truncation, and JSON or plain output.
+  multi-cap/codepoint Powerline caps, width truncation, and JSON or plain
+  output.
 - Basic Jujutsu widgets for root, workspace, revision, description, bookmarks,
   changed files, insertions, and deletions.
 - Presets for compact, dense, Git-focused, usage-focused, no-font,
@@ -89,6 +90,13 @@ Use with any shell prompt:
 
 ```sh
 cxstatusline render --format plain
+```
+
+Force a render width with either native or compatibility environment variables:
+
+```sh
+CXSTATUSLINE_WIDTH=90 cxstatusline render
+CCSTATUSLINE_WIDTH=90 cxstatusline render
 ```
 
 ## Codex Native Footer

@@ -26,7 +26,7 @@ while staying honest about Codex's current extension points.
   insertion, and deletion widgets.
 - Multi-line rendering.
 - OSC8 links.
-- Configurable Powerline separators and caps.
+- Configurable Powerline separators and multi-cap/codepoint caps.
 - Flexible spacer/right alignment.
 - Per-widget color overrides.
 - Path abbreviation and fish-style path shortening.
@@ -36,7 +36,7 @@ while staying honest about Codex's current extension points.
 - tmux, Starship, native footer, and hooks uninstall flows.
 - SketchyBar integration docs.
 - Persistent Git cache with TTL and `.git/HEAD`/`.git/index` invalidation.
-- Width truncation.
+- Width truncation and `CXSTATUSLINE_WIDTH`/`CCSTATUSLINE_WIDTH` overrides.
 - Doctor and reset commands.
 - Runtime benchmark command.
 - GitHub Actions CI and release workflow.
