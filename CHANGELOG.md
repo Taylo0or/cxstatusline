@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.21
+
+- Added per-widget `maxWidth` truncation with visible-width accounting.
+- Added custom command max-width compatibility, including `width` as a
+  command-only alias for imported or hand-written configs.
+- Preserved `maxWidth` during `ccstatusline` settings import.
+
 ## 0.2.20
 
 - Added Powerline widget merge support so `merge: true` suppresses the next

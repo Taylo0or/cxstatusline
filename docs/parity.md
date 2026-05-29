@@ -13,7 +13,7 @@ equivalent data or extension points.
   separator backgrounds, multiple caps, and Unicode codepoint input.
 - Built-in themes, global plain formatting overrides, inherited separator
   colors, plain/Powerline widget merges including no-padding mode, and
-  per-widget foreground/background overrides.
+  per-widget foreground/background overrides and max-width truncation.
 - Multi-line rendering with manual separator collapse around empty widgets,
   Powerline auto-alignment, and optional theme continuation across lines.
 - Flexible spacer/right-aligned plain rendering.
@@ -31,8 +31,8 @@ equivalent data or extension points.
 - `ccstatusline` settings import for lines, minimalist mode, terminal width
   options, global formatting, widget merge/bold flags, separators, Git cache
   TTL, Powerline options, common widget metadata, and named colors.
-- Custom text, custom symbol, custom command with optional ANSI preservation,
-  and OSC8 link widgets.
+- Custom text, custom symbol, custom command with timeout, max-width, and
+  optional ANSI preservation, and OSC8 link widgets.
 - Git branch, SHA, status, clean/dirty, staged, unstaged, untracked, conflicts,
   ahead/behind, insertions, deletions, origin, upstream owner/repo, fork status,
   worktree, clickable branch links, and GitHub/GitLab PR/MR widgets.

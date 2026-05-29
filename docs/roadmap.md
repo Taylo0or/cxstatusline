@@ -23,7 +23,7 @@ while staying honest about Codex's current extension points.
   block timer, weekly timer, cost, and custom text widgets.
 - Token speed, input speed, output speed, total speed, usage, weekly usage,
   reset timer timestamp modes, and cache token widgets from hook state.
-- Custom command widget.
+- Custom command widget with timeout, max-width, and optional ANSI preservation.
 - Jujutsu root, active workspace, revision, description, bookmark list,
   bookmark count, changed files, insertion/deletion summary, combined stats,
   insertion, and deletion widgets.
@@ -35,7 +35,7 @@ while staying honest about Codex's current extension points.
 - Flexible spacer/right alignment.
 - Global default padding/separators, inherited separator colors, global bold and
   color overrides, plain/Powerline widget merges including no-padding mode, and
-  per-widget color overrides.
+  per-widget color overrides and max-width truncation.
 - Terminal width modes, compact thresholds, width truncation, and
   `CXSTATUSLINE_WIDTH`/`CCSTATUSLINE_WIDTH` overrides.
 - Path abbreviation and fish-style path shortening.

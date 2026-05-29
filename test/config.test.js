@@ -28,7 +28,7 @@ test("converts ccstatusline settings into cxstatusline config", () => {
         { type: "model", color: "cyan", merge: "no-padding", bold: true },
         { type: "separator" },
         { type: "git-branch", color: "magenta" },
-        { type: "custom-command", command: "printf ok", preserveColors: true },
+        { type: "custom-command", command: "printf ok", maxWidth: 8, preserveColors: true },
         { type: "tokens-total", rawValue: true },
         { type: "current-working-dir", metadata: { segments: "2", fish: "true" } }
       ],
@@ -66,6 +66,7 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[0][1].text, " :: ");
   assert.equal(config.lines[0][2].type, "gitBranch");
   assert.equal(config.lines[0][3].type, "command");
+  assert.equal(config.lines[0][3].maxWidth, 8);
   assert.equal(config.lines[0][3].preserveColors, true);
   assert.equal(config.lines[0][4].type, "tokens");
   assert.equal(config.lines[0][4].label, "");

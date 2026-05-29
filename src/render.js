@@ -47,7 +47,7 @@ function buildSegments(context, config, theme, themeOffset = 0) {
   return assignAlignColumns(collapseSeparators(widgets.map((widget, index) => {
     const rawWidget = typeof widget === "string" ? { type: widget } : widget;
     const resolvedType = resolveWidgetType(rawWidget.type);
-    const text = renderWidget(widget, context);
+    const text = truncateSegmentText(renderWidget(widget, context), rawWidget, resolvedType);
     if (!text && config.hideEmpty !== false) return null;
     const segmentTheme = theme.segments[(themeOffset + index) % theme.segments.length];
     return {
@@ -64,6 +64,17 @@ function buildSegments(context, config, theme, themeOffset = 0) {
       preserveColors: Boolean(rawWidget.preserveColors)
     };
   }).filter(Boolean)));
+}
+
+function truncateSegmentText(text, widget, resolvedType) {
+  const maxWidth = segmentMaxWidth(widget, resolvedType);
+  return maxWidth ? truncateEnd(text, maxWidth) : text;
+}
+
+function segmentMaxWidth(widget, resolvedType) {
+  const value = widget.maxWidth ?? (resolvedType === "command" ? widget.width : undefined);
+  const width = Number(value || 0);
+  return Number.isFinite(width) && width > 0 ? Math.floor(width) : 0;
 }
 
 function renderPreparedLine(rendered, theme, config, options = {}, alignWidths = null, context = {}) {

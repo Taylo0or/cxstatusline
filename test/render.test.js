@@ -42,6 +42,54 @@ test("respects width truncation in visible cells", () => {
   assert.ok(visibleLength(output) <= 10);
 });
 
+test("supports per-widget max width truncation", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      mode: "plain",
+      widgets: [{ type: "text", text: "abcdefghijklmnopqrstuvwxyz", maxWidth: 8 }]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { format: "plain" });
+
+  assert.equal(output, "abcde...");
+});
+
+test("supports command max width truncation", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      mode: "plain",
+      widgets: [{ type: "command", command: "printf abcdefghijklmnop", maxWidth: 6 }]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: process.cwd(),
+    codexConfig: {}
+  }, { format: "plain" });
+
+  assert.equal(output, "abc...");
+});
+
+test("uses command width as a max-width compatibility alias", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      mode: "plain",
+      widgets: [{ type: "command", command: "printf abcdefghijklmnop", width: 6 }]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: process.cwd(),
+    codexConfig: {}
+  }, { format: "plain" });
+
+  assert.equal(output, "abc...");
+});
+
 test("renders multiple configured lines", () => {
   const output = renderStatusLine({
     config: {
