@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.32
+
+- Stabilized custom command stdin compatibility validation across CI runners.
+
 ## 0.2.31
 
 - Passed render context JSON to custom command widgets via stdin, matching

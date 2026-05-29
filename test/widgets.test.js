@@ -194,7 +194,7 @@ test("renders custom command output", () => {
 test("passes render context JSON to custom command stdin", () => {
   const output = renderWidget({
     type: "command",
-    command: "node -e \"let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>process.stdout.write(JSON.parse(d).state.model))\""
+    command: "cat"
   }, {
     config: { theme: "mono" },
     state: { model: "gpt-5.5" },
@@ -203,7 +203,7 @@ test("passes render context JSON to custom command stdin", () => {
     cwd: process.cwd()
   });
 
-  assert.equal(output, "gpt-5.5");
+  assert.equal(JSON.parse(output).state.model, "gpt-5.5");
 });
 
 test("renders custom commandPath compatibility alias", () => {
