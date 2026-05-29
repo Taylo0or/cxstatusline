@@ -34,6 +34,9 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   overrides, custom command output, configurable Powerline separators/caps,
   multi-cap/codepoint Powerline caps, width truncation, and JSON or plain
   output.
+- `ccstatusline` widget-name aliases for common kebab-case types such as
+  `git-branch`, `tokens-total`, `current-working-dir`, `git-pr`,
+  `weekly-sonnet-usage`, `separator`, and `flex-separator`.
 - Basic Jujutsu widgets for root, workspace, revision, description, bookmarks,
   changed files, insertions, and deletions.
 - Presets for compact, dense, Git-focused, usage-focused, no-font,
@@ -194,6 +197,12 @@ List widgets:
 
 ```sh
 cxstatusline widgets
+```
+
+Render with `ccstatusline`-style widget names:
+
+```sh
+cxstatusline render --format plain --widgets model,git-branch,tokens-total,current-working-dir
 ```
 
 List presets:

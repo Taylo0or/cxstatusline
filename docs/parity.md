@@ -20,6 +20,8 @@ equivalent data or extension points.
 - Interactive and non-interactive configuration command.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and
   multi-line layouts.
+- `ccstatusline` kebab-case widget aliases for migrated widget lists, including
+  separator and flex-separator compatibility.
 - Custom text, custom symbol, custom command, and OSC8 link widgets.
 - Git branch, SHA, status, clean/dirty, staged, unstaged, untracked, conflicts,
   ahead/behind, insertions, deletions, origin, upstream owner/repo, fork status,

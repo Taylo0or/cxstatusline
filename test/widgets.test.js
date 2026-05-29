@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatPath, inferContextWindow, parseGithubPullRequest, parseGitlabMergeRequest, parseJjStat, renderWidget } from "../src/widgets.js";
+import { formatPath, inferContextWindow, parseGithubPullRequest, parseGitlabMergeRequest, parseJjStat, renderWidget, resolveWidgetType } from "../src/widgets.js";
 import { stripAnsi } from "../src/util.js";
 
 test("infers context windows from model suffixes", () => {
@@ -125,6 +125,42 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "remoteControlStatus" }, context), "remote off");
   assert.equal(renderWidget({ type: "skills", mode: "list" }, context), "review-pr, commit");
   assert.equal(renderWidget({ type: "claudeAccountEmail" }, context), "dev@example.com");
+});
+
+test("resolves ccstatusline kebab-case widget names", () => {
+  assert.equal(resolveWidgetType("git-branch"), "gitBranch");
+  assert.equal(resolveWidgetType("current-working-dir"), "cwd");
+  assert.equal(resolveWidgetType("tokens-total"), "tokens");
+  assert.equal(resolveWidgetType("git-pr"), "gitPullRequest");
+  assert.equal(resolveWidgetType("worktree-original-branch"), "gitWorktreeOriginalBranch");
+  assert.equal(resolveWidgetType("weekly-sonnet-usage"), "weeklySonnetUsage");
+  assert.equal(resolveWidgetType("flex-separator"), "spacer");
+});
+
+test("renders ccstatusline widget aliases", () => {
+  const context = {
+    config: {},
+    state: {
+      model: "gpt-5.5",
+      usage: { totalTokens: 1234 },
+      startedAt: new Date(Date.now() - 60_000).toISOString()
+    },
+    git: {
+      isRepo: true,
+      branch: "main",
+      status: { clean: true },
+      diff: { insertions: 0, deletions: 0 },
+      stagedDiff: { insertions: 0, deletions: 0 }
+    },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  };
+
+  assert.equal(renderWidget({ type: "git-branch" }, context), "main");
+  assert.equal(renderWidget({ type: "tokens-total" }, context), "1.2k");
+  assert.equal(renderWidget({ type: "current-working-dir", segments: 1, home: false }, context), "/.../project");
+  assert.equal(renderWidget({ type: "separator", text: "::" }, context), "::");
+  assert.match(renderWidget({ type: "reset-timer" }, context), /\d+[hms]/);
 });
 
 test("parses Jujutsu diff stats", () => {

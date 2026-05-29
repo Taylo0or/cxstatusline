@@ -30,6 +30,7 @@ while staying honest about Codex's current extension points.
 - Flexible spacer/right alignment.
 - Per-widget color overrides.
 - Path abbreviation and fish-style path shortening.
+- `ccstatusline` kebab-case widget aliases for migrated widget lists.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and multi-line
   layouts.
 - tmux and Starship integration snippets, including optional config writes.

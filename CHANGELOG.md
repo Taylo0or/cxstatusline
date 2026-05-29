@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.10
+
+- Added `ccstatusline` widget-name compatibility for kebab-case types such as
+  `git-branch`, `tokens-total`, `current-working-dir`, `git-pr`,
+  `weekly-sonnet-usage`, and `worktree-original-branch`.
+- Added `separator` and `flex-separator` compatibility widgets.
+
 ## 0.2.9
 
 - Added a `bench:ci` benchmark scenario suite covering compact, usage, Git, and

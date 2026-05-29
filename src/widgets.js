@@ -7,6 +7,35 @@ const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const PACKAGE = readJson(join(repoRoot, "package.json"), {});
 
+const WIDGET_ALIASES = {
+  "current-working-dir": "cwd",
+  "tokens-total": "tokens",
+  "tokens-input": "inputTokens",
+  "tokens-output": "outputTokens",
+  "tokens-cached": "cachedTokens",
+  "cache-read-tokens": "cacheReadTokens",
+  "cache-write-tokens": "cacheWriteTokens",
+  "session-cost": "cost",
+  "reset-timer": "blockResetTimer",
+  "free-memory": "memory",
+  "thinking-effort": "reasoning",
+  "git-review": "gitPullRequest",
+  "git-pr": "gitPullRequest",
+  "git-pull-request": "gitPullRequest",
+  "git-pr-state": "gitPullRequestState",
+  "git-pr-review": "gitPullRequestReview",
+  "git-pr-stats": "gitPullRequestStats",
+  "git-pr-branches": "gitPullRequestBranches",
+  "worktree-mode": "gitWorktreeMode",
+  "worktree-name": "gitWorktreeName",
+  "worktree-branch": "gitWorktreeBranch",
+  "worktree-original-branch": "gitWorktreeOriginalBranch",
+  "flex-separator": "spacer",
+  "custom-text": "text",
+  "custom-symbol": "symbol",
+  "custom-command": "command"
+};
+
 export const widgetRegistry = {
   appName: {
     description: "Codex application label",
@@ -529,6 +558,10 @@ export const widgetRegistry = {
       return result.ok ? result.stdout.trim().split(/\r?\n/)[0] : "";
     }
   },
+  separator: {
+    description: "Manual separator text",
+    render: ({ widget }) => widget.text || widget.separator || "|"
+  },
   spacer: {
     description: "Flexible spacer for right-aligned plain output",
     render: () => SPACER
@@ -643,7 +676,8 @@ export function listWidgets() {
 
 export function renderWidget(widget, context) {
   const type = typeof widget === "string" ? widget : widget.type;
-  const definition = widgetRegistry[type];
+  const resolvedType = resolveWidgetType(type);
+  const definition = widgetRegistry[resolvedType];
   if (!definition) return "";
   const value = definition.render({ ...context, widget: typeof widget === "string" ? { type } : widget });
   if (!value) return "";
@@ -652,6 +686,25 @@ export function renderWidget(widget, context) {
   const label = typeof widget === "string" ? "" : widget.label;
   if (context.config.minimal || label === "") return String(value);
   return label ? `${label}: ${value}` : String(value);
+}
+
+export function resolveWidgetType(type) {
+  const raw = String(type || "");
+  if (widgetRegistry[raw]) return raw;
+
+  const directAlias = WIDGET_ALIASES[raw];
+  if (directAlias && widgetRegistry[directAlias]) return directAlias;
+
+  const normalized = normalizeWidgetType(raw);
+  const normalizedAlias = Object.entries(WIDGET_ALIASES)
+    .find(([alias]) => normalizeWidgetType(alias) === normalized)?.[1];
+  if (normalizedAlias && widgetRegistry[normalizedAlias]) return normalizedAlias;
+
+  return Object.keys(widgetRegistry).find((name) => normalizeWidgetType(name) === normalized) || null;
+}
+
+function normalizeWidgetType(type) {
+  return String(type || "").replace(/[^A-Za-z0-9]/g, "").toLowerCase();
 }
 
 export function formatPath(path, options = {}) {
