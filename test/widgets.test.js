@@ -191,6 +191,18 @@ test("renders custom command output", () => {
   assert.equal(output, "command-ok");
 });
 
+test("keeps command output when a fast command closes stdin early", () => {
+  const output = renderWidget({ type: "command", command: "printf command-ok" }, {
+    config: {},
+    state: { transcript: "x".repeat(1_000_000) },
+    git: { isRepo: false },
+    codexConfig: {},
+    cwd: process.cwd()
+  });
+
+  assert.equal(output, "command-ok");
+});
+
 test("passes render context JSON to custom command stdin", () => {
   const output = renderWidget({
     type: "command",

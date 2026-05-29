@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.33
+
+- Preserved successful custom command output when commands exit before reading
+  all stdin payload bytes.
+
 ## 0.2.32
 
 - Stabilized custom command stdin compatibility validation across CI runners.

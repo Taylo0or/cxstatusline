@@ -82,7 +82,8 @@ export function run(command, args = [], options = {}) {
     env: { ...process.env, ...(options.env || {}) }
   });
 
-  if (result.error || result.status !== 0) {
+  const ignoredError = result.error?.code === "EPIPE" && result.status === 0;
+  if (!ignoredError && (result.error || result.status !== 0)) {
     return {
       ok: false,
       stdout: result.stdout || "",
