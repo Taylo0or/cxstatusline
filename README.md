@@ -205,6 +205,13 @@ Render with `ccstatusline`-style widget names:
 cxstatusline render --format plain --widgets model,git-branch,tokens-total,current-working-dir
 ```
 
+Import an existing `ccstatusline` config:
+
+```sh
+cxstatusline import ccstatusline --dry-run
+cxstatusline import ccstatusline
+```
+
 List presets:
 
 ```sh
@@ -217,6 +224,7 @@ cxstatusline presets
 cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
 cxstatusline hook
 cxstatusline configure
+cxstatusline import ccstatusline [--from path] [--dry-run]
 cxstatusline init [--force] [--preset default|compact|dense|git|usage|nofont|right|multiline]
 cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
 cxstatusline uninstall [hooks|native|tmux|starship]

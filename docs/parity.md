@@ -22,6 +22,8 @@ equivalent data or extension points.
   multi-line layouts.
 - `ccstatusline` kebab-case widget aliases for migrated widget lists, including
   separator and flex-separator compatibility.
+- `ccstatusline` settings import for lines, minimalist mode, separators, Git
+  cache TTL, Powerline options, common widget metadata, and named colors.
 - Custom text, custom symbol, custom command, and OSC8 link widgets.
 - Git branch, SHA, status, clean/dirty, staged, unstaged, untracked, conflicts,
   ahead/behind, insertions, deletions, origin, upstream owner/repo, fork status,

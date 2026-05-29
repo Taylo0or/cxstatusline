@@ -1,7 +1,8 @@
 import { existsSync, copyFileSync } from "node:fs";
 import { join } from "node:path";
 import { DEFAULT_CONFIG, PRESETS, THEMES } from "./constants.js";
-import { configDir, ensureDir, readJson, repoRoot, writeJsonAtomic } from "./util.js";
+import { configDir, ensureDir, homePath, readJson, repoRoot, writeJsonAtomic } from "./util.js";
+import { resolveWidgetType } from "./widgets.js";
 
 export function defaultConfigPath() {
   return join(configDir(), "config.json");
@@ -65,3 +66,133 @@ export function applyPreset(config, presetName) {
   }
   return output;
 }
+
+export function defaultCcstatuslineConfigPath() {
+  return homePath(".config", "ccstatusline", "settings.json");
+}
+
+export function importCcstatuslineConfig(options = {}) {
+  const source = options.from || defaultCcstatuslineConfigPath();
+  const settings = readJson(source, null);
+  if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
+    throw new Error(`Could not read ccstatusline settings from ${source}`);
+  }
+
+  const base = loadConfig({ config: options.config });
+  const converted = convertCcstatuslineSettings(settings, base);
+  if (!options.dryRun) saveConfig(converted, { config: options.config });
+  return {
+    source,
+    path: options.config || defaultConfigPath(),
+    config: converted
+  };
+}
+
+export function convertCcstatuslineSettings(settings, base = DEFAULT_CONFIG) {
+  const output = structuredClone(base);
+  if (typeof settings.minimalistMode === "boolean") output.minimal = settings.minimalistMode;
+  if (typeof settings.defaultSeparator === "string") output.separator = settings.defaultSeparator;
+  if (settings.gitCacheTtlSeconds !== undefined) {
+    output.gitCacheTtlMs = Math.max(0, Number(settings.gitCacheTtlSeconds) || 0) * 1000;
+  }
+
+  const powerline = settings.powerline && typeof settings.powerline === "object" ? settings.powerline : null;
+  if (powerline) {
+    output.mode = powerline.enabled ? "powerline" : "plain";
+    output.powerline = {
+      ...(output.powerline || {}),
+      separator: Array.isArray(powerline.separators) && powerline.separators.length ? powerline.separators[0] : output.powerline?.separator,
+      startCaps: Array.isArray(powerline.startCaps) ? powerline.startCaps : output.powerline?.startCaps,
+      endCaps: Array.isArray(powerline.endCaps) ? powerline.endCaps : output.powerline?.endCaps
+    };
+  }
+
+  const lines = Array.isArray(settings.lines)
+    ? settings.lines.map((line) => convertCcstatuslineLine(line, settings)).filter((line) => line.length > 0)
+    : [];
+
+  if (lines.length > 1) {
+    output.lines = lines;
+    delete output.widgets;
+  } else if (lines.length === 1) {
+    output.widgets = lines[0];
+    delete output.lines;
+  }
+
+  return output;
+}
+
+function convertCcstatuslineLine(line, settings) {
+  if (!Array.isArray(line)) return [];
+  return line
+    .map((widget) => convertCcstatuslineWidget(widget, settings))
+    .filter(Boolean);
+}
+
+function convertCcstatuslineWidget(widget, settings) {
+  if (typeof widget === "string") return { type: resolveWidgetType(widget) || widget };
+  if (!widget || typeof widget !== "object" || Array.isArray(widget)) return null;
+
+  const sourceType = widget.type || "text";
+  const type = resolveWidgetType(sourceType) || sourceType;
+  const output = { type };
+
+  if (widget.rawValue || settings.minimalistMode) output.label = "";
+  for (const key of ["text", "symbol", "command", "href", "url", "timeout", "width"]) {
+    if (widget[key] !== undefined) output[key] = widget[key];
+  }
+
+  if (type === "separator" && output.text === undefined) {
+    output.text = widget.separator || widget.value || settings.defaultSeparator || "|";
+  }
+
+  const metadata = widget.metadata && typeof widget.metadata === "object" ? widget.metadata : {};
+  for (const [key, value] of Object.entries(metadata)) {
+    if (value === undefined || value === null) continue;
+    if (["format", "mode", "style", "segments", "fish", "home", "limit", "listLimit"].includes(key)) {
+      output[key === "listLimit" ? "limit" : key] = coerceMetadataValue(value);
+    }
+  }
+
+  const fg = normalizeColor(widget.fg || widget.color);
+  const bg = normalizeColor(widget.bg || widget.background || widget.backgroundColor);
+  if (fg) output.fg = fg;
+  if (bg) output.bg = bg;
+  return output;
+}
+
+function coerceMetadataValue(value) {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  if (typeof value === "string" && /^-?\d+$/.test(value)) return Number(value);
+  return value;
+}
+
+function normalizeColor(value) {
+  if (typeof value !== "string" || !value.trim()) return "";
+  const text = value.trim();
+  if (/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(text)) return text;
+  if (/^hex:[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(text)) return `#${text.slice(4)}`;
+  return NAMED_COLORS[text.toLowerCase()] || "";
+}
+
+const NAMED_COLORS = {
+  black: "#000000",
+  red: "#dc2626",
+  green: "#16a34a",
+  yellow: "#ca8a04",
+  blue: "#2563eb",
+  magenta: "#c026d3",
+  cyan: "#0891b2",
+  white: "#f8fafc",
+  gray: "#64748b",
+  grey: "#64748b",
+  brightblack: "#475569",
+  brightred: "#ef4444",
+  brightgreen: "#22c55e",
+  brightyellow: "#eab308",
+  brightblue: "#3b82f6",
+  brightmagenta: "#d946ef",
+  brightcyan: "#06b6d4",
+  brightwhite: "#ffffff"
+};

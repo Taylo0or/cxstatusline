@@ -3,7 +3,7 @@ import readline from "node:readline/promises";
 import { dirname } from "node:path";
 import { stdin as input, stdout as output } from "node:process";
 import { CODEX_NATIVE_ITEMS, DEFAULT_NATIVE_STATUS_LINE, PRESETS, THEMES } from "./constants.js";
-import { applyPreset, defaultConfigPath, initConfig, loadConfig, saveConfig } from "./config.js";
+import { applyPreset, defaultConfigPath, importCcstatuslineConfig, initConfig, loadConfig, saveConfig } from "./config.js";
 import { codexConfigPath, installNativeStatusLine, readCodexConfig, uninstallNativeStatusLine } from "./codexConfig.js";
 import { getGitInfo } from "./git.js";
 import { hooksPath, installHooks, uninstallHooks } from "./install.js";
@@ -21,6 +21,7 @@ export async function runCli(args) {
   if (command === "init") return initCommand(rest);
   if (command === "install") return installCommand(rest);
   if (command === "uninstall") return uninstallCommand(rest);
+  if (command === "import" || command === "migrate") return importCommand(rest);
   if (command === "configure" || command === "config") return configureCommand(rest);
   if (command === "widgets") return widgetsCommand();
   if (command === "presets") return presetsCommand();
@@ -108,6 +109,26 @@ async function configureCommand(args) {
     const result = installNativeStatusLine({ dryRun: Boolean(flags["dry-run"]) });
     console.log(`native: ${flags["dry-run"] ? "would update" : "updated"} ${result.path}`);
   }
+}
+
+function importCommand(args) {
+  const { flags, positionals } = parseFlags(args);
+  const sourceName = positionals[0] || flags.source || "ccstatusline";
+  if (sourceName !== "ccstatusline") {
+    throw new Error("Unknown import source. Use: cxstatusline import ccstatusline");
+  }
+
+  const result = importCcstatuslineConfig({
+    from: flags.from || flags.path,
+    config: flags.config,
+    dryRun: Boolean(flags["dry-run"])
+  });
+
+  if (flags["dry-run"]) {
+    console.log(JSON.stringify(result.config, null, 2));
+    return;
+  }
+  console.log(`config: imported ${result.source} -> ${result.path}`);
 }
 
 function installCommand(args) {
@@ -268,6 +289,7 @@ Usage:
   cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
   cxstatusline hook
   cxstatusline configure
+  cxstatusline import ccstatusline [--from path] [--dry-run]
   cxstatusline init [--force]
   cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
   cxstatusline uninstall [hooks|native|tmux|starship]
@@ -283,6 +305,7 @@ Examples:
   cxstatusline render --format plain
   cxstatusline render --preset compact --format plain
   cxstatusline configure --preset compact --theme powerline --yes
+  cxstatusline import ccstatusline --dry-run
   cxstatusline install hooks
   cxstatusline install tmux
   cxstatusline install tmux --write --preset compact

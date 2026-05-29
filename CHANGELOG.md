@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.11
+
+- Added `cxstatusline import ccstatusline` / `migrate ccstatusline` to convert
+  `~/.config/ccstatusline/settings.json` into `cxstatusline` config.
+- Converts ccstatusline lines, minimalist mode, separators, Git cache TTL,
+  Powerline separators/caps, common widget metadata, and named widget colors.
+- Added `--dry-run` support for previewing imported config JSON.
+
 ## 0.2.10
 
 - Added `ccstatusline` widget-name compatibility for kebab-case types such as
