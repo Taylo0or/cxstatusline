@@ -1084,15 +1084,21 @@ function formatVimMode(value, widget) {
 }
 
 function formatSkills(skills, widget) {
-  const mode = widget.mode || widget.view || "current";
-  if (mode === "count") return skills.totalInvocations ? String(skills.totalInvocations) : "";
+  const configuredMode = String(metadataValue(widget, "mode") || widget.view || "current");
+  const mode = ["current", "count", "list"].includes(configuredMode) ? configuredMode : "current";
+  const hideWhenEmpty = Boolean(widget.hideEmpty) || metadataFlag(widget, "hideWhenEmpty") === true;
+  if (mode === "count") {
+    const total = Number(skills.totalInvocations || 0);
+    return total ? String(total) : hideWhenEmpty ? "" : "0";
+  }
   if (mode === "list") {
     const unique = Array.isArray(skills.uniqueSkills) ? skills.uniqueSkills : [];
-    const limit = Number(widget.limit || widget.listLimit || 0);
+    if (!unique.length) return hideWhenEmpty ? "" : "none";
+    const limit = Number(metadataValue(widget, "limit") || metadataValue(widget, "listLimit") || 0);
     const visible = limit > 0 ? unique.slice(0, limit) : unique;
     return visible.join(", ");
   }
-  return skills.lastSkill || "";
+  return skills.lastSkill || (hideWhenEmpty ? "" : "none");
 }
 
 export function formatPullRequestInfo(item, widget = {}) {

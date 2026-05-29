@@ -143,6 +143,11 @@ test("TUI widget option helpers expose type-specific rows", () => {
   assert.equal(extraUsageRows.find((row) => row.key === "display")?.value, "slider");
   assert.equal(extraUsageRows.find((row) => row.key === "hideIfDisabled")?.value, "on");
 
+  const skillsRows = buildWidgetOptionRows({ type: "skills", metadata: { mode: "list", listLimit: "2", hideWhenEmpty: "true" } });
+  assert.equal(skillsRows.find((row) => row.key === "view")?.value, "list");
+  assert.equal(skillsRows.find((row) => row.key === "limit")?.value, "2");
+  assert.equal(skillsRows.find((row) => row.key === "hideEmpty")?.value, "on");
+
   const statusRows = buildWidgetOptionRows({ type: "voiceStatus", metadata: { format: "icon", nerdFont: "true" } });
   assert.equal(statusRows.find((row) => row.key === "format")?.value, "icon");
   assert.equal(statusRows.find((row) => row.key === "nerdFont")?.value, "on");
@@ -179,6 +184,10 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.deepEqual(applyWidgetOption({ type: "sessionUsage", metadata: { cursor: "true" } }, "cursor"), { type: "sessionUsage" });
   assert.deepEqual(applyWidgetOption({ type: "extraUsageRemaining" }, "hideIfDisabled"), { type: "extraUsageRemaining", hideIfDisabled: true });
   assert.deepEqual(applyWidgetOption({ type: "extraUsageRemaining", metadata: { hideIfDisabled: "true" } }, "hideIfDisabled"), { type: "extraUsageRemaining" });
+  assert.deepEqual(applyWidgetOption({ type: "skills", metadata: { mode: "list" } }, "view"), { type: "skills" });
+  assert.deepEqual(applyWidgetOption({ type: "skills", metadata: { listLimit: "1" } }, "limit", "2"), { type: "skills", limit: 2 });
+  assert.deepEqual(applyWidgetOption({ type: "skills", metadata: { hideWhenEmpty: "true" } }, "hideEmpty"), { type: "skills" });
+  assert.deepEqual(applyWidgetOption({ type: "skills" }, "hideEmpty"), { type: "skills", hideWhenEmpty: true });
 
   assert.deepEqual(applyWidgetOption({ type: "vimMode" }, "format"), { type: "vimMode", format: "icon-letter" });
   assert.deepEqual(applyWidgetOption({ type: "voiceStatus", metadata: { format: "icon" } }, "format"), { type: "voiceStatus", format: "icon-text" });
@@ -220,5 +229,6 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.equal(describeWidgetOptions({ type: "blockResetTimer", metadata: { absolute: "true", timezone: "UTC" } }), "timestamp, tz=UTC");
   assert.equal(describeWidgetOptions({ type: "sessionUsage", display: "progress-short", invert: true, cursor: true }), "display=progress-short, invert, cursor");
   assert.equal(describeWidgetOptions({ type: "extraUsageRemaining", hideIfDisabled: true }), "hide-if-disabled");
+  assert.equal(describeWidgetOptions({ type: "skills", metadata: { listLimit: "2", hideWhenEmpty: "true" } }), "limit=2, hide-empty");
   assert.equal(describeWidgetOptions({ type: "compactions", nerdFont: true, hideZero: true }), "nerd-font, hide-zero");
 });

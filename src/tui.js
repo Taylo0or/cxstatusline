@@ -263,7 +263,10 @@ export function describeWidgetOptions(widget) {
   if (item.fish || metadataFlag(item, "fishStyle")) parts.push("fish");
   if (metadataFlag(item, "abbreviateHome")) parts.push("home=~");
   if (item.home === false) parts.push("no-home");
-  if (item.limit !== undefined || item.listLimit !== undefined) parts.push(`limit=${item.limit ?? item.listLimit}`);
+  if (metadataValue(item, "limit") !== undefined || metadataValue(item, "listLimit") !== undefined) {
+    parts.push(`limit=${metadataValue(item, "limit") ?? metadataValue(item, "listLimit")}`);
+  }
+  if (skillsHideEmpty(item)) parts.push("hide-empty");
   if (timerTimeZone(item)) parts.push(`tz=${timerTimeZone(item)}`);
   if (item.locale) parts.push(`locale=${item.locale}`);
   if (item.hour12 !== undefined || item.twelveHour !== undefined) parts.push(`hour12=${item.hour12 ?? item.twelveHour}`);
@@ -361,9 +364,9 @@ export function buildWidgetOptionRows(widget) {
   }
   if (type === "skills") {
     rows.push(
-      { key: "view", label: "Skills view", value: item.view || item.mode || "current" },
-      { key: "limit", label: "List limit", value: item.limit || item.listLimit || "(all)" },
-      { key: "hideEmpty", label: "Hide when empty", value: BOOLEAN_TEXT.get(Boolean(item.hideEmpty)) }
+      { key: "view", label: "Skills view", value: item.view || metadataValue(item, "mode") || "current" },
+      { key: "limit", label: "List limit", value: metadataValue(item, "limit") || metadataValue(item, "listLimit") || "(all)" },
+      { key: "hideEmpty", label: "Hide when empty", value: BOOLEAN_TEXT.get(skillsHideEmpty(item)) }
     );
   }
   if (type === "vimMode" || type === "voiceStatus" || type === "remoteControlStatus" || type === "compactions") {
@@ -416,9 +419,9 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "hour12") return item.hour12 === undefined ? { ...item, hour12: true } : item.hour12 ? { ...item, hour12: false } : deleteKey(item, "hour12");
   if (key === "includeDate") return toggleDateOption(item);
   if (key === "windowSeconds") return setNumericField(item, "windowSeconds", value);
-  if (key === "view") return setModeValue(item, nextValue(["current", "count", "list"], item.view || item.mode || "current"), "view");
-  if (key === "limit") return setNumericField(deleteKey(item, "listLimit"), "limit", value);
-  if (key === "hideEmpty") return toggleOrDelete(item, "hideEmpty");
+  if (key === "view") return setSkillsView(item, nextValue(["current", "count", "list"], item.view || metadataValue(item, "mode") || "current"));
+  if (key === "limit") return setSkillsLimit(item, value);
+  if (key === "hideEmpty") return toggleSkillsHideEmpty(item);
   if (key === "format") return setFormatValue(item, nextValue(formatValuesForType(resolveWidgetType(item.type) || item.type), metadataValue(item, "format") || item.format || defaultFormatForType(resolveWidgetType(item.type) || item.type)));
   if (key === "nerdFont") return toggleOrDeleteMetadataAware(item, "nerdFont");
   if (key === "hideZero") return toggleOrDeleteMetadataAware(item, "hideZero");
@@ -1564,6 +1567,33 @@ function toggleOrDeleteMetadataAware(item, key) {
   return next;
 }
 
+function skillsHideEmpty(item) {
+  return Boolean(item?.hideEmpty) || metadataFlag(item, "hideWhenEmpty") === true;
+}
+
+function toggleSkillsHideEmpty(item) {
+  const enabled = skillsHideEmpty(item);
+  const next = removeMetadataKeys({ ...item }, ["hideWhenEmpty"]);
+  delete next.hideEmpty;
+  if (!enabled) next.hideWhenEmpty = true;
+  return next;
+}
+
+function setSkillsView(item, mode) {
+  const next = removeMetadataKeys({ ...item }, ["mode"]);
+  delete next.mode;
+  delete next.view;
+  if (mode !== "current") next.view = mode;
+  return next;
+}
+
+function setSkillsLimit(item, value) {
+  const next = removeMetadataKeys({ ...item }, ["limit", "listLimit"]);
+  delete next.limit;
+  delete next.listLimit;
+  return setNumericField(next, "limit", value);
+}
+
 function setModeValue(item, mode, key = "mode") {
   const next = { ...item };
   if (mode === "used" || mode === "duration" || mode === "current") delete next[key];
@@ -1677,6 +1707,7 @@ function clearWidgetOptions(item) {
     "view",
     "limit",
     "listLimit",
+    "hideWhenEmpty",
     "hideEmpty",
     "nerdFont",
     "hideZero"

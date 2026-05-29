@@ -68,7 +68,7 @@ equivalent data or extension points.
   remote-control status, skills, account email, run state, last event, last
   tool, compaction count, duration, memory, and terminal width widgets, with
   upstream-compatible format, Nerd Font, and hide-zero controls where
-  applicable.
+  applicable, plus Skills mode/list-limit/hide-when-empty metadata.
 - Jujutsu root, active workspace, revision, description, bookmark list,
   bookmark count, changed files, insertion/deletion summary, combined stats,
   insertion, and deletion widgets, including upstream-compatible `no jj`

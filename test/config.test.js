@@ -41,7 +41,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
         { type: "link", metadata: { url: "https://example.com/docs", text: "Docs" } },
         { type: "reset-timer", color: "brightYellow", metadata: { format: "timestamp", timeZone: "UTC", timezone: "UTC", hour12: "false", absolute: "true" } },
         { type: "jj-workspace", metadata: { hideNoJj: "true" } },
-        { type: "extra-usage-remaining", metadata: { hideIfDisabled: "true" } }
+        { type: "extra-usage-remaining", metadata: { hideIfDisabled: "true" } },
+        { type: "skills", metadata: { mode: "list", listLimit: "2", hideWhenEmpty: "true" } }
       ]
     ]
   });
@@ -109,4 +110,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[1][4].hideNoJj, true);
   assert.equal(config.lines[1][5].type, "extraUsageRemaining");
   assert.equal(config.lines[1][5].hideIfDisabled, true);
+  assert.equal(config.lines[1][6].type, "skills");
+  assert.equal(config.lines[1][6].mode, "list");
+  assert.equal(config.lines[1][6].limit, 2);
+  assert.equal(config.lines[1][6].hideWhenEmpty, true);
 });

@@ -356,6 +356,12 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "voiceStatus", format: "icon" }, context), "\u{1F3A4} \u25C9");
   assert.equal(renderWidget({ type: "remoteControlStatus", format: "label-mark" }, context), "remote \u2717");
   assert.equal(renderWidget({ type: "skills", mode: "list" }, context), "review-pr, commit");
+  assert.equal(renderWidget({ type: "skills", metadata: { mode: "list", listLimit: "1" } }, context), "review-pr");
+  assert.equal(renderWidget({ type: "skills", metadata: { mode: "count" } }, context), "2");
+  assert.equal(renderWidget({ type: "skills" }, { ...context, state: { skills: {} } }), "none");
+  assert.equal(renderWidget({ type: "skills", metadata: { mode: "count" } }, { ...context, state: { skills: {} } }), "0");
+  assert.equal(renderWidget({ type: "skills", metadata: { hideWhenEmpty: "true" } }, { ...context, state: { skills: {} } }), "");
+  assert.equal(renderWidget({ type: "skills", metadata: { mode: "list", hideWhenEmpty: "true" } }, { ...context, state: { skills: { uniqueSkills: [] } } }), "");
   assert.equal(renderWidget({ type: "claudeAccountEmail" }, context), "dev@example.com");
   assert.equal(renderWidget({ type: "compactions", format: "icon-space-number", nerdFont: true }, {
     ...context,

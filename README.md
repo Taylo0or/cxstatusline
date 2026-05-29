@@ -27,8 +27,9 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 - Codex/session widgets: model, reasoning effort, service tier, permission mode,
   sandbox mode, session id/name, output style, vim/voice/remote-control status
   when present with upstream-compatible format and Nerd Font controls, skills,
-  run state, last event, last tool, compaction count with format/Nerd Font and
-  hide-zero controls, duration, and best-effort token/context/cost metrics when
+  with mode/list-limit/hide-when-empty metadata, run state, last event, last
+  tool, compaction count with format/Nerd Font and hide-zero controls,
+  duration, and best-effort token/context/cost metrics when
   Codex exposes them through hook payloads or transcript entries.
 - Usage widgets: token/input/output/total speed, session and weekly usage,
   Sonnet/Opus weekly usage when available, context used/remaining/window,
@@ -300,6 +301,12 @@ Render usage or context percentages with `ccstatusline` display metadata:
 { "type": "sessionUsage", "metadata": { "display": "progress-short", "invert": "true" } }
 { "type": "contextPercentage", "metadata": { "display": "slider", "cursor": "true" } }
 { "type": "extraUsageUtilization", "metadata": { "display": "slider-only", "hideIfDisabled": "true" } }
+```
+
+Use `ccstatusline`-style Skills metadata:
+
+```json
+{ "type": "skills", "metadata": { "mode": "list", "listLimit": "2", "hideWhenEmpty": "true" } }
 ```
 
 Import an existing `ccstatusline` config:

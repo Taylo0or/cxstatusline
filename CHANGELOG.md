@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.42
+
+- Added upstream-compatible Skills widget `metadata.mode`,
+  `metadata.listLimit`, and `metadata.hideWhenEmpty` rendering.
+- Preserved Skills hide-when-empty metadata during `ccstatusline` settings
+  import and exposed it in the full-screen TUI.
+
 ## 0.2.41
 
 - Added `ccstatusline` path widget metadata aliases for `segments`,
