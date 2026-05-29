@@ -1,6 +1,6 @@
 {
   "name": "cxstatusline",
-  "version": "0.2.40",
+  "version": "0.2.41",
   "description": "A Codex-aware statusline renderer with hooks, Powerline themes, and native Codex footer configuration.",
   "type": "module",
   "bin": {

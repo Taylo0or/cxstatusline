@@ -847,20 +847,21 @@ function normalizeWidgetType(type) {
 
 export function formatPath(path, options = {}) {
   let output = String(path || "");
-  if (options.home !== false) {
+  const abbreviateHome = options.home !== false && metadataFlag(options, "abbreviateHome") !== false;
+  if (abbreviateHome) {
     const home = os.homedir();
     if (output === home) output = "~";
     else if (output.startsWith(`${home}/`)) output = `~/${output.slice(home.length + 1)}`;
   }
 
-  const segments = Number(options.segments || 0);
+  const segments = Number(metadataValue(options, "segments") || 0);
   if (segments > 0) {
     const prefix = output.startsWith("~/") ? "~/" : output.startsWith("/") ? "/" : "";
     const parts = output.replace(/^~?\//, "").split("/").filter(Boolean);
     if (parts.length > segments) output = `${prefix}.../${parts.slice(-segments).join("/")}`;
   }
 
-  if (options.fish) output = fishPath(output);
+  if (options.fish || metadataFlag(options, "fishStyle") === true) output = fishPath(output);
   return output;
 }
 

@@ -51,8 +51,8 @@ equivalent data or extension points.
   GitHub/GitLab PR/MR widgets with combined status/title/raw display controls.
 - Persistent Git cache with TTL plus `.git/HEAD` and `.git/index`
   invalidation.
-- Current directory path abbreviation, segment limiting, and fish-style path
-  shortening.
+- Current directory path abbreviation, segment limiting, fish-style path
+  shortening, and `ccstatusline` path metadata aliases.
 - Token, input token, output token, cached token, cache-read token,
   cache-write token, context, context percentage aliases, context bar, context
   window, cost, usage remaining/utilization, session usage, weekly usage,

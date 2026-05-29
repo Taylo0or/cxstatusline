@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { homedir } from "node:os";
 import { formatJjChangeSummary, formatPath, formatPullRequestInfo, formatResetTimer, inferContextWindow, parseGithubPullRequest, parseGitlabMergeRequest, parseJjBookmarks, parseJjStat, renderWidget, resolveWidgetType } from "../src/widgets.js";
 import { stripAnsi } from "../src/util.js";
 
@@ -192,6 +193,8 @@ test("renders Git root dir IDE links from metadata", () => {
 test("formats paths with home abbreviation, segments, and fish mode", () => {
   assert.equal(formatPath("/Users/luke/AlphaPay/ca-parent", { segments: 2, home: false }), "/.../AlphaPay/ca-parent");
   assert.equal(formatPath("/Users/luke/AlphaPay/ca-parent", { fish: true, home: false }), "/U/l/A/ca-parent");
+  assert.equal(formatPath(`${homedir()}/Documents/AlphaPay/ca-parent`, { metadata: { segments: "2", abbreviateHome: "true" } }), "~/.../AlphaPay/ca-parent");
+  assert.equal(formatPath(`${homedir()}/Documents/AlphaPay/ca-parent`, { metadata: { fishStyle: "true" } }), "~/D/A/ca-parent");
 });
 
 test("parses rich GitHub pull request metadata", () => {

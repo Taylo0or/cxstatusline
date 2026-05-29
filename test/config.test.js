@@ -31,7 +31,7 @@ test("converts ccstatusline settings into cxstatusline config", () => {
         { type: "git-branch", color: "magenta", metadata: { linkToGitHub: "true", linkToRepo: "false" } },
         { type: "custom-command", commandPath: "printf ok", maxWidth: 8, preserveColors: true },
         { type: "tokens-total", rawValue: true },
-        { type: "current-working-dir", metadata: { segments: "2", fish: "true" } },
+        { type: "current-working-dir", metadata: { segments: "2", fish: "true", abbreviateHome: "true", fishStyle: "true" } },
         { type: "git-root-dir", metadata: { linkToIDE: "cursor", linkToCursor: "true" } },
         { type: "git-is-fork", metadata: { hideWhenNotFork: "true" } }
       ],
@@ -83,6 +83,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[0][5].type, "cwd");
   assert.equal(config.lines[0][5].segments, 2);
   assert.equal(config.lines[0][5].fish, true);
+  assert.equal(config.lines[0][5].abbreviateHome, true);
+  assert.equal(config.lines[0][5].fishStyle, true);
   assert.equal(config.lines[0][6].type, "gitRootDir");
   assert.equal(config.lines[0][6].linkToIDE, "cursor");
   assert.equal(config.lines[0][6].linkToCursor, true);

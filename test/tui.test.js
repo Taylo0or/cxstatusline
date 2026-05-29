@@ -92,10 +92,12 @@ test("TUI widget option helpers expose type-specific rows", () => {
   assert.ok(commandRows.includes("timeout"));
   assert.ok(commandRows.includes("preserveColors"));
 
-  const cwdRows = buildWidgetOptionRows({ type: "cwd" }).map((row) => row.key);
-  assert.ok(cwdRows.includes("segments"));
-  assert.ok(cwdRows.includes("home"));
-  assert.ok(cwdRows.includes("fish"));
+  const cwdRows = buildWidgetOptionRows({ type: "cwd", metadata: { segments: "2", fishStyle: "true" } });
+  assert.ok(cwdRows.map((row) => row.key).includes("segments"));
+  assert.ok(cwdRows.map((row) => row.key).includes("home"));
+  assert.ok(cwdRows.map((row) => row.key).includes("fish"));
+  assert.equal(cwdRows.find((row) => row.key === "segments")?.value, "2");
+  assert.equal(cwdRows.find((row) => row.key === "fish")?.value, "on");
 
   const gitRows = buildWidgetOptionRows({ type: "gitBranch" }).map((row) => row.key);
   assert.ok(gitRows.includes("linkToRepo"));
@@ -208,6 +210,7 @@ test("TUI widget option helpers apply common and specific settings", () => {
   });
 
   assert.equal(describeWidgetOptions({ type: "cwd", segments: 2, fish: true, home: false }), "segments=2, fish, no-home");
+  assert.equal(describeWidgetOptions({ type: "cwd", metadata: { segments: "2", abbreviateHome: "true", fishStyle: "true" } }), "segments=2, fish, home=~");
   assert.equal(describeWidgetOptions({ type: "gitBranch", linkToRepo: true, hideNoGit: true }), "repo-link, hide-no-git");
   assert.equal(describeWidgetOptions({ type: "gitOriginRepo", hideNoRemote: true }), "hide-no-remote");
   assert.equal(describeWidgetOptions({ type: "gitIsFork", hideWhenNotFork: true }), "hide-not-fork");

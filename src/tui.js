@@ -259,8 +259,9 @@ export function describeWidgetOptions(widget) {
   if (metadataFlag(item, "hideIfDisabled")) parts.push("hide-if-disabled");
   if (metadataFlag(item, "hideStatus")) parts.push("hide-status");
   if (metadataFlag(item, "hideTitle")) parts.push("hide-title");
-  if (item.segments !== undefined) parts.push(`segments=${item.segments}`);
-  if (item.fish) parts.push("fish");
+  if (metadataValue(item, "segments") !== undefined) parts.push(`segments=${metadataValue(item, "segments")}`);
+  if (item.fish || metadataFlag(item, "fishStyle")) parts.push("fish");
+  if (metadataFlag(item, "abbreviateHome")) parts.push("home=~");
   if (item.home === false) parts.push("no-home");
   if (item.limit !== undefined || item.listLimit !== undefined) parts.push(`limit=${item.limit ?? item.listLimit}`);
   if (timerTimeZone(item)) parts.push(`tz=${timerTimeZone(item)}`);
@@ -327,9 +328,9 @@ export function buildWidgetOptionRows(widget) {
   }
   if (type === "cwd" || type === "path") {
     rows.push(
-      { key: "segments", label: "Path segments", value: item.segments || "(all)" },
+      { key: "segments", label: "Path segments", value: metadataValue(item, "segments") || "(all)" },
       { key: "home", label: "Home abbreviation", value: BOOLEAN_TEXT.get(item.home !== false) },
-      { key: "fish", label: "Fish-style path", value: BOOLEAN_TEXT.get(Boolean(item.fish)) }
+      { key: "fish", label: "Fish-style path", value: BOOLEAN_TEXT.get(Boolean(item.fish || metadataFlag(item, "fishStyle"))) }
     );
   }
   if (USAGE_WIDGETS.has(type) || type === "contextBar") {
@@ -1653,8 +1654,10 @@ function clearWidgetOptions(item) {
     "linkToIDE",
     "linkToCursor",
     "segments",
+    "abbreviateHome",
     "home",
     "fish",
+    "fishStyle",
     "mode",
     "format",
     "display",

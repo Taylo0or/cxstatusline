@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.41
+
+- Added `ccstatusline` path widget metadata aliases for `segments`,
+  `abbreviateHome`, and `fishStyle`.
+- Preserved path abbreviation metadata during `ccstatusline` settings import
+  and exposed the imported values in the full-screen TUI.
+
 ## 0.2.40
 
 - Added upstream-compatible reset timer `metadata.display` progress and slider

@@ -51,7 +51,8 @@ while staying honest about Codex's current extension points.
   `CXSTATUSLINE_WIDTH`/`CCSTATUSLINE_WIDTH` overrides.
 - External refresh interval configuration for tmux and other external status
   surfaces that honor their own refresh cadence.
-- Path abbreviation and fish-style path shortening.
+- Path abbreviation, fish-style path shortening, and `ccstatusline` path
+  metadata aliases.
 - `ccstatusline` kebab-case widget aliases for migrated widget lists.
 - `ccstatusline` settings import for common layout and widget options.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and multi-line

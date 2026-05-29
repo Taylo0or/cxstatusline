@@ -257,6 +257,12 @@ Use `ccstatusline`-style Git link metadata:
 }
 ```
 
+Use `ccstatusline`-style path abbreviation metadata:
+
+```json
+{ "type": "current-working-dir", "metadata": { "segments": "2", "fishStyle": "true" } }
+```
+
 Use `ccstatusline`-style Link metadata:
 
 ```json
