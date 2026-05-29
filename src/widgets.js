@@ -558,13 +558,22 @@ export const widgetRegistry = {
   },
   sessionClock: {
     description: "Elapsed time since SessionStart hook",
-    render: ({ state }) => state.startedAt ? formatDuration(Date.now() - Date.parse(state.startedAt)) : ""
+    render: ({ state, widget }) => {
+      const durationMs = Number(state.usage?.totalDurationMs);
+      const value = Number.isFinite(durationMs) && durationMs >= 0
+        ? formatSessionDuration(durationMs)
+        : state.startedAt
+          ? formatSessionDuration(Date.now() - Date.parse(state.startedAt))
+          : "";
+      return value ? formatRawOrLabeledValue(widget, "Session: ", value) : "";
+    }
   },
   version: {
     description: "cxstatusline version or Codex version when present in hook state",
     render: ({ state, widget }) => {
       const version = widget.source === "codex" ? state.version : state.version || PACKAGE.version;
-      return version ? `v${String(version).replace(/^v/, "")}` : "";
+      const value = String(version || "").replace(/^v/, "");
+      return value ? formatRawOrLabeledValue(widget, "v", value) : "";
     }
   },
   outputStyle: {
@@ -620,7 +629,10 @@ export const widgetRegistry = {
   },
   terminalWidth: {
     description: "Detected terminal width",
-    render: () => process.env.CXSTATUSLINE_WIDTH || process.env.CCSTATUSLINE_WIDTH || process.env.COLUMNS || ""
+    render: ({ widget }) => {
+      const width = process.env.CXSTATUSLINE_WIDTH || process.env.CCSTATUSLINE_WIDTH || process.env.COLUMNS || "";
+      return width ? formatRawOrLabeledValue(widget, "Term: ", width) : "";
+    }
   },
   text: {
     description: "Custom literal text",
@@ -1073,6 +1085,20 @@ function formatStatusValue(value, label, widget = {}, options = {}) {
   if (options.checkFormats && format === "label-check") return `${label} ${state.enabled ? "\u2705" : "\u274C"}`;
   if (options.checkFormats && format === "label-mark") return `${label} ${state.enabled ? "\u2713" : "\u2717"}`;
   return `${label} ${state.text}`;
+}
+
+function formatRawOrLabeledValue(widget, prefix, value) {
+  return widget?.rawValue || widget?.label !== undefined ? String(value) : `${prefix}${value}`;
+}
+
+function formatSessionDuration(durationMs) {
+  const totalMinutes = Math.floor(Number(durationMs || 0) / 60000);
+  if (totalMinutes < 1) return "<1m";
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours === 0) return `${minutes}m`;
+  if (minutes === 0) return `${hours}hr`;
+  return `${hours}hr ${minutes}m`;
 }
 
 function statusState(value) {

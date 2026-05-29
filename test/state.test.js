@@ -8,6 +8,7 @@ test("extracts token usage from nested payloads", () => {
       usage: {
         input_tokens: 1000,
         output_tokens: 250,
+        total_duration_ms: 8_100_000,
         extra_usage_enabled: false,
         extra_usage_utilization: 0.26
       }
@@ -17,6 +18,7 @@ test("extracts token usage from nested payloads", () => {
   assert.equal(usage.inputTokens, 1000);
   assert.equal(usage.outputTokens, 250);
   assert.equal(usage.totalTokens, 1250);
+  assert.equal(usage.totalDurationMs, 8_100_000);
   assert.equal(usage.extraUsageEnabled, false);
   assert.equal(usage.extraUsageUtilization, 0.26);
 });

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.45
+
+- Added upstream-compatible raw/default labels for `sessionClock`, `version`,
+  and `terminalWidth` widgets.
+- Extracted `total_duration_ms` style hook payload fields for Session Clock
+  duration rendering.
+
 ## 0.2.44
 
 - Added upstream-compatible Context Bar `metadata.display` detail rendering for

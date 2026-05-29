@@ -227,6 +227,32 @@ test("renders upstream-style Context Bar display metadata", () => {
   assert.equal(renderWidget({ type: "contextBar", rawValue: true, style: "ascii", width: 10 }, context), "[##--------] 30k/200k (15%)");
 });
 
+test("renders raw and labeled core environment widgets", () => {
+  const context = {
+    config: {},
+    state: {
+      usage: { totalDurationMs: 2 * 60 * 60 * 1000 + 15 * 60 * 1000 },
+      version: "1.2.3"
+    },
+    git: { isRepo: false },
+    codexConfig: {}
+  };
+  const previousWidth = process.env.CXSTATUSLINE_WIDTH;
+  process.env.CXSTATUSLINE_WIDTH = "132";
+
+  try {
+    assert.equal(renderWidget({ type: "sessionClock" }, context), "Session: 2hr 15m");
+    assert.equal(renderWidget({ type: "sessionClock", rawValue: true }, context), "2hr 15m");
+    assert.equal(renderWidget({ type: "version" }, context), "v1.2.3");
+    assert.equal(renderWidget({ type: "version", rawValue: true }, context), "1.2.3");
+    assert.equal(renderWidget({ type: "terminalWidth" }, context), "Term: 132");
+    assert.equal(renderWidget({ type: "terminalWidth", rawValue: true }, context), "132");
+  } finally {
+    if (previousWidth === undefined) delete process.env.CXSTATUSLINE_WIDTH;
+    else process.env.CXSTATUSLINE_WIDTH = previousWidth;
+  }
+});
+
 test("formats paths with home abbreviation, segments, and fish mode", () => {
   assert.equal(formatPath("/Users/luke/AlphaPay/ca-parent", { segments: 2, home: false }), "/.../AlphaPay/ca-parent");
   assert.equal(formatPath("/Users/luke/AlphaPay/ca-parent", { fish: true, home: false }), "/U/l/A/ca-parent");

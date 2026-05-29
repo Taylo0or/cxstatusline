@@ -30,7 +30,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   when present with upstream-compatible format and Nerd Font controls, skills,
   with mode/list-limit/hide-when-empty metadata, run state, last event, last
   tool, compaction count with format/Nerd Font and hide-zero controls,
-  duration, and best-effort token/context/cost metrics when
+  duration, version, and terminal width with upstream-compatible raw/default
+  labels, and best-effort token/context/cost metrics when
   Codex exposes them through hook payloads or transcript entries.
 - Usage widgets: token/input/output/total speed, session and weekly usage,
   Sonnet/Opus weekly usage when available, context used/remaining/window,

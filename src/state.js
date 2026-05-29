@@ -148,6 +148,7 @@ export function extractUsage(value) {
     if (["contextused", "contextusedtokens"].includes(normalized)) output.contextUsed = number;
     if (["contextremaining", "contextremainingtokens"].includes(normalized)) output.contextRemaining = number;
     if (["costusd", "totalcostusd"].includes(normalized)) output.costUsd = number;
+    if (["totaldurationms", "durationms", "sessiondurationms"].includes(normalized)) output.totalDurationMs = number;
     if (["usagelimit", "usagelimitremaining", "fivehourlimitremaining"].includes(normalized)) output.usageLimitRemaining = number;
     if (["usagelimitused", "fivehourlimitused"].includes(normalized)) output.usageLimitUsed = number;
     if (["extrausagelimit", "extrausageremaining"].includes(normalized)) output.extraUsageRemaining = number;
