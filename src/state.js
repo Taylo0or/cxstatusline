@@ -132,6 +132,9 @@ export function extractUsage(value) {
   const output = {};
   visit(value, (key, candidate) => {
     const normalized = key.replace(/[_-]/g, "").toLowerCase();
+    const boolean = parseBooleanValue(candidate);
+    if (normalized === "extrausageenabled" && boolean !== null) output.extraUsageEnabled = boolean;
+
     const number = Number(candidate);
     if (!Number.isFinite(number)) return;
 
@@ -149,6 +152,7 @@ export function extractUsage(value) {
     if (["usagelimitused", "fivehourlimitused"].includes(normalized)) output.usageLimitUsed = number;
     if (["extrausagelimit", "extrausageremaining"].includes(normalized)) output.extraUsageRemaining = number;
     if (["extrausageused", "extrausageutilized"].includes(normalized)) output.extraUsageUsed = number;
+    if (["extrausageutilization", "extrausageutilizationpercent", "extrausagepercent"].includes(normalized)) output.extraUsageUtilization = number;
     if (["sessionusage", "sessionusagepercent", "dailyusage", "dailyusagepercent"].includes(normalized)) output.sessionUsagePercent = number;
     if (["weeklyusage", "weeklyusagepercent"].includes(normalized)) output.weeklyUsagePercent = number;
     if (["weeklyusageused", "weeklylimitused"].includes(normalized)) output.weeklyUsageUsed = number;
@@ -168,6 +172,16 @@ export function extractUsage(value) {
     output.contextRemaining = output.contextWindow - output.contextUsed;
   }
   return output;
+}
+
+function parseBooleanValue(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const text = value.trim().toLowerCase();
+    if (["true", "1", "yes", "on", "enabled"].includes(text)) return true;
+    if (["false", "0", "no", "off", "disabled"].includes(text)) return false;
+  }
+  return null;
 }
 
 function firstString(...values) {

@@ -40,7 +40,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
         { type: "git-origin-owner-repo", metadata: { linkToRepo: "true", ownerOnlyWhenFork: "true", hideNoRemote: "true" } },
         { type: "link", metadata: { url: "https://example.com/docs", text: "Docs" } },
         { type: "reset-timer", color: "brightYellow", metadata: { format: "timestamp", timeZone: "UTC", hour12: "false" } },
-        { type: "jj-workspace", metadata: { hideNoJj: "true" } }
+        { type: "jj-workspace", metadata: { hideNoJj: "true" } },
+        { type: "extra-usage-remaining", metadata: { hideIfDisabled: "true" } }
       ]
     ]
   });
@@ -102,4 +103,6 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[1][3].hour12, false);
   assert.equal(config.lines[1][4].type, "jjWorkspace");
   assert.equal(config.lines[1][4].hideNoJj, true);
+  assert.equal(config.lines[1][5].type, "extraUsageRemaining");
+  assert.equal(config.lines[1][5].hideIfDisabled, true);
 });

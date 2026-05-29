@@ -34,8 +34,9 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   Sonnet/Opus weekly usage when available, context used/remaining/window,
   context bars, upstream-compatible percent display modes (`progress`,
   `progress-short`, `slider`, `slider-only`) with invert/cursor controls,
-  cached/cache-read/cache-write tokens, five-hour block timer, reset timers
-  with timestamp/time zone modes, and local weekly timer.
+  extra usage disabled-state hiding, cached/cache-read/cache-write tokens,
+  five-hour block timer, reset timers with timestamp/time zone modes, and
+  local weekly timer.
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
   links including `ccstatusline` Link metadata, flexible spacers/right
   alignment, manual separator collapse, path abbreviation, default
@@ -291,6 +292,7 @@ Render usage or context percentages with `ccstatusline` display metadata:
 ```json
 { "type": "sessionUsage", "metadata": { "display": "progress-short", "invert": "true" } }
 { "type": "contextPercentage", "metadata": { "display": "slider", "cursor": "true" } }
+{ "type": "extraUsageUtilization", "metadata": { "display": "slider-only", "hideIfDisabled": "true" } }
 ```
 
 Import an existing `ccstatusline` config:

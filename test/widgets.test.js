@@ -313,7 +313,9 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
         contextWindow: 100,
         usageLimitUsed: 25,
         usageLimitRemaining: 75,
-        weeklyUsagePercent: 0.4
+        weeklyUsagePercent: 0.4,
+        extraUsageUsed: 25,
+        extraUsageRemaining: 75
       },
       samples: [
         { at: "2026-01-01T00:00:00.000Z", totalTokens: 100, inputTokens: 80, outputTokens: 20 },
@@ -333,6 +335,13 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "contextPercentage", metadata: { display: "slider-only", cursor: "true" } }, context), "▓▓▓▓▓│░░░░");
   assert.equal(renderWidget({ type: "contextPercentage", display: "slider-only", cursor: true }, context), "▓▓▓▓▓│░░░░");
   assert.equal(renderWidget({ type: "weeklyUsage" }, context), "40%");
+  assert.equal(renderWidget({ type: "extraUsageRemaining" }, context), "75");
+  assert.equal(renderWidget({ type: "extraUsageUtilization" }, context), "25%");
+  assert.equal(renderWidget({ type: "extraUsageUtilization", metadata: { display: "progress-short", invert: "true" } }, context), "[████████████░░░░] 75.0%");
+  assert.equal(renderWidget({ type: "extraUsageUtilization", metadata: { display: "slider-only", cursor: "true" } }, context), "▓▓▓│░░░░░░");
+  assert.equal(renderWidget({ type: "extraUsageRemaining" }, { ...context, state: { usage: { extraUsageRemaining: 0 } } }), "0");
+  assert.equal(renderWidget({ type: "extraUsageRemaining" }, { ...context, state: { usage: { extraUsageEnabled: false } } }), "n/a");
+  assert.equal(renderWidget({ type: "extraUsageUtilization", metadata: { hideIfDisabled: "true" } }, { ...context, state: { usage: { extraUsageEnabled: false } } }), "");
   assert.equal(renderWidget({ type: "contextPercentageUsable" }, context), "50%");
   assert.equal(renderWidget({ type: "claudeSessionId" }, context), "abcdef12");
   assert.equal(renderWidget({ type: "sessionName" }, context), "Sprint");

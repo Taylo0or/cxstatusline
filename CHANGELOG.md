@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.39
+
+- Added upstream-compatible extra usage disabled-state handling with
+  `hideIfDisabled` metadata.
+- Added progress, slider, invert, and cursor display metadata support to
+  `extraUsageUtilization`.
+
 ## 0.2.38
 
 - Added upstream-compatible Jujutsu `no jj` empty states and `hideNoJj`

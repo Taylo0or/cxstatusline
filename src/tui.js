@@ -83,10 +83,12 @@ const USAGE_WIDGETS = new Set([
   "contextPercentage",
   "contextPercentageUsable",
   "sessionUsage",
+  "extraUsageUtilization",
   "weeklyUsage",
   "weeklySonnetUsage",
   "weeklyOpusUsage"
 ]);
+const EXTRA_USAGE_WIDGETS = new Set(["extraUsageRemaining", "extraUsageUtilization"]);
 const BOOLEAN_TEXT = new Map([[true, "on"], [false, "off"]]);
 
 export async function runTuiConfigEditor(options = {}) {
@@ -253,6 +255,7 @@ export function describeWidgetOptions(widget) {
   if (metadataFlag(item, "hideNoRemote")) parts.push("hide-no-remote");
   if (metadataFlag(item, "ownerOnlyWhenFork")) parts.push("owner-only-fork");
   if (metadataFlag(item, "hideWhenNotFork")) parts.push("hide-not-fork");
+  if (metadataFlag(item, "hideIfDisabled")) parts.push("hide-if-disabled");
   if (metadataFlag(item, "hideStatus")) parts.push("hide-status");
   if (metadataFlag(item, "hideTitle")) parts.push("hide-title");
   if (item.segments !== undefined) parts.push(`segments=${item.segments}`);
@@ -314,6 +317,9 @@ export function buildWidgetOptionRows(widget) {
       { key: "hideStatus", label: "Hide PR/MR status", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "hideStatus"))) },
       { key: "hideTitle", label: "Hide PR/MR title", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "hideTitle"))) }
     );
+  }
+  if (EXTRA_USAGE_WIDGETS.has(type)) {
+    rows.push({ key: "hideIfDisabled", label: "Hide if disabled", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "hideIfDisabled"))) });
   }
   if (type === "text" || type === "symbol" || type === "separator") {
     rows.push({ key: "text", label: primaryValueLabel(type), value: item[primaryValueKey(type)] || "(empty)" });
@@ -390,6 +396,7 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "linkToIDE") return cycleIdeLink(item);
   if (key === "ownerOnlyWhenFork") return toggleOrDelete(item, "ownerOnlyWhenFork");
   if (key === "hideWhenNotFork") return toggleOrDeleteMetadataAware(item, "hideWhenNotFork");
+  if (key === "hideIfDisabled") return toggleOrDeleteMetadataAware(item, "hideIfDisabled");
   if (key === "hideStatus") return toggleOrDeleteMetadataAware(item, "hideStatus");
   if (key === "hideTitle") return toggleOrDeleteMetadataAware(item, "hideTitle");
   if (key === "segments") return setNumericField(item, "segments", value);
@@ -1635,6 +1642,7 @@ function clearWidgetOptions(item) {
     "hideNoRemote",
     "ownerOnlyWhenFork",
     "hideWhenNotFork",
+    "hideIfDisabled",
     "hideStatus",
     "hideTitle",
     "linkToIDE",

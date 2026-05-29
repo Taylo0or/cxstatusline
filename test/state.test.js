@@ -7,7 +7,9 @@ test("extracts token usage from nested payloads", () => {
     response: {
       usage: {
         input_tokens: 1000,
-        output_tokens: 250
+        output_tokens: 250,
+        extra_usage_enabled: false,
+        extra_usage_utilization: 0.26
       }
     }
   });
@@ -15,6 +17,8 @@ test("extracts token usage from nested payloads", () => {
   assert.equal(usage.inputTokens, 1000);
   assert.equal(usage.outputTokens, 250);
   assert.equal(usage.totalTokens, 1250);
+  assert.equal(usage.extraUsageEnabled, false);
+  assert.equal(usage.extraUsageUtilization, 0.26);
 });
 
 test("updates run state from hook events", () => {

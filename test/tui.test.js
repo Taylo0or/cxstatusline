@@ -135,6 +135,10 @@ test("TUI widget option helpers expose type-specific rows", () => {
   assert.equal(usageRows.find((row) => row.key === "invert")?.value, "on");
   assert.ok(usageRows.map((row) => row.key).includes("cursor"));
 
+  const extraUsageRows = buildWidgetOptionRows({ type: "extraUsageUtilization", metadata: { display: "slider", hideIfDisabled: "true" } });
+  assert.equal(extraUsageRows.find((row) => row.key === "display")?.value, "slider");
+  assert.equal(extraUsageRows.find((row) => row.key === "hideIfDisabled")?.value, "on");
+
   const statusRows = buildWidgetOptionRows({ type: "voiceStatus", metadata: { format: "icon", nerdFont: "true" } });
   assert.equal(statusRows.find((row) => row.key === "format")?.value, "icon");
   assert.equal(statusRows.find((row) => row.key === "nerdFont")?.value, "on");
@@ -169,6 +173,8 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.deepEqual(applyWidgetOption({ type: "sessionUsage", metadata: { display: "slider-only" } }, "display"), { type: "sessionUsage" });
   assert.deepEqual(applyWidgetOption({ type: "sessionUsage" }, "invert"), { type: "sessionUsage", invert: true });
   assert.deepEqual(applyWidgetOption({ type: "sessionUsage", metadata: { cursor: "true" } }, "cursor"), { type: "sessionUsage" });
+  assert.deepEqual(applyWidgetOption({ type: "extraUsageRemaining" }, "hideIfDisabled"), { type: "extraUsageRemaining", hideIfDisabled: true });
+  assert.deepEqual(applyWidgetOption({ type: "extraUsageRemaining", metadata: { hideIfDisabled: "true" } }, "hideIfDisabled"), { type: "extraUsageRemaining" });
 
   assert.deepEqual(applyWidgetOption({ type: "vimMode" }, "format"), { type: "vimMode", format: "icon-letter" });
   assert.deepEqual(applyWidgetOption({ type: "voiceStatus", metadata: { format: "icon" } }, "format"), { type: "voiceStatus", format: "icon-text" });
@@ -207,5 +213,6 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.equal(describeWidgetOptions({ type: "gitPullRequest", hideStatus: true, hideTitle: true }), "hide-status, hide-title");
   assert.equal(describeWidgetOptions({ type: "gitRootDir", linkToIDE: "cursor" }), "link-cursor");
   assert.equal(describeWidgetOptions({ type: "sessionUsage", display: "progress-short", invert: true, cursor: true }), "display=progress-short, invert, cursor");
+  assert.equal(describeWidgetOptions({ type: "extraUsageRemaining", hideIfDisabled: true }), "hide-if-disabled");
   assert.equal(describeWidgetOptions({ type: "compactions", nerdFont: true, hideZero: true }), "nerd-font, hide-zero");
 });

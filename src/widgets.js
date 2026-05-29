@@ -473,15 +473,20 @@ export const widgetRegistry = {
   },
   extraUsageRemaining: {
     description: "Extra usage remaining when present in hook state",
-    render: ({ state }) => state.usage?.extraUsageRemaining ? compactNumber(state.usage.extraUsageRemaining) : ""
+    render: ({ state, widget }) => {
+      const usage = state.usage || {};
+      if (usage.extraUsageEnabled === false) return extraUsageDisabled(widget);
+      return hasUsageValue(usage.extraUsageRemaining) ? compactNumber(usage.extraUsageRemaining) : "";
+    }
   },
   extraUsageUtilization: {
     description: "Extra usage utilization when present in hook state",
-    render: ({ state }) => {
-      const used = Number(state.usage?.extraUsageUsed || 0);
-      const remaining = Number(state.usage?.extraUsageRemaining || 0);
-      if (!used || !remaining) return "";
-      return `${Math.round((used / (used + remaining)) * 100)}%`;
+    render: ({ state, widget }) => {
+      const usage = state.usage || {};
+      if (usage.extraUsageEnabled === false) return extraUsageDisabled(widget);
+      const percent = extraUsagePercent(usage);
+      if (!Number.isFinite(percent)) return "";
+      return renderPercentDisplay(percent, widget);
     }
   },
   duration: {
@@ -994,6 +999,30 @@ function usagePercent(usage, keys) {
   const remaining = Number(usage[keys.remaining] || 0);
   if (used || remaining) return (used / (used + remaining)) * 100;
   return Number.NaN;
+}
+
+function extraUsagePercent(usage) {
+  if (hasUsageValue(usage.extraUsageUtilization)) {
+    const direct = Number(usage.extraUsageUtilization);
+    return direct <= 1 ? direct * 100 : direct;
+  }
+  if (hasUsageValue(usage.extraUsageUtilizationPercent)) {
+    const direct = Number(usage.extraUsageUtilizationPercent);
+    return direct <= 1 ? direct * 100 : direct;
+  }
+  return usagePercent(usage, {
+    percent: "extraUsagePercent",
+    used: "extraUsageUsed",
+    remaining: "extraUsageRemaining"
+  });
+}
+
+function hasUsageValue(value) {
+  return value !== undefined && value !== null && Number.isFinite(Number(value));
+}
+
+function extraUsageDisabled(widget) {
+  return metadataFlag(widget, "hideIfDisabled") === true ? "" : "n/a";
 }
 
 function formatStatusValue(value, label, widget = {}, options = {}) {
