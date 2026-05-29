@@ -17,6 +17,8 @@ while staying honest about Codex's current extension points.
 - Token speed samples from hook state.
 - Multi-line rendering.
 - OSC8 links.
+- Presets for compact, Git, usage, and multi-line layouts.
+- tmux and Starship integration snippets.
 - Width truncation.
 - Doctor and reset commands.
 
@@ -26,7 +28,7 @@ while staying honest about Codex's current extension points.
 - More presets: compact, dense, git-heavy, usage-heavy, mono, and no-font.
 - Starship module generator.
 - SketchyBar example.
-- tmux installer and uninstaller.
+- tmux config append/uninstall flow.
 - OSC 8 link widgets for GitHub/GitLab branches and PRs.
 - GitHub/GitLab PR/MR detection through `gh` and `glab`.
 - Persistent Git cache with TTL and `.git/index` invalidation.

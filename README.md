@@ -25,6 +25,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   through hook payloads or transcript entries.
 - Configurable widget order, labels, minimal mode, multi-line output, OSC8
   links, width truncation, and JSON or plain output.
+- Presets for compact, Git-focused, usage-focused, and multi-line layouts.
+- tmux and Starship integration snippets.
 - Zero runtime dependencies; Node.js 20+ is enough.
 
 ## Quick Start
@@ -40,7 +42,7 @@ Install locally while developing:
 
 ```sh
 npm link
-cxstatusline init
+cxstatusline init --preset compact
 cxstatusline install hooks
 cxstatusline install native
 ```
@@ -148,15 +150,22 @@ List widgets:
 cxstatusline widgets
 ```
 
+List presets:
+
+```sh
+cxstatusline presets
+```
+
 ## Commands
 
 ```text
 cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
 cxstatusline hook
-cxstatusline init [--force]
-cxstatusline install [all|hooks|native|config] [--dry-run]
+cxstatusline init [--force] [--preset default|compact|git|usage|multiline]
+cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run]
 cxstatusline uninstall hooks
 cxstatusline widgets
+cxstatusline presets
 cxstatusline native-items
 cxstatusline themes
 cxstatusline doctor

@@ -69,6 +69,52 @@ export const DEFAULT_CONFIG = {
   }
 };
 
+export const PRESETS = {
+  default: DEFAULT_CONFIG.widgets,
+  compact: [
+    { type: "model", label: "" },
+    { type: "project", label: "" },
+    { type: "gitBranch", label: "" },
+    { type: "gitStatus", label: "" },
+    { type: "runState", label: "" }
+  ],
+  git: [
+    { type: "project", label: "Project" },
+    { type: "gitBranchLink", label: "Branch" },
+    { type: "gitStatus", label: "Files" },
+    { type: "gitAheadBehind", label: "" },
+    { type: "gitInsertions", label: "" },
+    { type: "gitDeletions", label: "" },
+    { type: "gitOriginOwnerRepo", label: "Remote" }
+  ],
+  usage: [
+    { type: "model", label: "Model" },
+    { type: "reasoning", label: "Think" },
+    { type: "contextWindow", label: "Window" },
+    { type: "contextBar", label: "Ctx", width: 16 },
+    { type: "tokens", label: "Tokens" },
+    { type: "tokenSpeed", label: "Speed" },
+    { type: "cost", label: "Cost" },
+    { type: "duration", label: "Time" }
+  ],
+  multiline: {
+    lines: [
+      [
+        { type: "model", label: "Model" },
+        { type: "reasoning", label: "Think" },
+        { type: "runState", label: "" }
+      ],
+      [
+        { type: "project", label: "Project" },
+        { type: "gitBranch", label: "Git" },
+        { type: "gitStatus", label: "" },
+        { type: "tokens", label: "Tokens" },
+        { type: "duration", label: "Time" }
+      ]
+    ]
+  }
+};
+
 export const THEMES = {
   powerline: {
     name: "powerline",

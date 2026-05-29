@@ -1,6 +1,6 @@
 import { existsSync, copyFileSync } from "node:fs";
 import { join } from "node:path";
-import { DEFAULT_CONFIG, THEMES } from "./constants.js";
+import { DEFAULT_CONFIG, PRESETS, THEMES } from "./constants.js";
 import { configDir, ensureDir, readJson, repoRoot, writeJsonAtomic } from "./util.js";
 
 export function defaultConfigPath() {
@@ -25,7 +25,12 @@ export function initConfig(options = {}) {
   if (existsSync(target) && !options.force) {
     return { path: target, created: false };
   }
-  copyFileSync(templateConfigPath(), target);
+  if (options.preset && PRESETS[options.preset]) {
+    const config = applyPreset(DEFAULT_CONFIG, options.preset);
+    writeJsonAtomic(target, config);
+  } else {
+    copyFileSync(templateConfigPath(), target);
+  }
   return { path: target, created: true };
 }
 
@@ -44,6 +49,19 @@ export function mergeConfig(base, override) {
     } else {
       output[key] = value;
     }
+  }
+  return output;
+}
+
+export function applyPreset(config, presetName) {
+  const preset = PRESETS[presetName];
+  const output = structuredClone(config);
+  if (!preset) return output;
+  if (Array.isArray(preset)) {
+    output.widgets = structuredClone(preset);
+    delete output.lines;
+  } else {
+    Object.assign(output, structuredClone(preset));
   }
   return output;
 }

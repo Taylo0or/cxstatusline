@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { dirname } from "node:path";
-import { CODEX_NATIVE_ITEMS, DEFAULT_NATIVE_STATUS_LINE, THEMES } from "./constants.js";
-import { defaultConfigPath, initConfig, loadConfig } from "./config.js";
+import { CODEX_NATIVE_ITEMS, DEFAULT_NATIVE_STATUS_LINE, PRESETS, THEMES } from "./constants.js";
+import { applyPreset, defaultConfigPath, initConfig, loadConfig } from "./config.js";
 import { codexConfigPath, installNativeStatusLine, readCodexConfig } from "./codexConfig.js";
 import { getGitInfo } from "./git.js";
 import { hooksPath, installHooks, uninstallHooks } from "./install.js";
@@ -20,6 +20,7 @@ export async function runCli(args) {
   if (command === "install") return installCommand(rest);
   if (command === "uninstall") return uninstallCommand(rest);
   if (command === "widgets") return widgetsCommand();
+  if (command === "presets") return presetsCommand();
   if (command === "native-items") return nativeItemsCommand();
   if (command === "themes") return themesCommand();
   if (command === "doctor") return doctorCommand();
@@ -30,10 +31,11 @@ export async function runCli(args) {
 
 function renderCommand(args) {
   const { flags } = parseFlags(args);
-  const config = loadConfig({ config: flags.config });
+  let config = loadConfig({ config: flags.config });
   if (flags.theme) config.theme = flags.theme;
   if (flags.mode) config.mode = flags.mode;
   if (flags.minimal) config.minimal = true;
+  if (flags.preset) config = applyPreset(config, flags.preset);
   if (flags.widgets) {
     config.widgets = String(flags.widgets).split(",").map((type) => ({ type: type.trim() })).filter((widget) => widget.type);
   }
@@ -63,7 +65,7 @@ async function hookCommand(args) {
 
 function initCommand(args) {
   const { flags } = parseFlags(args);
-  const result = initConfig({ config: flags.config, force: flags.force });
+  const result = initConfig({ config: flags.config, force: flags.force, preset: flags.preset });
   console.log(result.created ? `Created ${result.path}` : `Already exists: ${result.path}`);
 }
 
@@ -83,11 +85,21 @@ function installCommand(args) {
   }
 
   if (target === "all" || target === "config") {
-    results.push(["config", initConfig({ force: flags.force })]);
+    results.push(["config", initConfig({ force: flags.force, preset: flags.preset })]);
+  }
+
+  if (target === "tmux") {
+    console.log(tmuxSnippet(flags));
+    return;
+  }
+
+  if (target === "starship") {
+    console.log(starshipSnippet(flags));
+    return;
   }
 
   if (!results.length) {
-    throw new Error(`Unknown install target: ${target}. Use all, hooks, native, or config.`);
+    throw new Error(`Unknown install target: ${target}. Use all, hooks, native, config, tmux, or starship.`);
   }
 
   for (const [name, result] of results) {
@@ -111,6 +123,10 @@ function widgetsCommand() {
   for (const widget of listWidgets()) {
     console.log(`${widget.name.padEnd(16)} ${widget.description}`);
   }
+}
+
+function presetsCommand() {
+  for (const name of Object.keys(PRESETS)) console.log(name);
 }
 
 function nativeItemsCommand() {
@@ -161,9 +177,10 @@ Usage:
   cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
   cxstatusline hook
   cxstatusline init [--force]
-  cxstatusline install [all|hooks|native|config] [--dry-run]
+  cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run]
   cxstatusline uninstall hooks
   cxstatusline widgets
+  cxstatusline presets
   cxstatusline native-items
   cxstatusline themes
   cxstatusline doctor
@@ -171,7 +188,9 @@ Usage:
 
 Examples:
   cxstatusline render --format plain
+  cxstatusline render --preset compact --format plain
   cxstatusline install hooks
+  cxstatusline install tmux
   cxstatusline install native --items model-with-reasoning,context-used,git-branch,run-state
   tmux set -g status-right '#(cxstatusline render --width 80)'
 `);
@@ -183,4 +202,20 @@ function summarizeToml(text) {
   if (start === -1) return text;
   const end = lines.findIndex((line, index) => index > start && /^\[[^\]]+]$/.test(line.trim()));
   return lines.slice(start, end === -1 ? undefined : end).join("\n");
+}
+
+function tmuxSnippet(flags) {
+  const width = flags.width || 90;
+  const preset = flags.preset ? ` --preset ${flags.preset}` : "";
+  return `# Add to ~/.tmux.conf\nset -g status-right '#(cxstatusline render --width ${width}${preset})'`;
+}
+
+function starshipSnippet(flags) {
+  const preset = flags.preset ? ` --preset ${flags.preset}` : "";
+  return `[custom.cxstatusline]
+command = "cxstatusline render --format plain${preset}"
+when = "true"
+shell = ["sh", "-c"]
+style = "bold blue"
+format = "[$output]($style)"`;
 }

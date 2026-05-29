@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { renderStatusLine } from "../src/render.js";
 import { DEFAULT_CONFIG } from "../src/constants.js";
+import { applyPreset } from "../src/config.js";
 import { stripAnsi, visibleLength } from "../src/util.js";
 
 test("renders a plain status line from configured widgets", () => {
@@ -58,4 +59,18 @@ test("renders multiple configured lines", () => {
   }, { format: "plain" });
 
   assert.equal(output, "gpt-5.5\nReady");
+});
+
+test("renders preset configurations", () => {
+  const config = applyPreset({ ...DEFAULT_CONFIG, mode: "plain" }, "compact");
+  const output = renderStatusLine({
+    config,
+    state: { model: "gpt-5.5", runState: "Ready" },
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { format: "plain" });
+
+  assert.match(output, /gpt-5.5/);
+  assert.match(output, /Ready/);
 });

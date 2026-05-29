@@ -1,6 +1,6 @@
 import os from "node:os";
 import { basename } from "node:path";
-import { compactNumber, formatDuration, numberFormat } from "./util.js";
+import { compactNumber, formatDuration, numberFormat, run } from "./util.js";
 
 export const widgetRegistry = {
   appName: {
@@ -255,6 +255,15 @@ export const widgetRegistry = {
       const path = git.origin.host === "gitlab.com" ? `-/tree/${branch}` : `tree/${branch}`;
       return osc8(`${git.origin.httpsUrl}/${path}`, git.branch);
     }
+  },
+  gitPullRequest: {
+    description: "Current GitHub pull request or GitLab merge request when gh/glab is available",
+    render: ({ git, cwd }) => {
+      if (!git.isRepo) return "";
+      const item = findPullRequest(cwd || git.root);
+      if (!item) return "";
+      return item.url ? osc8(item.url, item.label) : item.label;
+    }
   }
 };
 
@@ -297,4 +306,27 @@ function tokenSpeed(samples, windowSeconds) {
 function osc8(url, text) {
   if (!url || !text) return "";
   return `\x1b]8;;${String(url).replace(/\x1b/g, "")}\x1b\\${text}\x1b]8;;\x1b\\`;
+}
+
+function findPullRequest(cwd) {
+  const gh = run("gh", ["pr", "view", "--json", "number,title,url", "--template", "{{.number}}\t{{.title}}\t{{.url}}"], { cwd, timeout: 1500 });
+  if (gh.ok && gh.stdout.trim()) {
+    const [number, title, url] = gh.stdout.trim().split("\t");
+    return { label: `PR #${number}${title ? ` ${title}` : ""}`, url };
+  }
+
+  const glab = run("glab", ["mr", "view", "--output", "json"], { cwd, timeout: 1500 });
+  if (glab.ok && glab.stdout.trim()) {
+    try {
+      const parsed = JSON.parse(glab.stdout);
+      const iid = parsed.iid || parsed.id || parsed.reference;
+      const title = parsed.title || "";
+      const url = parsed.web_url || parsed.webUrl || parsed.url || "";
+      return { label: `MR !${iid}${title ? ` ${title}` : ""}`, url };
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }
