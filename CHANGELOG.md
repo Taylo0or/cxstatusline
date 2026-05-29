@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.52
+
+- Aligned core widget default/raw rendering with upstream `ccstatusline` for
+  model, thinking effort, output style, session name, session cost, Claude
+  session id, and Claude account email.
+- Added upstream-style thinking-effort normalization, including `default`,
+  `xhigh`, `max`, unknown-value `?` markers, and transcript command fallback.
+
 ## 0.2.51
 
 - Aligned Git diff count widgets with upstream `ccstatusline`: `gitChanges`

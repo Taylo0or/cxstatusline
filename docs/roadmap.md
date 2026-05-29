@@ -26,9 +26,10 @@ while staying honest about Codex's current extension points.
   session name, output style, vim mode, voice status, remote-control status,
   skills, account email, compaction, duration, memory, token, context, usage,
   block timer, weekly timer, cost, and custom text widgets, including
-  upstream-compatible status default formats, raw/default labels, Skills metadata,
-  Compaction Counter zero display, Nerd Font, and compaction hide-zero
-  controls where applicable.
+  upstream-compatible status default formats, core raw/default rendering,
+  thinking-effort normalization and transcript fallback, Skills metadata,
+  Compaction Counter zero display, Nerd Font, and compaction hide-zero controls
+  where applicable.
 - Token speed, input speed, output speed, total speed, usage, weekly usage,
   reset timer timestamp modes, and cache token widgets from hook state,
   including upstream-compatible usage/context progress, slider, invert, and

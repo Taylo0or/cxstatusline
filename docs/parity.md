@@ -68,10 +68,11 @@ equivalent data or extension points.
 - Five-hour block timer, reset timer, and local weekly timer widgets, including
   Block Timer compact/progress/slider modes and reset timestamp, time zone,
   locale, 12/24-hour, combined, progress/slider, and bar modes.
-- Session id/name, version, output style, vim mode, voice status,
-  remote-control status, skills, account email, run state, last event, last
-  tool, compaction count, duration, memory, and terminal width widgets, with
-  upstream-compatible default formats, raw/default label, Compaction Counter
+- Model, thinking effort, session id/name, version, output style, vim mode,
+  voice status, remote-control status, skills, account email, run state, last
+  event, last tool, compaction count, duration, memory, and terminal width
+  widgets, with upstream-compatible default/raw rendering, thinking-effort
+  normalization and transcript fallback, default formats, Compaction Counter
   zero display, Nerd Font, and hide-zero controls where applicable, plus Skills
   mode/list-limit/hide-when-empty metadata.
 - Jujutsu root, active workspace, revision, description, bookmark list,

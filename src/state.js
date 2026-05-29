@@ -46,6 +46,16 @@ export function updateStateFromHook(payload, previous = loadState()) {
     sessionId,
     cwd: payload.cwd || previous.cwd || process.cwd(),
     model: payload.model || previous.model || null,
+    reasoningEffort: firstString(
+      payload.effort?.level,
+      payload.effort_level,
+      payload.effortLevel,
+      payload.reasoning_effort,
+      payload.reasoningEffort,
+      payload.model_reasoning_effort,
+      payload.modelReasoningEffort,
+      previous.reasoningEffort
+    ),
     permissionMode: payload.permission_mode || previous.permissionMode || null,
     lastEvent: event,
     lastPayloadAt: now,

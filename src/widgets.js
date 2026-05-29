@@ -1,6 +1,7 @@
+import { existsSync, readFileSync } from "node:fs";
 import os from "node:os";
 import { basename, join } from "node:path";
-import { compactNumber, formatDuration, numberFormat, readJson, repoRoot, run } from "./util.js";
+import { compactNumber, formatDuration, numberFormat, readJson, repoRoot, run, stripAnsi } from "./util.js";
 
 export const SPACER = "__CXSTATUSLINE_SPACER__";
 const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
@@ -23,6 +24,12 @@ const JJ_WORKSPACE_ICON = "\u25C6";
 const JJ_REVISION_ICON = "\uF1FA";
 const GIT_BRANCH_ICON = "\u2387";
 const WORKTREE_ICON = "\u{16830}";
+const KNOWN_THINKING_EFFORTS = new Set(["low", "medium", "high", "xhigh", "max"]);
+const MODEL_STDOUT_PREFIX = "<local-command-stdout>Set model to ";
+const MODEL_STDOUT_EFFORT_REGEX = /^<local-command-stdout>Set model to[\s\S]*? with ([a-zA-Z0-9-]+) effort<\/local-command-stdout>$/i;
+const EFFORT_STDOUT_PREFIX = "<local-command-stdout>Set effort level to ";
+const EFFORT_STDOUT_REGEX = /^<local-command-stdout>Set effort level to ([a-zA-Z0-9-]+)\b/i;
+const UNKNOWN_EFFORT_PATTERN = /^(?=.*[a-z0-9])[a-z0-9-]{2,20}$/;
 
 const WIDGET_ALIASES = {
   "current-working-dir": "cwd",
@@ -61,11 +68,14 @@ export const widgetRegistry = {
   },
   model: {
     description: "Active Codex model from hook state or config",
-    render: ({ state, codexConfig }) => state.model || codexConfig.model || process.env.CODEX_MODEL || ""
+    render: ({ state, codexConfig, widget }) => {
+      const model = formatModelName(state.model || codexConfig.model || process.env.CODEX_MODEL || "");
+      return model ? formatRawOrLabeledValue(widget, "Model: ", model) : "";
+    }
   },
   reasoning: {
     description: "Configured model reasoning effort",
-    render: ({ codexConfig }) => codexConfig.model_reasoning_effort || codexConfig.modelReasoningEffort || ""
+    render: ({ state, codexConfig, widget }) => formatRawOrLabeledValue(widget, "Thinking: ", formatThinkingEffort(resolveThinkingEffort(state, codexConfig)))
   },
   serviceTier: {
     description: "Configured Codex service tier",
@@ -408,9 +418,9 @@ export const widgetRegistry = {
   },
   cost: {
     description: "Session cost in USD when present in hook state",
-    render: ({ state }) => {
+    render: ({ state, widget }) => {
       const cost = state.usage?.costUsd;
-      return Number.isFinite(Number(cost)) ? `$${Number(cost).toFixed(2)}` : "";
+      return Number.isFinite(Number(cost)) ? formatRawOrLabeledValue(widget, "Cost: ", `$${Number(cost).toFixed(2)}`) : "";
     }
   },
   usageRemaining: {
@@ -538,11 +548,11 @@ export const widgetRegistry = {
   },
   claudeSessionId: {
     description: "Claude-compatible alias for the current Codex session id",
-    render: ({ state }) => state.sessionId ? String(state.sessionId).slice(0, 8) : ""
+    render: ({ state, widget }) => state.sessionId ? formatRawOrLabeledValue(widget, "Session ID: ", String(state.sessionId)) : ""
   },
   sessionName: {
     description: "Current session name or thread title when present in hook state",
-    render: ({ state }) => state.sessionName || ""
+    render: ({ state, widget }) => state.sessionName ? formatRawOrLabeledValue(widget, "Session: ", state.sessionName) : ""
   },
   sessionClock: {
     description: "Elapsed time since SessionStart hook",
@@ -566,7 +576,10 @@ export const widgetRegistry = {
   },
   outputStyle: {
     description: "Current output style when present in hook state or config",
-    render: ({ state, codexConfig }) => state.outputStyle || codexConfig.output_style || codexConfig.outputStyle || ""
+    render: ({ state, codexConfig, widget }) => {
+      const value = state.outputStyle || codexConfig.output_style?.name || codexConfig.outputStyle?.name || codexConfig.output_style || codexConfig.outputStyle || "";
+      return value ? formatRawOrLabeledValue(widget, "Style: ", value) : "";
+    }
   },
   vimMode: {
     description: "Current editor vim mode when present in hook state",
@@ -603,7 +616,10 @@ export const widgetRegistry = {
   },
   claudeAccountEmail: {
     description: "Claude-compatible alias for account email when present",
-    render: ({ state }) => state.accountEmail || process.env.CODEX_ACCOUNT_EMAIL || ""
+    render: ({ state, widget }) => {
+      const value = state.accountEmail || process.env.CODEX_ACCOUNT_EMAIL || "";
+      return value ? formatRawOrLabeledValue(widget, "Account: ", value) : "";
+    }
   },
   compactions: {
     description: "Count of observed context compactions",
@@ -1085,6 +1101,85 @@ function statusFormat(widget, fallback, formats) {
 
 function formatRawOrLabeledValue(widget, prefix, value) {
   return widget?.rawValue || widget?.label !== undefined ? String(value) : `${prefix}${value}`;
+}
+
+function formatModelName(value) {
+  const name = typeof value === "string"
+    ? value
+    : value?.display_name || value?.displayName || value?.id || "";
+  return String(name || "").replace(/\s*\(.*\)$/, "");
+}
+
+function resolveThinkingEffort(state = {}, codexConfig = {}) {
+  const statusValue = firstNonEmptyString(
+    state.reasoningEffort,
+    state.effort?.level,
+    state.effortLevel,
+    state.reasoning_effort,
+    state.reasoningEffort
+  );
+  if (statusValue !== undefined) return normalizeThinkingEffort(statusValue) || null;
+
+  const transcriptEffort = transcriptThinkingEffort(state.transcriptPath);
+  if (transcriptEffort !== undefined) return transcriptEffort || null;
+
+  const configured = firstNonEmptyString(
+    codexConfig.model_reasoning_effort,
+    codexConfig.modelReasoningEffort,
+    codexConfig.reasoning_effort,
+    codexConfig.reasoningEffort,
+    codexConfig.effortLevel
+  );
+  return normalizeThinkingEffort(configured) || null;
+}
+
+function formatThinkingEffort(resolved) {
+  if (!resolved) return "default";
+  return resolved.known ? resolved.value : `${resolved.value}?`;
+}
+
+function normalizeThinkingEffort(value) {
+  if (typeof value !== "string" || !value.trim()) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (KNOWN_THINKING_EFFORTS.has(normalized)) return { value: normalized, known: true };
+  if (UNKNOWN_EFFORT_PATTERN.test(normalized)) return { value: normalized, known: false };
+  return undefined;
+}
+
+function transcriptThinkingEffort(path) {
+  if (!path || !existsSync(path)) return undefined;
+  try {
+    const lines = readFileSync(path, "utf8").split(/\r?\n/);
+    for (let index = lines.length - 1; index >= 0; index -= 1) {
+      const line = lines[index]?.trim();
+      if (!line) continue;
+      let entry;
+      try {
+        entry = JSON.parse(line);
+      } catch {
+        continue;
+      }
+      if (typeof entry?.message?.content !== "string") continue;
+      const content = stripAnsi(entry.message.content).trim();
+      if (content.startsWith(EFFORT_STDOUT_PREFIX)) {
+        const match = EFFORT_STDOUT_REGEX.exec(content);
+        return normalizeThinkingEffort(match?.[1]);
+      }
+      if (!content.startsWith(MODEL_STDOUT_PREFIX)) continue;
+      const match = MODEL_STDOUT_EFFORT_REGEX.exec(content);
+      return normalizeThinkingEffort(match?.[1]);
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
+function firstNonEmptyString(...values) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return undefined;
 }
 
 function formatSessionDuration(durationMs) {

@@ -52,6 +52,7 @@ test("stores optional session metadata and skill invocations from hooks", () => 
     hook_event_name: "PreToolUse",
     session_id: "abc",
     thread_title: "Ship it",
+    effort: { level: "high" },
     output_style: { name: "concise" },
     vim: { mode: "NORMAL" },
     voice_enabled: "on",
@@ -63,6 +64,7 @@ test("stores optional session metadata and skill invocations from hooks", () => 
 
   assert.equal(next.sessionName, "Ship it");
   assert.equal(next.outputStyle, "concise");
+  assert.equal(next.reasoningEffort, "high");
   assert.equal(next.vimMode, "NORMAL");
   assert.equal(next.voiceStatus, true);
   assert.equal(next.remoteControlStatus, false);

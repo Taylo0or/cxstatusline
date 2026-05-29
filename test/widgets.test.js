@@ -499,9 +499,14 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "blockTimer", metadata: { display: "slider-only" } }, blockContext), "Block ▓▓▓▓▓▓▓▓░░");
   assert.equal(renderWidget({ type: "blockTimer" }, { ...context, state: {} }), "Block: 0hr 0m");
   assert.equal(renderWidget({ type: "contextPercentageUsable" }, context), "50%");
-  assert.equal(renderWidget({ type: "claudeSessionId" }, context), "abcdef12");
-  assert.equal(renderWidget({ type: "sessionName" }, context), "Sprint");
-  assert.equal(renderWidget({ type: "outputStyle" }, context), "concise");
+  assert.equal(renderWidget({ type: "claudeSessionId" }, context), "Session ID: abcdef123456");
+  assert.equal(renderWidget({ type: "claudeSessionId", rawValue: true }, context), "abcdef123456");
+  assert.equal(renderWidget({ type: "sessionName" }, context), "Session: Sprint");
+  assert.equal(renderWidget({ type: "sessionName", rawValue: true }, context), "Sprint");
+  assert.equal(renderWidget({ type: "outputStyle" }, context), "Style: concise");
+  assert.equal(renderWidget({ type: "outputStyle", rawValue: true }, context), "concise");
+  assert.equal(renderWidget({ type: "claudeAccountEmail" }, context), "Account: dev@example.com");
+  assert.equal(renderWidget({ type: "claudeAccountEmail", rawValue: true }, context), "dev@example.com");
   assert.equal(renderWidget({ type: "vimMode", format: "letter" }, context), "N");
   assert.equal(renderWidget({ type: "voiceStatus" }, context), "\u{1F3A4} \u25C9");
   assert.equal(renderWidget({ type: "voiceStatus", rawValue: true }, context), "on");
@@ -519,7 +524,7 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "skills", metadata: { mode: "count" } }, { ...context, state: { skills: {} } }), "0");
   assert.equal(renderWidget({ type: "skills", metadata: { hideWhenEmpty: "true" } }, { ...context, state: { skills: {} } }), "");
   assert.equal(renderWidget({ type: "skills", metadata: { mode: "list", hideWhenEmpty: "true" } }, { ...context, state: { skills: { uniqueSkills: [] } } }), "");
-  assert.equal(renderWidget({ type: "claudeAccountEmail" }, context), "dev@example.com");
+  assert.equal(renderWidget({ type: "claudeAccountEmail" }, context), "Account: dev@example.com");
   assert.equal(renderWidget({ type: "compactions" }, { ...context, state: {} }), "\u21BB 0");
   assert.equal(renderWidget({ type: "compactions" }, { ...context, state: { compactions: 0 } }), "\u21BB 0");
   assert.equal(renderWidget({ type: "compactions" }, { ...context, state: { compactions: 2 } }), "\u21BB 2");
@@ -540,6 +545,37 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
     ...context,
     state: { compactions: 0 }
   }), "");
+});
+
+test("renders upstream-style core labels and raw values", () => {
+  const context = {
+    config: {},
+    state: {
+      model: { id: "gpt-5.5", display_name: "GPT 5.5 (1M context)" },
+      reasoningEffort: "xHigh",
+      outputStyle: "concise",
+      sessionName: "Sprint",
+      sessionId: "abcdef123456",
+      accountEmail: "dev@example.com",
+      usage: { costUsd: 2.45 }
+    },
+    git: { isRepo: false },
+    codexConfig: {}
+  };
+
+  assert.equal(renderWidget({ type: "model" }, context), "Model: GPT 5.5");
+  assert.equal(renderWidget({ type: "model", rawValue: true }, context), "GPT 5.5");
+  assert.equal(renderWidget({ type: "model", label: "M" }, context), "M: GPT 5.5");
+  assert.equal(renderWidget({ type: "reasoning" }, context), "Thinking: xhigh");
+  assert.equal(renderWidget({ type: "reasoning", rawValue: true }, context), "xhigh");
+  assert.equal(renderWidget({ type: "reasoning" }, { ...context, state: {}, codexConfig: {} }), "Thinking: default");
+  assert.equal(renderWidget({ type: "thinking-effort" }, { ...context, state: { reasoningEffort: "Ultra" } }), "Thinking: ultra?");
+  assert.equal(renderWidget({ type: "outputStyle" }, context), "Style: concise");
+  assert.equal(renderWidget({ type: "sessionName" }, context), "Session: Sprint");
+  assert.equal(renderWidget({ type: "cost" }, context), "Cost: $2.45");
+  assert.equal(renderWidget({ type: "cost", rawValue: true }, context), "$2.45");
+  assert.equal(renderWidget({ type: "claudeSessionId" }, context), "Session ID: abcdef123456");
+  assert.equal(renderWidget({ type: "claudeAccountEmail" }, context), "Account: dev@example.com");
 });
 
 test("resolves ccstatusline kebab-case widget names", () => {

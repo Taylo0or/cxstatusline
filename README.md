@@ -29,7 +29,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   status/title display controls.
 - Codex/session widgets: model, reasoning effort, service tier, permission mode,
   sandbox mode, session id/name, output style, vim/voice/remote-control status
-  when present with upstream-compatible default formats and Nerd Font controls,
+  when present with upstream-compatible default/raw rendering, default formats,
+  thinking-effort normalization, transcript fallback, and Nerd Font controls,
   skills with mode/list-limit/hide-when-empty metadata, run state, last event,
   last tool, compaction count with upstream-compatible default zero display,
   format/Nerd Font, and hide-zero controls,
