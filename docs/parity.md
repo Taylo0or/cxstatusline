@@ -27,7 +27,8 @@ equivalent data or extension points.
 - Core full-screen TUI configuration editor with live preview, main menu,
   widget picker, line editor, per-widget color editor, preset/theme/mode
   selection, terminal width options, global formatting options, Powerline
-  options, and save-time hook/native install toggles.
+  options, install/update management, and save-time hook/native install
+  toggles.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and
   multi-line layouts.
 - `ccstatusline` kebab-case widget aliases for migrated widget lists, including
@@ -58,6 +59,8 @@ equivalent data or extension points.
   bookmark count, changed files, insertion/deletion summary, combined stats,
   insertion, and deletion widgets.
 - Hook/native/tmux/Starship install and uninstall flows.
+- GitHub release update checks and pinned global install commands through CLI
+  and the full-screen TUI.
 - Doctor, reset, benchmark commands, and CI benchmark thresholds.
 - GitHub CI and release workflow, including optional npm publish with
   `NPM_TOKEN` or npm trusted publishing when repository settings are configured.
@@ -81,5 +84,5 @@ data, the matching widget stays empty instead of inventing values.
 
 ## Remaining Enhancements
 
-- Complete `ccstatusline` TUI parity for the pinned-install/update manager,
-  refresh-interval management, and every widget-specific shortcut.
+- Complete `ccstatusline` TUI parity for refresh-interval management and every
+  widget-specific shortcut.

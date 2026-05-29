@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.24
+
+- Added GitHub release update checks through `cxstatusline update-check`.
+- Added pinned global install command generation and `cxstatusline self-update`
+  with dry-run support.
+- Added an Install and Updates management page to the full-screen TUI.
+
 ## 0.2.23
 
 - Added an Edit Widget Colors screen to the full-screen TUI.

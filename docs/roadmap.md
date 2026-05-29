@@ -45,10 +45,11 @@ while staying honest about Codex's current extension points.
   layouts.
 - Full-screen TUI configuration editor with live preview, widget picker, line
   editor, per-widget color editor, preset/theme/mode selection, terminal width
-  controls, global formatting controls, Powerline controls, and save-time
-  hook/native install toggles.
+  controls, global formatting controls, Powerline controls, install/update
+  management, and save-time hook/native install toggles.
 - tmux and Starship integration snippets, including optional config writes.
 - tmux, Starship, native footer, and hooks uninstall flows.
+- GitHub release update checks and pinned global install commands.
 - SketchyBar integration docs.
 - Persistent Git cache with TTL and `.git/HEAD`/`.git/index` invalidation.
 - Doctor and reset commands.
@@ -58,9 +59,8 @@ while staying honest about Codex's current extension points.
 
 ## Next
 
-- Complete advanced `ccstatusline` TUI parity: pinned install/update manager,
-  refresh-interval controls, and the full set of widget-specific shortcut
-  editors.
+- Complete advanced `ccstatusline` TUI parity: refresh-interval controls and
+  the full set of widget-specific shortcut editors.
 
 ## Waiting On Codex Support
 

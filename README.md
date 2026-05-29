@@ -50,7 +50,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   right-aligned, and multi-line layouts.
 - Full-screen terminal configuration editor with live preview, widget picker,
   line editing, per-widget color editing, global options, terminal width
-  controls, Powerline controls, and save-time hook/native install toggles.
+  controls, Powerline controls, install/update management, and save-time
+  hook/native install toggles.
 - tmux and Starship integration snippets, with optional `--write` install.
 - Persistent Git cache with TTL and `.git/HEAD`/`.git/index` invalidation.
 - Zero runtime dependencies; Node.js 20+ is enough.
@@ -256,6 +257,14 @@ List presets:
 cxstatusline presets
 ```
 
+Check or pin the global install to a release tag:
+
+```sh
+cxstatusline update-check
+cxstatusline self-update --dry-run
+cxstatusline self-update --tag v0.2.24
+```
+
 ## Commands
 
 ```text
@@ -272,6 +281,8 @@ cxstatusline presets
 cxstatusline native-items
 cxstatusline themes
 cxstatusline bench [--iterations 500] [--max-avg-ms 5]
+cxstatusline update-check [--json]
+cxstatusline self-update [--dry-run] [--tag v0.2.24]
 cxstatusline doctor
 cxstatusline reset
 ```

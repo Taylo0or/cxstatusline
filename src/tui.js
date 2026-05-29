@@ -4,6 +4,7 @@ import { stdin as input, stdout as output } from "node:process";
 import { PRESETS, THEMES } from "./constants.js";
 import { applyPreset } from "./config.js";
 import { renderStatusLine } from "./render.js";
+import { currentVersion, getUpdateStatus, runSelfUpdate } from "./update.js";
 import { listWidgets, resolveWidgetType } from "./widgets.js";
 import { stripAnsi, truncateEnd, visibleLength } from "./util.js";
 
@@ -169,6 +170,7 @@ class TuiEditor {
     this.input = null;
     this.confirm = null;
     this.picker = null;
+    this.updateStatus = null;
     this.installHooks = false;
     this.installNative = false;
     this.message = "";
@@ -228,6 +230,7 @@ class TuiEditor {
     if (this.screen === "main") return this.handleMain(text, key);
     if (this.screen === "items") return this.handleItems(text, key);
     if (this.screen === "colors") return this.handleColors(text, key);
+    if (this.screen === "updates") return this.handleMenuScreen("updates", text, key);
     if (this.screen === "terminal") return this.handleMenuScreen("terminal", text, key);
     if (this.screen === "global") return this.handleMenuScreen("global", text, key);
     if (this.screen === "powerline") return this.handleMenuScreen("powerline", text, key);
@@ -244,6 +247,7 @@ class TuiEditor {
     if (!item) return;
     if (item.id === "items") this.openScreen("items");
     else if (item.id === "colors") this.openScreen("colors");
+    else if (item.id === "updates") this.openScreen("updates");
     else if (item.id === "preset") this.openChoice("Preset", Object.keys(PRESETS), this.detectPreset(), (value) => {
       this.config = applyPreset(this.config, value);
       this.markChanged(`Applied preset ${value}`);
@@ -688,6 +692,28 @@ class TuiEditor {
     }, "Cycled format");
   }
 
+  refreshUpdateStatus() {
+    try {
+      this.updateStatus = getUpdateStatus();
+      this.message = this.updateStatus.updateAvailable
+        ? `Update available: ${this.updateStatus.latest}`
+        : `Already current: ${this.updateStatus.current}`;
+    } catch (error) {
+      this.message = `Update check failed: ${error.message}`;
+    }
+  }
+
+  runPinnedInstall() {
+    if (!this.updateStatus) this.refreshUpdateStatus();
+    if (!this.updateStatus?.latest) return;
+    try {
+      const result = runSelfUpdate({ tag: this.updateStatus.latest });
+      this.message = result.ok ? `Pinned install complete: ${result.tag}` : `Pinned install failed: ${result.stderr || result.error?.message}`;
+    } catch (error) {
+      this.message = `Pinned install failed: ${error.message}`;
+    }
+  }
+
   selectedWidget() {
     const line = currentLine(this.config, this.lineIndex);
     const widget = line[this.itemIndex];
@@ -875,6 +901,7 @@ function mainMenuItems(editor) {
     { id: "terminal", label: "Terminal width", value: editor.config.flexMode || "full" },
     { id: "global", label: "Global overrides", value: globalSummary(editor.config) },
     { id: "powerline", label: "Powerline setup", value: powerlineSummary(editor.config) },
+    { id: "updates", label: "Manage install and updates", value: updateSummary(editor.updateStatus) },
     { id: "hooks", label: "Install Codex hooks after save", value: BOOLEAN_TEXT.get(editor.installHooks) },
     { id: "native", label: "Configure native Codex footer after save", value: BOOLEAN_TEXT.get(editor.installNative) },
     { id: "save", label: "Save and exit", value: editor.changed() ? "writes config" : "no changes" },
@@ -935,6 +962,32 @@ function screenItems(screen, editor) {
           delete config.overrideBackgroundColor;
           editor.markChanged("Cleared color overrides");
         }
+      },
+      { label: "Back", value: "", action: () => editor.openScreen("main") }
+    ];
+  }
+
+  if (screen === "updates") {
+    const status = editor.updateStatus;
+    return [
+      { label: "Current version", value: currentVersion() },
+      {
+        label: "Check latest GitHub release",
+        value: status?.latest || "not checked",
+        action: () => editor.refreshUpdateStatus()
+      },
+      {
+        label: "Pinned npm install command",
+        value: status?.installCommand || "check first",
+        action: () => {
+          if (!editor.updateStatus) editor.refreshUpdateStatus();
+          if (editor.updateStatus?.installCommand) editor.message = editor.updateStatus.installCommand;
+        }
+      },
+      {
+        label: "Run pinned npm install",
+        value: status?.latest || "check first",
+        action: () => editor.runPinnedInstall()
       },
       { label: "Back", value: "", action: () => editor.openScreen("main") }
     ];
@@ -1038,6 +1091,7 @@ function screenTitle(screen) {
   if (screen === "terminal") return "Terminal Options";
   if (screen === "global") return "Global Overrides";
   if (screen === "powerline") return "Powerline Setup";
+  if (screen === "updates") return "Install and Updates";
   return screen;
 }
 
@@ -1133,6 +1187,11 @@ function powerlineSummary(config) {
   if (powerline.continueThemeAcrossLines) parts.push("continue");
   if (powerline.separators?.length) parts.push(`${powerline.separators.length} sep`);
   return parts.join(", ") || "defaults";
+}
+
+function updateSummary(status) {
+  if (!status) return "not checked";
+  return status.updateAvailable ? `update ${status.latest}` : `current ${status.current}`;
 }
 
 function colorSummary(config) {

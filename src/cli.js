@@ -11,6 +11,7 @@ import { renderStatusLine } from "./render.js";
 import { listWidgets, resolveWidgetType } from "./widgets.js";
 import { loadState, readHookPayload, resetState, saveState, statePath, updateStateFromHook } from "./state.js";
 import { runTuiConfigEditor } from "./tui.js";
+import { getUpdateStatus, runSelfUpdate } from "./update.js";
 import { cacheDir, codexHome, configDir, homePath, parseFlags, readText, run, writeTextAtomic } from "./util.js";
 
 export async function runCli(args) {
@@ -32,6 +33,8 @@ export async function runCli(args) {
   if (command === "bench" || command === "benchmark") return benchCommand(rest);
   if (command === "doctor") return doctorCommand();
   if (command === "reset") return resetCommand();
+  if (command === "update-check" || command === "check-update") return updateCheckCommand(rest);
+  if (command === "self-update" || command === "update") return selfUpdateCommand(rest);
 
   throw new Error(`Unknown command: ${command}\nRun "cxstatusline help" for usage.`);
 }
@@ -319,6 +322,38 @@ function resetCommand() {
   console.log(`Reset state at ${statePath()} (${state.resetAt})`);
 }
 
+function updateCheckCommand(args) {
+  const { flags } = parseFlags(args);
+  const status = getUpdateStatus({ manager: flags.manager || "npm" });
+  if (flags.json) {
+    console.log(JSON.stringify(status, null, 2));
+    return;
+  }
+  console.log(`current        ${status.current}`);
+  console.log(`latest         ${status.latest}`);
+  console.log(`update         ${status.updateAvailable ? "available" : "not needed"}`);
+  console.log(`pinned install ${status.installCommand}`);
+}
+
+function selfUpdateCommand(args) {
+  const { flags } = parseFlags(args);
+  const result = runSelfUpdate({
+    tag: flags.tag,
+    target: flags.target,
+    manager: flags.manager || "npm",
+    dryRun: Boolean(flags["dry-run"])
+  });
+  if (flags["dry-run"]) {
+    console.log(result.commandText);
+    return;
+  }
+  if (!result.ok) {
+    throw new Error(result.stderr || result.error?.message || `Self-update failed: ${result.commandText}`);
+  }
+  process.stdout.write(result.stdout || "");
+  if (result.stderr) process.stderr.write(result.stderr);
+}
+
 function benchCommand(args) {
   const { flags } = parseFlags(args);
   const iterations = Number(flags.iterations || flags.n || 200);
@@ -365,6 +400,8 @@ Usage:
   cxstatusline native-items
   cxstatusline themes
   cxstatusline bench [--iterations 500] [--max-avg-ms 5]
+  cxstatusline update-check [--json]
+  cxstatusline self-update [--dry-run] [--tag v0.2.24]
   cxstatusline doctor
   cxstatusline reset
 
@@ -383,6 +420,8 @@ Examples:
   cxstatusline install tmux
   cxstatusline install tmux --write --preset compact
   cxstatusline install native --items model-with-reasoning,context-used,git-branch,run-state
+  cxstatusline update-check
+  cxstatusline self-update --dry-run
   tmux set -g status-right '#(cxstatusline render --width 80)'
 `);
 }
