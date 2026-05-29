@@ -12,7 +12,8 @@ equivalent data or extension points.
 - Custom Powerline separators and caps, including multiple caps and Unicode
   codepoint input.
 - Built-in themes and per-widget foreground/background overrides.
-- Multi-line rendering with manual separator collapse around empty widgets.
+- Multi-line rendering with manual separator collapse around empty widgets,
+  Powerline auto-alignment, and optional theme continuation across lines.
 - Flexible spacer/right-aligned plain rendering.
 - Width truncation and explicit width override through `CXSTATUSLINE_WIDTH` or
   the `CCSTATUSLINE_WIDTH` compatibility alias.
@@ -71,6 +72,5 @@ data, the matching widget stays empty instead of inventing values.
 ## Remaining Enhancements
 
 - Richer full-screen TUI configuration editor.
-- Benchmark scenario suite with enforceable thresholds in CI.
 - Optional npm trusted publishing setup after repository credentials are
   configured.

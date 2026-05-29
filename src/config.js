@@ -103,7 +103,9 @@ export function convertCcstatuslineSettings(settings, base = DEFAULT_CONFIG) {
       ...(output.powerline || {}),
       separator: Array.isArray(powerline.separators) && powerline.separators.length ? powerline.separators[0] : output.powerline?.separator,
       startCaps: Array.isArray(powerline.startCaps) ? powerline.startCaps : output.powerline?.startCaps,
-      endCaps: Array.isArray(powerline.endCaps) ? powerline.endCaps : output.powerline?.endCaps
+      endCaps: Array.isArray(powerline.endCaps) ? powerline.endCaps : output.powerline?.endCaps,
+      autoAlign: Boolean(powerline.autoAlign),
+      continueThemeAcrossLines: Boolean(powerline.continueThemeAcrossLines)
     };
   }
 

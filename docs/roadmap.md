@@ -25,7 +25,8 @@ while staying honest about Codex's current extension points.
 - Jujutsu root, active workspace, revision, description, bookmark list,
   bookmark count, changed files, insertion/deletion summary, combined stats,
   insertion, and deletion widgets.
-- Multi-line rendering with manual separator collapse around empty widgets.
+- Multi-line rendering with manual separator collapse around empty widgets,
+  Powerline auto-alignment, and optional theme continuation across lines.
 - OSC8 links and custom command ANSI color preservation.
 - Configurable Powerline separators and multi-cap/codepoint caps.
 - Flexible spacer/right alignment.

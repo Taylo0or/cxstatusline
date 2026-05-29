@@ -11,7 +11,9 @@ test("converts ccstatusline settings into cxstatusline config", () => {
       enabled: true,
       separators: ["U+E0B0"],
       startCaps: ["["],
-      endCaps: ["]"]
+      endCaps: ["]"],
+      autoAlign: true,
+      continueThemeAcrossLines: true
     },
     lines: [
       [
@@ -34,6 +36,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.gitCacheTtlMs, 7000);
   assert.equal(config.mode, "powerline");
   assert.deepEqual(config.powerline.startCaps, ["["]);
+  assert.equal(config.powerline.autoAlign, true);
+  assert.equal(config.powerline.continueThemeAcrossLines, true);
   assert.equal(config.lines[0][0].type, "model");
   assert.equal(config.lines[0][0].fg, "#0891b2");
   assert.equal(config.lines[0][1].type, "separator");

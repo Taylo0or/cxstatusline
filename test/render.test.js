@@ -222,3 +222,46 @@ test("preserves custom command ANSI colors when requested", () => {
 
   assert.match(output, /\x1b\[31mhot\x1b\[0m/);
 });
+
+test("supports powerline auto-align across multiple lines", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      mode: "powerline",
+      powerline: { autoAlign: true },
+      lines: [
+        [{ type: "text", text: "a" }, { type: "text", text: "yy" }],
+        [{ type: "text", text: "long" }, { type: "text", text: "zz" }]
+      ]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  }, { color: false });
+
+  const [first, second] = output.split("\n");
+  assert.equal(first.indexOf("yy"), second.indexOf("zz"));
+});
+
+test("supports powerline theme continuation across multiple lines", () => {
+  const output = renderStatusLine({
+    config: {
+      ...DEFAULT_CONFIG,
+      mode: "powerline",
+      powerline: { continueThemeAcrossLines: true },
+      lines: [
+        [{ type: "text", text: "a" }, { type: "text", text: "b" }],
+        [{ type: "text", text: "c" }]
+      ]
+    },
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/project",
+    codexConfig: {}
+  });
+
+  const [first, second] = output.split("\n");
+  assert.match(first, /\x1b\[48;2;56;189;248m/);
+  assert.match(second, /\x1b\[48;2;251;191;36m/);
+});

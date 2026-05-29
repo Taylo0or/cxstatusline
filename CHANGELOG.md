@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.15
+
+- Added multi-line Powerline auto-alignment with `powerline.autoAlign`.
+- Added Powerline theme color continuation across lines with
+  `powerline.continueThemeAcrossLines`.
+- Preserved those Powerline flags during `ccstatusline` settings import.
+
 ## 0.2.14
 
 - Collapsed leading, trailing, and duplicate manual separators when adjacent
