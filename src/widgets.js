@@ -567,9 +567,14 @@ export const widgetRegistry = {
   },
   command: {
     description: "Custom command output",
-    render: ({ widget, cwd }) => {
-      if (!widget.command) return "";
-      const result = run("sh", ["-c", widget.command], { cwd, timeout: Number(widget.timeout || 1000) });
+    render: ({ widget, cwd, state, git, codexConfig, config }) => {
+      const command = widget.command || widget.commandPath;
+      if (!command) return "";
+      const result = run("sh", ["-c", command], {
+        cwd,
+        timeout: Number(widget.timeout || 1000),
+        input: commandStdin({ cwd, state, git, codexConfig, config })
+      });
       return result.ok ? result.stdout.trim().split(/\r?\n/)[0] : "";
     }
   },
@@ -1004,6 +1009,17 @@ function linkUrl(widget) {
 
 function linkText(widget, url = linkUrl(widget)) {
   return widget?.text || metadataValue(widget, "text") || url || "";
+}
+
+function commandStdin(context) {
+  return `${JSON.stringify({
+    cwd: context.cwd || process.cwd(),
+    model: context.state?.model || context.codexConfig?.model || "",
+    state: context.state || {},
+    git: context.git || {},
+    codexConfig: context.codexConfig || {},
+    config: context.config || {}
+  })}\n`;
 }
 
 function gitBranchLinkEnabled(widget) {

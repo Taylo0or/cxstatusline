@@ -75,7 +75,8 @@ export function hashText(value) {
 export function run(command, args = [], options = {}) {
   const result = spawnSync(command, args, {
     encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
+    input: options.input,
+    stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
     timeout: options.timeout ?? 1500,
     cwd: options.cwd || process.cwd(),
     env: { ...process.env, ...(options.env || {}) }

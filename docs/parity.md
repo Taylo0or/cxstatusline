@@ -39,9 +39,10 @@ equivalent data or extension points.
   options, global formatting, widget merge/bold flags, Git and Link widget
   metadata, separators, Git cache TTL, Powerline options, common widget
   metadata, and named colors.
-- Custom text, custom symbol, custom command with timeout, max-width, and
-  optional ANSI preservation, and OSC8 link widgets including
-  `metadata.url`/`metadata.text` compatibility.
+- Custom text, custom symbol, custom command with render-context JSON on stdin,
+  timeout, max-width, `commandPath` compatibility, and optional ANSI
+  preservation, and OSC8 link widgets including `metadata.url`/`metadata.text`
+  compatibility.
 - Git branch, SHA, status, clean/dirty, staged, unstaged, untracked, conflicts,
   ahead/behind, insertions, deletions, origin, upstream owner/repo, tracking
   remote fallback, fork status, worktree, clickable branch and remote

@@ -25,7 +25,8 @@ while staying honest about Codex's current extension points.
   block timer, weekly timer, cost, and custom text widgets.
 - Token speed, input speed, output speed, total speed, usage, weekly usage,
   reset timer timestamp modes, and cache token widgets from hook state.
-- Custom command widget with timeout, max-width, and optional ANSI preservation.
+- Custom command widget with render-context stdin JSON, timeout, max-width,
+  `commandPath` compatibility, and optional ANSI preservation.
 - Jujutsu root, active workspace, revision, description, bookmark list,
   bookmark count, changed files, insertion/deletion summary, combined stats,
   insertion, and deletion widgets.

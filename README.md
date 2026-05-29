@@ -36,9 +36,9 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   alignment, manual separator collapse, path abbreviation, default
   padding/separator controls, inherited separator colors, global bold and color
   overrides, widget merge/no-padding modes, per-widget color overrides,
-  per-widget max-width truncation, custom command output with timeout,
-  max-width, and optional ANSI color preservation, configurable Powerline
-  separators/caps,
+  per-widget max-width truncation, custom command output with render-context
+  JSON on stdin, timeout, max-width, and optional ANSI color preservation,
+  configurable Powerline separators/caps,
   multi-separator and inverted Powerline separator support,
   multi-cap/codepoint Powerline caps, multi-line Powerline auto-alignment,
   theme continuation, terminal width modes, width truncation, and JSON or plain
@@ -254,6 +254,12 @@ Use `ccstatusline`-style Link metadata:
 
 ```json
 { "type": "link", "metadata": { "url": "https://example.com/docs", "text": "Docs" } }
+```
+
+Custom command widgets receive render context JSON on stdin:
+
+```json
+{ "type": "command", "command": "node ./scripts/status-summary.js" }
 ```
 
 Render reset timers as exact timestamps:

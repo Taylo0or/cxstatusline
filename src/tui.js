@@ -100,7 +100,8 @@ export function sanitizePreviewConfig(config) {
     const resolved = resolveWidgetType(item.type);
     if (resolved !== "command") return item;
     const label = item.label ?? "";
-    const text = item.command ? `$ ${String(item.command).split(/\r?\n/)[0]}` : "$ command";
+    const command = item.command || item.commandPath;
+    const text = command ? `$ ${String(command).split(/\r?\n/)[0]}` : "$ command";
     return {
       type: "text",
       text,
@@ -130,7 +131,7 @@ export function describeWidget(widget) {
   else if (item.label) details.push(`label=${item.label}`);
   if (item.text) details.push(`text=${item.text}`);
   if (item.symbol) details.push(`symbol=${item.symbol}`);
-  if (item.command) details.push(`cmd=${item.command}`);
+  if (item.command || item.commandPath) details.push(`cmd=${item.command || item.commandPath}`);
   if (linkUrl(item)) details.push(`url=${linkUrl(item)}`);
   if (item.merge) details.push(item.merge === true ? "merge" : `merge=${item.merge}`);
   if (item.bold) details.push("bold");
@@ -217,7 +218,7 @@ export function buildWidgetOptionRows(widget) {
 
   if (type === "command") {
     rows.push(
-      { key: "command", label: "Command", value: item.command || "(empty)" },
+      { key: "command", label: "Command", value: item.command || item.commandPath || "(empty)" },
       { key: "timeout", label: "Timeout ms", value: item.timeout || 1000 },
       { key: "preserveColors", label: "Preserve ANSI colors", value: BOOLEAN_TEXT.get(Boolean(item.preserveColors)) }
     );
@@ -292,7 +293,7 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "raw") return item.label === "" ? deleteKey(item, "label") : { ...item, label: "" };
   if (key === "merge") return setMergeMode(item, nextValue(MERGE_MODES, mergeMode(item)));
   if (key === "maxWidth") return setNumericField(item, "maxWidth", value);
-  if (key === "command") return value === "" ? deleteKey(item, "command") : { ...item, command: value };
+  if (key === "command") return value === "" ? deleteKey(deleteKey(item, "command"), "commandPath") : { ...deleteKey(item, "commandPath"), command: value };
   if (key === "timeout") return setNumericField(item, "timeout", value);
   if (key === "preserveColors") return { ...item, preserveColors: !Boolean(item.preserveColors) };
   if (key === "href") return value === "" ? deleteKey(deleteKey(item, "href"), "url") : { ...deleteKey(item, "url"), href: value };
@@ -1309,7 +1310,7 @@ function optionInputValue(widget, key) {
   const item = widget || {};
   if (key === "label") return item.label || "";
   if (key === "maxWidth") return item.maxWidth || "";
-  if (key === "command") return item.command || "";
+  if (key === "command") return item.command || item.commandPath || "";
   if (key === "timeout") return item.timeout || 1000;
   if (key === "href") return linkUrl(item);
   if (key === "text") return resolveWidgetType(item.type) === "link" ? linkText(item) : item[primaryValueKey(resolveWidgetType(item.type) || item.type)] || "";

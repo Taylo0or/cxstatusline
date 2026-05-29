@@ -127,6 +127,10 @@ test("TUI widget option helpers apply common and specific settings", () => {
 
   const command = applyWidgetOption({ type: "command" }, "timeout", "2500");
   assert.deepEqual(command, { type: "command", timeout: 2500 });
+  assert.deepEqual(applyWidgetOption({ type: "command", commandPath: "printf old" }, "command", "printf new"), {
+    type: "command",
+    command: "printf new"
+  });
 
   const cwd = applyWidgetOption(applyWidgetOption({ type: "cwd" }, "segments", "2"), "fish");
   assert.deepEqual(cwd, { type: "cwd", segments: 2, fish: true });

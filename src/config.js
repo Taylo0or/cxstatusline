@@ -174,6 +174,7 @@ function convertCcstatuslineWidget(widget, settings) {
     "text",
     "symbol",
     "command",
+    "commandPath",
     "href",
     "url",
     "timeout",
@@ -190,7 +191,8 @@ function convertCcstatuslineWidget(widget, settings) {
     "linkToIDE",
     "linkToCursor"
   ]) {
-    if (widget[key] !== undefined) output[key] = widget[key];
+    if (key === "commandPath" && widget[key] !== undefined && output.command === undefined) output.command = widget[key];
+    else if (key !== "commandPath" && widget[key] !== undefined) output[key] = widget[key];
   }
 
   if (type === "separator" && output.text === undefined) {

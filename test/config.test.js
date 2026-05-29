@@ -29,7 +29,7 @@ test("converts ccstatusline settings into cxstatusline config", () => {
         { type: "model", color: "cyan", merge: "no-padding", bold: true },
         { type: "separator" },
         { type: "git-branch", color: "magenta", metadata: { linkToGitHub: "true", linkToRepo: "false" } },
-        { type: "custom-command", command: "printf ok", maxWidth: 8, preserveColors: true },
+        { type: "custom-command", commandPath: "printf ok", maxWidth: 8, preserveColors: true },
         { type: "tokens-total", rawValue: true },
         { type: "current-working-dir", metadata: { segments: "2", fish: "true" } },
         { type: "git-root-dir", metadata: { linkToIDE: "cursor", linkToCursor: "true" } }

@@ -191,6 +191,33 @@ test("renders custom command output", () => {
   assert.equal(output, "command-ok");
 });
 
+test("passes render context JSON to custom command stdin", () => {
+  const output = renderWidget({
+    type: "command",
+    command: "node -e \"let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>process.stdout.write(JSON.parse(d).state.model))\""
+  }, {
+    config: { theme: "mono" },
+    state: { model: "gpt-5.5" },
+    git: { isRepo: true, branch: "main" },
+    codexConfig: {},
+    cwd: process.cwd()
+  });
+
+  assert.equal(output, "gpt-5.5");
+});
+
+test("renders custom commandPath compatibility alias", () => {
+  const output = renderWidget({ type: "command", commandPath: "printf command-path-ok" }, {
+    config: {},
+    state: {},
+    git: { isRepo: false },
+    codexConfig: {},
+    cwd: process.cwd()
+  });
+
+  assert.equal(output, "command-path-ok");
+});
+
 test("renders parity aliases for speed, usage, session, and optional metadata", () => {
   const context = {
     config: {},

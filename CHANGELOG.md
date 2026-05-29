@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.31
+
+- Passed render context JSON to custom command widgets via stdin, matching
+  `ccstatusline` command chaining behavior.
+- Added `commandPath` compatibility for imported or hand-written custom command
+  widgets.
+- Updated TUI command editing and preview helpers to understand `commandPath`.
+
 ## 0.2.30
 
 - Added `ccstatusline`-style Link widget metadata support for `metadata.url`
