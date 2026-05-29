@@ -47,7 +47,8 @@ equivalent data or extension points.
   ahead/behind, insertions, deletions, origin, upstream owner/repo, tracking
   remote fallback, fork status, worktree, clickable branch and remote
   owner/repo links, Git root directory IDE links for VS Code and Cursor, remote
-  empty-state hiding, `ownerOnlyWhenFork`, and GitHub/GitLab PR/MR widgets.
+  empty-state hiding, `ownerOnlyWhenFork`, and GitHub/GitLab PR/MR widgets with
+  combined status/title/raw display controls.
 - Persistent Git cache with TTL plus `.git/HEAD` and `.git/index`
   invalidation.
 - Current directory path abbreviation, segment limiting, and fish-style path
@@ -94,5 +95,5 @@ data, the matching widget stays empty instead of inventing values.
 ## Remaining Enhancements
 
 - Complete `ccstatusline` TUI parity for the remaining widget-specific
-  shortcuts beyond the currently supported Git, status-format, and
+  shortcuts beyond the currently supported Git, PR/MR, status-format, and
   empty-state toggles.

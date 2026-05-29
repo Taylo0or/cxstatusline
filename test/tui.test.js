@@ -108,6 +108,10 @@ test("TUI widget option helpers expose type-specific rows", () => {
   const rootRows = buildWidgetOptionRows({ type: "gitRootDir" }).map((row) => row.key);
   assert.ok(rootRows.includes("linkToIDE"));
 
+  const prRows = buildWidgetOptionRows({ type: "gitPullRequest" }).map((row) => row.key);
+  assert.ok(prRows.includes("hideStatus"));
+  assert.ok(prRows.includes("hideTitle"));
+
   const linkRows = buildWidgetOptionRows({ type: "link", metadata: { url: "https://example.com/docs", text: "Docs" } });
   assert.equal(linkRows.find((row) => row.key === "href")?.value, "https://example.com/docs");
   assert.equal(linkRows.find((row) => row.key === "text")?.value, "Docs");
@@ -157,6 +161,8 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.deepEqual(applyWidgetOption({ type: "gitOriginRepo" }, "linkToRepo"), { type: "gitOriginRepo", linkToRepo: true });
   assert.deepEqual(applyWidgetOption({ type: "gitOriginRepo" }, "hideNoRemote"), { type: "gitOriginRepo", hideNoRemote: true });
   assert.deepEqual(applyWidgetOption({ type: "gitOriginOwnerRepo" }, "ownerOnlyWhenFork"), { type: "gitOriginOwnerRepo", ownerOnlyWhenFork: true });
+  assert.deepEqual(applyWidgetOption({ type: "gitPullRequest" }, "hideStatus"), { type: "gitPullRequest", hideStatus: true });
+  assert.deepEqual(applyWidgetOption({ type: "gitPullRequest", metadata: { hideTitle: "true" } }, "hideTitle"), { type: "gitPullRequest" });
   assert.deepEqual(applyWidgetOption({ type: "gitRootDir" }, "linkToIDE"), { type: "gitRootDir", linkToIDE: "vscode" });
   assert.deepEqual(applyWidgetOption({ type: "gitRootDir", linkToIDE: "vscode" }, "linkToIDE"), { type: "gitRootDir", linkToIDE: "cursor" });
   assert.deepEqual(applyWidgetOption({ type: "gitRootDir", metadata: { linkToCursor: "true" } }, "linkToIDE"), { type: "gitRootDir" });
@@ -169,6 +175,7 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.equal(describeWidgetOptions({ type: "cwd", segments: 2, fish: true, home: false }), "segments=2, fish, no-home");
   assert.equal(describeWidgetOptions({ type: "gitBranch", linkToRepo: true }), "repo-link");
   assert.equal(describeWidgetOptions({ type: "gitOriginRepo", hideNoRemote: true }), "hide-no-remote");
+  assert.equal(describeWidgetOptions({ type: "gitPullRequest", hideStatus: true, hideTitle: true }), "hide-status, hide-title");
   assert.equal(describeWidgetOptions({ type: "gitRootDir", linkToIDE: "cursor" }), "link-cursor");
   assert.equal(describeWidgetOptions({ type: "compactions", nerdFont: true, hideZero: true }), "nerd-font, hide-zero");
 });

@@ -203,6 +203,8 @@ export function describeWidgetOptions(widget) {
   if (ideLinkMode(item)) parts.push(`link-${ideLinkMode(item)}`);
   if (metadataFlag(item, "hideNoRemote")) parts.push("hide-no-remote");
   if (metadataFlag(item, "ownerOnlyWhenFork")) parts.push("owner-only-fork");
+  if (metadataFlag(item, "hideStatus")) parts.push("hide-status");
+  if (metadataFlag(item, "hideTitle")) parts.push("hide-title");
   if (item.segments !== undefined) parts.push(`segments=${item.segments}`);
   if (item.fish) parts.push("fish");
   if (item.home === false) parts.push("no-home");
@@ -247,6 +249,12 @@ export function buildWidgetOptionRows(widget) {
   }
   if (type === "gitOriginOwnerRepo") {
     rows.push({ key: "ownerOnlyWhenFork", label: "Owner only when fork", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "ownerOnlyWhenFork"))) });
+  }
+  if (type === "gitPullRequest") {
+    rows.push(
+      { key: "hideStatus", label: "Hide PR/MR status", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "hideStatus"))) },
+      { key: "hideTitle", label: "Hide PR/MR title", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "hideTitle"))) }
+    );
   }
   if (type === "text" || type === "symbol" || type === "separator") {
     rows.push({ key: "text", label: primaryValueLabel(type), value: item[primaryValueKey(type)] || "(empty)" });
@@ -315,6 +323,8 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "hideNoRemote") return toggleOrDelete(item, "hideNoRemote");
   if (key === "linkToIDE") return cycleIdeLink(item);
   if (key === "ownerOnlyWhenFork") return toggleOrDelete(item, "ownerOnlyWhenFork");
+  if (key === "hideStatus") return toggleOrDeleteMetadataAware(item, "hideStatus");
+  if (key === "hideTitle") return toggleOrDeleteMetadataAware(item, "hideTitle");
   if (key === "segments") return setNumericField(item, "segments", value);
   if (key === "home") return item.home === false ? deleteKey(item, "home") : { ...item, home: false };
   if (key === "fish") return toggleOrDelete(item, "fish");
@@ -1542,6 +1552,8 @@ function clearWidgetOptions(item) {
     "hideNoGit",
     "hideNoRemote",
     "ownerOnlyWhenFork",
+    "hideStatus",
+    "hideTitle",
     "linkToIDE",
     "linkToCursor",
     "segments",

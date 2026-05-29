@@ -627,11 +627,11 @@ export const widgetRegistry = {
   },
   gitPullRequest: {
     description: "Current GitHub pull request or GitLab merge request when gh/glab is available",
-    render: ({ git, cwd }) => {
+    render: ({ git, cwd, widget }) => {
       if (!git.isRepo) return "";
       const item = getPullRequestInfo(cwd || git.root);
       if (!item) return "";
-      return item.url ? osc8(item.url, item.label) : item.label;
+      return formatPullRequestInfo(item, widget);
     }
   },
   gitPullRequestState: {
@@ -964,6 +964,46 @@ function formatSkills(skills, widget) {
     return visible.join(", ");
   }
   return skills.lastSkill || "";
+}
+
+export function formatPullRequestInfo(item, widget = {}) {
+  if (!item) return "";
+  const showStatus = metadataFlag(widget, "hideStatus") !== true;
+  const showTitle = metadataFlag(widget, "hideTitle") !== true;
+  const noun = pullRequestNoun(item);
+  const number = item.number || "";
+  const linkText = widget.label === "" || widget.rawValue ? `#${number}` : `${noun} #${number}`;
+  const parts = [item.url ? osc8(item.url, linkText) : linkText];
+  const status = pullRequestStatusLabel(item);
+  if (showStatus && status) parts.push(status);
+  if (showTitle && item.title) parts.push(truncatePullRequestTitle(item.title, Number(widget.titleWidth || 30)));
+  return parts.filter(Boolean).join(" ");
+}
+
+function pullRequestNoun(item) {
+  const provider = String(item.provider || "").toLowerCase();
+  const url = String(item.url || "").toLowerCase();
+  return provider.includes("gitlab") || provider === "glab" || url.includes("/-/merge_requests/") || url.includes("gitlab")
+    ? "MR"
+    : "PR";
+}
+
+function pullRequestStatusLabel(item) {
+  const state = String(item.state || "").toUpperCase();
+  const review = String(item.reviewDecision || "").toUpperCase();
+  if (state === "MERGED") return "MERGED";
+  if (state === "CLOSED" || state === "CLOSE") return "CLOSED";
+  if (review === "APPROVED") return "APPROVED";
+  if (review === "CHANGES_REQUESTED") return "CHANGES_REQ";
+  if (state === "OPEN" || state === "OPENED") return "OPEN";
+  if (state === "DRAFT") return "DRAFT";
+  return state;
+}
+
+function truncatePullRequestTitle(title, width) {
+  const limit = Number.isFinite(width) && width > 1 ? Math.floor(width) : 30;
+  const text = String(title || "");
+  return text.length <= limit ? text : `${text.slice(0, limit - 1)}\u2026`;
 }
 
 function blockProgress(startedAtMs, nowMs = Date.now()) {

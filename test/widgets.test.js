@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatJjChangeSummary, formatPath, formatResetTimer, inferContextWindow, parseGithubPullRequest, parseGitlabMergeRequest, parseJjBookmarks, parseJjStat, renderWidget, resolveWidgetType } from "../src/widgets.js";
+import { formatJjChangeSummary, formatPath, formatPullRequestInfo, formatResetTimer, inferContextWindow, parseGithubPullRequest, parseGitlabMergeRequest, parseJjBookmarks, parseJjStat, renderWidget, resolveWidgetType } from "../src/widgets.js";
 import { stripAnsi } from "../src/util.js";
 
 test("infers context windows from model suffixes", () => {
@@ -158,6 +158,10 @@ test("parses rich GitHub pull request metadata", () => {
   assert.equal(pr.reviewDecision, "APPROVED");
   assert.equal(pr.comments, 2);
   assert.equal(pr.commits, 3);
+  assert.equal(stripAnsi(formatPullRequestInfo(pr)), "PR #42 APPROVED Add feature");
+  assert.equal(stripAnsi(formatPullRequestInfo(pr, { hideStatus: true })), "PR #42 Add feature");
+  assert.equal(stripAnsi(formatPullRequestInfo(pr, { hideTitle: true })), "PR #42 APPROVED");
+  assert.equal(stripAnsi(formatPullRequestInfo(pr, { rawValue: true })), "#42 APPROVED Add feature");
 });
 
 test("parses rich GitLab merge request metadata", () => {
@@ -177,6 +181,7 @@ test("parses rich GitLab merge request metadata", () => {
   assert.equal(mr.changedFiles, 4);
   assert.equal(mr.headRefName, "ship");
   assert.equal(mr.baseRefName, "main");
+  assert.equal(stripAnsi(formatPullRequestInfo(mr)), "MR #7 OPEN Ship");
 });
 
 test("renders custom command output", () => {

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.35
+
+- Added upstream-compatible Git PR/MR display controls for combined status,
+  title, and raw-number rendering.
+
 ## 0.2.34
 
 - Added upstream-compatible status widget format options for Vim, voice,
