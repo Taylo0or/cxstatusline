@@ -223,6 +223,8 @@ external bars and prompts. If Codex adds command-backed statusline support later
 the renderer can be wired directly into it.
 
 See [docs/roadmap.md](docs/roadmap.md) for the full parity plan.
+See [docs/parity.md](docs/parity.md) for the current ccstatusline compatibility
+matrix.
 
 ## Development
 
