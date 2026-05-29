@@ -163,6 +163,13 @@ Open the interactive configurator:
 cxstatusline configure
 ```
 
+Persist a specific layout without prompts:
+
+```sh
+cxstatusline configure --widgets model,git-branch,tokens-total --separator " :: " --yes
+cxstatusline configure --powerline-separators "U+E0B0,U+E0B1" --powerline-auto-align --yes
+```
+
 Create the config:
 
 ```sh
@@ -238,7 +245,7 @@ cxstatusline presets
 ```text
 cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
 cxstatusline hook
-cxstatusline configure
+cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv]
 cxstatusline import ccstatusline [--from path] [--dry-run]
 cxstatusline init [--force] [--preset default|compact|dense|git|usage|nofont|right|multiline]
 cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]

@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      NPM_TRUSTED_PUBLISHING: ${{ vars.NPM_TRUSTED_PUBLISHING }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,8 +31,11 @@ jobs:
         with:
           files: cxstatusline-*.tgz
           generate_release_notes: true
-      - name: Publish to npm
+      - name: Publish to npm with token
         if: ${{ env.NPM_TOKEN != '' }}
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
+      - name: Publish to npm with trusted publishing
+        if: ${{ env.NPM_TOKEN == '' && env.NPM_TRUSTED_PUBLISHING == 'true' }}
+        run: npm publish --provenance --access public

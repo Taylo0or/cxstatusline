@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.17
+
+- Expanded `configure` so widget lists, plain separators, Powerline separator
+  arrays, separator inversion, caps, auto-alignment, and theme continuation can
+  be persisted from prompts or direct flags.
+- Added optional npm trusted publishing support to the release workflow while
+  retaining token-based publishing for repositories that use `NPM_TOKEN`.
+
 ## 0.2.16
 
 - Added Powerline separator arrays with boundary-specific separators that reuse

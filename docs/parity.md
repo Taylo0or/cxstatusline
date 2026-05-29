@@ -18,7 +18,8 @@ equivalent data or extension points.
 - Width truncation and explicit width override through `CXSTATUSLINE_WIDTH` or
   the `CCSTATUSLINE_WIDTH` compatibility alias.
 - JSON, ANSI, and plain output modes.
-- Interactive and non-interactive configuration command.
+- Interactive and non-interactive configuration command, including widget,
+  separator, Powerline separator, and Powerline alignment flags.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and
   multi-line layouts.
 - `ccstatusline` kebab-case widget aliases for migrated widget lists, including
@@ -49,8 +50,8 @@ equivalent data or extension points.
   insertion, and deletion widgets.
 - Hook/native/tmux/Starship install and uninstall flows.
 - Doctor, reset, benchmark commands, and CI benchmark thresholds.
-- GitHub CI and release workflow, including optional npm publish when
-  `NPM_TOKEN` is configured.
+- GitHub CI and release workflow, including optional npm publish with
+  `NPM_TOKEN` or npm trusted publishing when repository settings are configured.
 
 ## Codex Platform Limits
 
@@ -72,5 +73,3 @@ data, the matching widget stays empty instead of inventing values.
 ## Remaining Enhancements
 
 - Richer full-screen TUI configuration editor.
-- Optional npm trusted publishing setup after repository credentials are
-  configured.

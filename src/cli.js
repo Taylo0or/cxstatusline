@@ -8,7 +8,7 @@ import { codexConfigPath, installNativeStatusLine, readCodexConfig, uninstallNat
 import { getGitInfo } from "./git.js";
 import { hooksPath, installHooks, uninstallHooks } from "./install.js";
 import { renderStatusLine } from "./render.js";
-import { listWidgets } from "./widgets.js";
+import { listWidgets, resolveWidgetType } from "./widgets.js";
 import { loadState, readHookPayload, resetState, saveState, statePath, updateStateFromHook } from "./state.js";
 import { cacheDir, codexHome, configDir, homePath, parseFlags, readText, run, writeTextAtomic } from "./util.js";
 
@@ -85,9 +85,27 @@ async function configureCommand(args) {
       const preset = await choose(rl, "Preset", Object.keys(PRESETS), "compact");
       const theme = await choose(rl, "Theme", Object.keys(THEMES), "powerline");
       const mode = await choose(rl, "Mode", ["powerline", "plain"], theme === "mono" ? "plain" : "powerline");
+      const widgets = await optional(rl, "Widgets CSV", widgetCsv(config));
       flags.preset = preset;
       flags.theme = theme;
       flags.mode = mode;
+      if (widgets) flags.widgets = widgets;
+      const minimal = await yesNo(rl, "Minimal labels?", Boolean(config.minimal));
+      flags[minimal ? "minimal" : "no-minimal"] = true;
+      const hideEmpty = await yesNo(rl, "Hide empty widgets?", config.hideEmpty !== false);
+      flags[hideEmpty ? "hide-empty" : "show-empty"] = true;
+      if (mode === "plain") {
+        flags.separator = await optional(rl, "Plain separator", config.separator || " | ");
+      } else {
+        flags["powerline-separators"] = await optional(rl, "Powerline separators CSV", capCsv(config.powerline?.separators || config.powerline?.separator || "\uE0B0"));
+        flags["powerline-start-caps"] = await optional(rl, "Powerline start caps CSV", capCsv(config.powerline?.startCaps || config.powerline?.startCap || ""));
+        flags["powerline-end-caps"] = await optional(rl, "Powerline end caps CSV", capCsv(config.powerline?.endCaps || config.powerline?.endCap || ""));
+        flags["powerline-invert-separators"] = await optional(rl, "Invert separator backgrounds CSV", boolCsv(config.powerline?.separatorInvertBackground || []));
+        const autoAlign = await yesNo(rl, "Auto-align Powerline columns?", Boolean(config.powerline?.autoAlign));
+        flags[autoAlign ? "powerline-auto-align" : "no-powerline-auto-align"] = true;
+        const continueTheme = await yesNo(rl, "Continue Powerline theme across lines?", Boolean(config.powerline?.continueThemeAcrossLines));
+        flags[continueTheme ? "powerline-continue-theme" : "no-powerline-continue-theme"] = true;
+      }
       flags.installHooks = await yesNo(rl, "Install Codex hooks?", false);
       flags.installNative = await yesNo(rl, "Configure native Codex footer?", false);
     } finally {
@@ -95,9 +113,7 @@ async function configureCommand(args) {
     }
   }
 
-  if (flags.preset) config = applyPreset(config, flags.preset);
-  if (flags.theme) config.theme = flags.theme;
-  if (flags.mode) config.mode = flags.mode;
+  config = applyConfigureFlags(config, flags);
   const path = saveConfig(config, { config: flags.config });
   console.log(`config: updated ${path}`);
 
@@ -288,7 +304,7 @@ function help() {
 Usage:
   cxstatusline render [--format plain|ansi|json] [--theme name] [--mode powerline|plain]
   cxstatusline hook
-  cxstatusline configure
+  cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv]
   cxstatusline import ccstatusline [--from path] [--dry-run]
   cxstatusline init [--force]
   cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write]
@@ -305,6 +321,8 @@ Examples:
   cxstatusline render --format plain
   cxstatusline render --preset compact --format plain
   cxstatusline configure --preset compact --theme powerline --yes
+  cxstatusline configure --widgets model,git-branch,tokens-total --separator ' :: ' --yes
+  cxstatusline configure --powerline-separators 'U+E0B0,U+E0B1' --powerline-auto-align --yes
   cxstatusline import ccstatusline --dry-run
   cxstatusline install hooks
   cxstatusline install tmux
@@ -312,6 +330,60 @@ Examples:
   cxstatusline install native --items model-with-reasoning,context-used,git-branch,run-state
   tmux set -g status-right '#(cxstatusline render --width 80)'
 `);
+}
+
+export function applyConfigureFlags(config, flags = {}) {
+  let outputConfig = config;
+  if (flags.preset) outputConfig = applyPreset(outputConfig, flags.preset);
+  if (flags.theme) outputConfig.theme = flags.theme;
+  if (flags.mode) outputConfig.mode = flags.mode;
+  if (flags.widgets) {
+    outputConfig.widgets = splitCsv(flags.widgets).map((type) => ({ type: resolveWidgetType(type) || type }));
+    delete outputConfig.lines;
+  }
+  if (flags.separator !== undefined) outputConfig.separator = String(flags.separator);
+  if (flags.minimal !== undefined) outputConfig.minimal = parseBoolean(flags.minimal);
+  if (flags["no-minimal"] !== undefined) outputConfig.minimal = false;
+  if (flags["hide-empty"] !== undefined) outputConfig.hideEmpty = parseBoolean(flags["hide-empty"]);
+  if (flags["show-empty"] !== undefined) outputConfig.hideEmpty = false;
+
+  const powerline = { ...(outputConfig.powerline || {}) };
+  let hasPowerlineUpdate = false;
+  if (flags["powerline-separators"] !== undefined) {
+    powerline.separators = splitCsv(flags["powerline-separators"]);
+    powerline.separator = powerline.separators[0] || powerline.separator;
+    hasPowerlineUpdate = true;
+  }
+  if (flags["powerline-start-caps"] !== undefined) {
+    powerline.startCaps = splitCsv(flags["powerline-start-caps"]);
+    hasPowerlineUpdate = true;
+  }
+  if (flags["powerline-end-caps"] !== undefined) {
+    powerline.endCaps = splitCsv(flags["powerline-end-caps"]);
+    hasPowerlineUpdate = true;
+  }
+  if (flags["powerline-invert-separators"] !== undefined) {
+    powerline.separatorInvertBackground = splitCsv(flags["powerline-invert-separators"]).map(parseBoolean);
+    hasPowerlineUpdate = true;
+  }
+  if (flags["powerline-auto-align"] !== undefined || flags["auto-align"] !== undefined) {
+    powerline.autoAlign = parseBoolean(flags["powerline-auto-align"] ?? flags["auto-align"]);
+    hasPowerlineUpdate = true;
+  }
+  if (flags["no-powerline-auto-align"] !== undefined || flags["no-auto-align"] !== undefined) {
+    powerline.autoAlign = false;
+    hasPowerlineUpdate = true;
+  }
+  if (flags["powerline-continue-theme"] !== undefined || flags["continue-theme"] !== undefined) {
+    powerline.continueThemeAcrossLines = parseBoolean(flags["powerline-continue-theme"] ?? flags["continue-theme"]);
+    hasPowerlineUpdate = true;
+  }
+  if (flags["no-powerline-continue-theme"] !== undefined || flags["no-continue-theme"] !== undefined) {
+    powerline.continueThemeAcrossLines = false;
+    hasPowerlineUpdate = true;
+  }
+  if (hasPowerlineUpdate) outputConfig.powerline = powerline;
+  return outputConfig;
 }
 
 async function choose(rl, label, values, fallback) {
@@ -327,6 +399,33 @@ async function yesNo(rl, question, fallback) {
   const answer = (await rl.question(`${question} ${fallback ? "[Y/n]" : "[y/N]"} `)).trim().toLowerCase();
   if (!answer) return fallback;
   return ["y", "yes"].includes(answer);
+}
+
+async function optional(rl, label, fallback) {
+  const answer = (await rl.question(`${label} [${fallback}]\n> `)).trim();
+  return answer || fallback;
+}
+
+function widgetCsv(config) {
+  const widgets = Array.isArray(config.widgets) ? config.widgets : [];
+  return widgets.map((widget) => typeof widget === "string" ? widget : widget.type).filter(Boolean).join(",");
+}
+
+function capCsv(value) {
+  if (Array.isArray(value)) return value.join(",");
+  return value || "";
+}
+
+function boolCsv(value) {
+  return Array.isArray(value) ? value.map((item) => item ? "true" : "false").join(",") : "";
+}
+
+function splitCsv(value) {
+  return String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+function parseBoolean(value) {
+  return ["1", "true", "yes", "y", "on", "invert", "inverted"].includes(String(value).trim().toLowerCase());
 }
 
 function summarizeToml(text) {

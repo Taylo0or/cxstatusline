@@ -10,7 +10,8 @@ while staying honest about Codex's current extension points.
 - Powerline and plain renderers.
 - Theme system.
 - JSON config.
-- Interactive and non-interactive configuration command.
+- Interactive and non-interactive configuration command, including direct
+  widget, separator, Powerline separator, and Powerline alignment flags.
 - Git branch, SHA, status, ahead/behind, and diff widgets.
 - Git origin owner/repo, upstream owner/repo, fork status, worktree, PR/MR
   detection, and clickable branch widgets.
@@ -44,12 +45,12 @@ while staying honest about Codex's current extension points.
 - Width truncation and `CXSTATUSLINE_WIDTH`/`CCSTATUSLINE_WIDTH` overrides.
 - Doctor and reset commands.
 - Runtime benchmark command and CI benchmark scenario suite.
-- GitHub Actions CI and release workflow.
+- GitHub Actions CI and release workflow with optional npm token or trusted
+  publishing.
 
 ## Next
 
 - Richer full-screen TUI configuration editor.
-- npm publish credentials setup.
 
 ## Waiting On Codex Support
 
