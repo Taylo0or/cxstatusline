@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.38
+
+- Added upstream-compatible Jujutsu `no jj` empty states and `hideNoJj`
+  metadata support for Jj widgets.
+- Preserved `hideNoJj` during `ccstatusline` settings import and exposed it in
+  the full-screen TUI.
+
 ## 0.2.37
 
 - Added upstream-compatible `hideNoGit` rendering for Git widgets so non-Git

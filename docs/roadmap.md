@@ -34,7 +34,8 @@ while staying honest about Codex's current extension points.
   `commandPath` compatibility, and optional ANSI preservation.
 - Jujutsu root, active workspace, revision, description, bookmark list,
   bookmark count, changed files, insertion/deletion summary, combined stats,
-  insertion, and deletion widgets.
+  insertion, and deletion widgets, including upstream-compatible `no jj`
+  empty states and `hideNoJj` metadata.
 - Multi-line rendering with manual separator collapse around empty widgets,
   Powerline auto-alignment, and optional theme continuation across lines.
 - OSC8 links and custom command ANSI color preservation.
@@ -57,7 +58,7 @@ while staying honest about Codex's current extension points.
 - Full-screen TUI configuration editor with live preview, widget picker, line
   editor, widget-specific option editor including Git link, IDE-link,
   PR/MR status/title, Git empty-state, usage display, status-format, Nerd Font,
-  and remote empty-state toggles,
+  Jujutsu empty-state, and remote empty-state toggles,
   per-widget color editor,
   preset/theme/mode selection, terminal width controls, global formatting
   controls, Powerline controls, install/update management, and save-time

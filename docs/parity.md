@@ -69,7 +69,8 @@ equivalent data or extension points.
   applicable.
 - Jujutsu root, active workspace, revision, description, bookmark list,
   bookmark count, changed files, insertion/deletion summary, combined stats,
-  insertion, and deletion widgets.
+  insertion, and deletion widgets, including upstream-compatible `no jj`
+  empty states and `hideNoJj` metadata.
 - Hook/native/tmux/Starship install and uninstall flows.
 - GitHub release update checks and pinned global install commands through CLI
   and the full-screen TUI.

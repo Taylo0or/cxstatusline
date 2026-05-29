@@ -65,6 +65,19 @@ const GIT_NO_GIT_WIDGETS = new Set([
   "gitWorktree",
   "gitPullRequest"
 ]);
+const JJ_NO_JJ_WIDGETS = new Set([
+  "jjWorkspace",
+  "jjRevision",
+  "jjDescription",
+  "jjBookmarks",
+  "jjRootDir",
+  "jjChanges",
+  "jjChangedFiles",
+  "jjStats",
+  "jjBookmarkCount",
+  "jjInsertions",
+  "jjDeletions"
+]);
 const USAGE_WIDGETS = new Set([
   "contextPercent",
   "contextPercentage",
@@ -236,6 +249,7 @@ export function describeWidgetOptions(widget) {
   if (gitLinkEnabled(item, type)) parts.push("repo-link");
   if (ideLinkMode(item)) parts.push(`link-${ideLinkMode(item)}`);
   if (metadataFlag(item, "hideNoGit")) parts.push("hide-no-git");
+  if (metadataFlag(item, "hideNoJj")) parts.push("hide-no-jj");
   if (metadataFlag(item, "hideNoRemote")) parts.push("hide-no-remote");
   if (metadataFlag(item, "ownerOnlyWhenFork")) parts.push("owner-only-fork");
   if (metadataFlag(item, "hideWhenNotFork")) parts.push("hide-not-fork");
@@ -279,6 +293,9 @@ export function buildWidgetOptionRows(widget) {
   }
   if (GIT_NO_GIT_WIDGETS.has(type)) {
     rows.push({ key: "hideNoGit", label: "Hide no git", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "hideNoGit"))) });
+  }
+  if (JJ_NO_JJ_WIDGETS.has(type)) {
+    rows.push({ key: "hideNoJj", label: "Hide no jj", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "hideNoJj"))) });
   }
   if (GIT_REMOTE_WIDGETS.has(type)) {
     rows.push({ key: "hideNoRemote", label: "Hide no remote", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "hideNoRemote"))) });
@@ -368,6 +385,7 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "text") return value === "" ? deleteKey(item, primaryValueKey(resolveWidgetType(item.type) || item.type)) : { ...item, [primaryValueKey(resolveWidgetType(item.type) || item.type)]: value };
   if (key === "linkToRepo") return toggleLinkToRepo(item);
   if (key === "hideNoGit") return toggleOrDeleteMetadataAware(item, "hideNoGit");
+  if (key === "hideNoJj") return toggleOrDeleteMetadataAware(item, "hideNoJj");
   if (key === "hideNoRemote") return toggleOrDelete(item, "hideNoRemote");
   if (key === "linkToIDE") return cycleIdeLink(item);
   if (key === "ownerOnlyWhenFork") return toggleOrDelete(item, "ownerOnlyWhenFork");
@@ -1613,6 +1631,7 @@ function clearWidgetOptions(item) {
     "linkToRepo",
     "linkToGitHub",
     "hideNoGit",
+    "hideNoJj",
     "hideNoRemote",
     "ownerOnlyWhenFork",
     "hideWhenNotFork",

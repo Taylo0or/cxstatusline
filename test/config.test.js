@@ -39,7 +39,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
         { type: "flex-separator" },
         { type: "git-origin-owner-repo", metadata: { linkToRepo: "true", ownerOnlyWhenFork: "true", hideNoRemote: "true" } },
         { type: "link", metadata: { url: "https://example.com/docs", text: "Docs" } },
-        { type: "reset-timer", color: "brightYellow", metadata: { format: "timestamp", timeZone: "UTC", hour12: "false" } }
+        { type: "reset-timer", color: "brightYellow", metadata: { format: "timestamp", timeZone: "UTC", hour12: "false" } },
+        { type: "jj-workspace", metadata: { hideNoJj: "true" } }
       ]
     ]
   });
@@ -99,4 +100,6 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[1][3].format, "timestamp");
   assert.equal(config.lines[1][3].timeZone, "UTC");
   assert.equal(config.lines[1][3].hour12, false);
+  assert.equal(config.lines[1][4].type, "jjWorkspace");
+  assert.equal(config.lines[1][4].hideNoJj, true);
 });

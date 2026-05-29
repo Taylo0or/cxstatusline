@@ -115,6 +115,9 @@ test("TUI widget option helpers expose type-specific rows", () => {
   assert.ok(prRows.includes("hideStatus"));
   assert.ok(prRows.includes("hideTitle"));
 
+  const jjRows = buildWidgetOptionRows({ type: "jjWorkspace", metadata: { hideNoJj: "true" } });
+  assert.equal(jjRows.find((row) => row.key === "hideNoJj")?.value, "on");
+
   const forkRows = buildWidgetOptionRows({ type: "gitIsFork" }).map((row) => row.key);
   assert.ok(forkRows.includes("hideWhenNotFork"));
 
@@ -184,6 +187,8 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.deepEqual(applyWidgetOption({ type: "gitRootDir" }, "linkToIDE"), { type: "gitRootDir", linkToIDE: "vscode" });
   assert.deepEqual(applyWidgetOption({ type: "gitRootDir", linkToIDE: "vscode" }, "linkToIDE"), { type: "gitRootDir", linkToIDE: "cursor" });
   assert.deepEqual(applyWidgetOption({ type: "gitRootDir", metadata: { linkToCursor: "true" } }, "linkToIDE"), { type: "gitRootDir" });
+  assert.deepEqual(applyWidgetOption({ type: "jjWorkspace" }, "hideNoJj"), { type: "jjWorkspace", hideNoJj: true });
+  assert.deepEqual(applyWidgetOption({ type: "jjWorkspace", metadata: { hideNoJj: "true" } }, "hideNoJj"), { type: "jjWorkspace" });
   assert.deepEqual(applyWidgetOption({ type: "link", metadata: { url: "https://example.com/docs" } }, "text", "Docs"), {
     type: "link",
     metadata: { url: "https://example.com/docs" },
@@ -198,6 +203,7 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.equal(describeWidgetOptions({ type: "gitBranch", linkToRepo: true, hideNoGit: true }), "repo-link, hide-no-git");
   assert.equal(describeWidgetOptions({ type: "gitOriginRepo", hideNoRemote: true }), "hide-no-remote");
   assert.equal(describeWidgetOptions({ type: "gitIsFork", hideWhenNotFork: true }), "hide-not-fork");
+  assert.equal(describeWidgetOptions({ type: "jjWorkspace", hideNoJj: true }), "hide-no-jj");
   assert.equal(describeWidgetOptions({ type: "gitPullRequest", hideStatus: true, hideTitle: true }), "hide-status, hide-title");
   assert.equal(describeWidgetOptions({ type: "gitRootDir", linkToIDE: "cursor" }), "link-cursor");
   assert.equal(describeWidgetOptions({ type: "sessionUsage", display: "progress-short", invert: true, cursor: true }), "display=progress-short, invert, cursor");

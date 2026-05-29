@@ -53,7 +53,7 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   `weekly-sonnet-usage`, `separator`, and `flex-separator`.
 - Jujutsu widgets for root, active workspace, revision, description,
   bookmarks, bookmark count, changed files, insertion/deletion summary,
-  combined stats, insertions, and deletions.
+  combined stats, insertions, deletions, and `hideNoJj` empty-state controls.
 - Presets for compact, dense, Git-focused, usage-focused, no-font,
   right-aligned, and multi-line layouts.
 - Full-screen terminal configuration editor with live preview, widget picker,
@@ -260,6 +260,12 @@ Use `ccstatusline`-style Link metadata:
 
 ```json
 { "type": "link", "metadata": { "url": "https://example.com/docs", "text": "Docs" } }
+```
+
+Hide Jujutsu non-repository empty states with `ccstatusline`-style metadata:
+
+```json
+{ "type": "jjWorkspace", "metadata": { "hideNoJj": "true" } }
 ```
 
 Custom command widgets receive render context JSON on stdin:

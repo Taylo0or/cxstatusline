@@ -18,6 +18,9 @@ const COMPACTION_ICON = "\u21BB";
 const COMPACTION_NERD_FONT_ICON = "\uF021";
 const STATUS_DOT_ON = "\u25C9";
 const STATUS_DOT_OFF = "\u25CB";
+const JJ_BOOKMARK_ICON = "\u{1F516}";
+const JJ_WORKSPACE_ICON = "\u25C6";
+const JJ_REVISION_ICON = "\uF1FA";
 
 const WIDGET_ALIASES = {
   "current-working-dir": "cwd",
@@ -708,78 +711,94 @@ export const widgetRegistry = {
   },
   jjWorkspace: {
     description: "Current Jujutsu workspace name",
-    render: ({ cwd }) => {
-      const output = jjOutput(["workspace", "list", "--template", "if(target.current_working_copy(), name ++ \"\\n\")"], cwd);
-      return output ? output.split(/\r?\n/).map((line) => line.trim()).find(Boolean) || "" : "";
+    render: ({ cwd, widget }) => {
+      const output = jjOutput(["workspace", "list", "--template", "if(target.current_working_copy(), name ++ \"\\n\")"], cwd, { allowEmpty: true });
+      if (output === null) return jjNoJj(widget, `${JJ_WORKSPACE_ICON} no jj`);
+      const workspace = output.split(/\r?\n/).map((line) => line.trim()).find(Boolean) || "";
+      return workspace ? jjIconValue(widget, workspace, JJ_WORKSPACE_ICON) : jjNoJj(widget, `${JJ_WORKSPACE_ICON} no jj`);
     }
   },
   jjRevision: {
     description: "Current Jujutsu revision id",
-    render: ({ cwd }) => jj(["log", "-r", "@", "--no-graph", "-T", "change_id.shortest()"], cwd)
+    render: ({ cwd, widget }) => {
+      const revision = jj(["log", "-r", "@", "--no-graph", "-T", "change_id.shortest()"], cwd);
+      return revision ? jjIconValue(widget, revision, JJ_REVISION_ICON) : jjNoJj(widget, `${JJ_REVISION_ICON} no jj`);
+    }
   },
   jjDescription: {
     description: "Current Jujutsu change description",
-    render: ({ cwd }) => {
+    render: ({ cwd, widget }) => {
       const output = jjOutput(["log", "-r", "@", "--no-graph", "-T", "description.first_line()"], cwd, { allowEmpty: true });
-      if (output === null) return "";
+      if (output === null) return jjNoJj(widget, "no jj");
       return output.trim() || "(no description)";
     }
   },
   jjBookmarks: {
     description: "Current Jujutsu bookmarks",
-    render: ({ cwd }) => parseJjBookmarks(jjOutput(["log", "--no-graph", "-r", "heads(::@ & bookmarks())", "--template", "bookmarks"], cwd)).join(", ")
+    render: ({ cwd, widget }) => {
+      const output = jjOutput(["log", "--no-graph", "-r", "heads(::@ & bookmarks())", "--template", "bookmarks"], cwd, { allowEmpty: true });
+      if (output === null) return jjNoJj(widget, `${JJ_BOOKMARK_ICON} no jj`);
+      const bookmarks = parseJjBookmarks(output).join(", ");
+      return bookmarks ? jjIconValue(widget, bookmarks, JJ_BOOKMARK_ICON) : jjNoJj(widget, `${JJ_BOOKMARK_ICON} (none)`);
+    }
   },
   jjRootDir: {
     description: "Current Jujutsu root directory name",
-    render: ({ cwd }) => {
+    render: ({ cwd, widget }) => {
       const root = jj(["root"], cwd);
-      return root ? basename(root) : "";
+      return root ? basename(root) : jjNoJj(widget, "no jj");
     }
   },
   jjChanges: {
     description: "Current Jujutsu insertion/deletion summary",
-    render: ({ cwd }) => {
+    render: ({ cwd, widget }) => {
       const output = jjOutput(["diff", "--stat"], cwd, { allowEmpty: true });
-      if (output === null) return "";
+      if (output === null) return jjNoJj(widget);
       return formatJjChangeSummary(parseJjStat(output));
     }
   },
   jjChangedFiles: {
     description: "Current Jujutsu changed file count",
-    render: ({ cwd }) => {
+    render: ({ cwd, widget }) => {
       const output = jjOutput(["diff", "--stat"], cwd, { allowEmpty: true });
-      if (output === null) return "";
+      if (output === null) return jjNoJj(widget);
       return String(parseJjStat(output).files);
     }
   },
   jjStats: {
     description: "Current Jujutsu file, insertion, and deletion stats",
-    render: ({ cwd }) => {
+    render: ({ cwd, widget }) => {
       const output = jjOutput(["diff", "--stat"], cwd, { allowEmpty: true });
-      if (output === null) return "";
+      if (output === null) return jjNoJj(widget);
       const stat = parseJjStat(output);
       return `${stat.files} files +${stat.insertions} -${stat.deletions}`;
     }
   },
   jjBookmarkCount: {
     description: "Current Jujutsu bookmark count",
-    render: ({ cwd }) => {
-      const bookmarks = parseJjBookmarks(jjOutput(["log", "--no-graph", "-r", "heads(::@ & bookmarks())", "--template", "bookmarks"], cwd));
+    render: ({ cwd, widget }) => {
+      const output = jjOutput(["log", "--no-graph", "-r", "heads(::@ & bookmarks())", "--template", "bookmarks"], cwd, { allowEmpty: true });
+      if (output === null) return jjNoJj(widget);
+      const bookmarks = parseJjBookmarks(output);
       return bookmarks.length ? String(bookmarks.length) : "";
     }
   },
   jjInsertions: {
     description: "Current Jujutsu insertion count",
-    render: ({ cwd }) => {
-      const stat = parseJjStat(jj(["diff", "--stat"], cwd));
-      return stat.insertions ? `+${stat.insertions}` : "";
+    render: ({ cwd, widget }) => {
+      const output = jjOutput(["diff", "--stat"], cwd, { allowEmpty: true });
+      if (output === null) return jjNoJj(widget);
+      const stat = parseJjStat(output);
+      return `+${stat.insertions}`;
     }
   },
   jjDeletions: {
     description: "Current Jujutsu deletion count",
-    render: ({ cwd }) => {
-      const stat = parseJjStat(jj(["diff", "--stat"], cwd));
-      return stat.deletions ? `-${stat.deletions}` : "";
+    render: ({ cwd, widget }) => {
+      const output = jjOutput(["diff", "--stat"], cwd, { allowEmpty: true });
+      if (output === null) return jjNoJj(widget);
+      const stat = parseJjStat(output);
+      return `-${stat.deletions}`;
     }
   }
 };
@@ -871,6 +890,14 @@ function jjOutput(args, cwd, options = {}) {
   if (!result.ok) return null;
   const output = result.stdout.trimEnd();
   return output || options.allowEmpty ? output : null;
+}
+
+function jjNoJj(widget, text = "(no jj)") {
+  return metadataFlag(widget, "hideNoJj") === true ? "" : text;
+}
+
+function jjIconValue(widget, value, icon) {
+  return widget?.rawValue || widget?.label !== undefined ? value : `${icon} ${value}`;
 }
 
 export function parseJjStat(output) {

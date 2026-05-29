@@ -137,6 +137,30 @@ test("renders Git fork status raw values and hideWhenNotFork metadata", () => {
   assert.equal(renderWidget({ type: "gitIsFork", metadata: { hideWhenNotFork: "true" } }, base), "");
 });
 
+test("renders Jujutsu no-repo empty states and hideNoJj metadata", () => {
+  const context = {
+    config: {},
+    state: {},
+    git: { isRepo: false },
+    cwd: "/tmp/cxstatusline-not-a-jj-repo",
+    codexConfig: {}
+  };
+
+  assert.equal(renderWidget({ type: "jjWorkspace" }, context), "\u25C6 no jj");
+  assert.equal(renderWidget({ type: "jjRevision" }, context), "\uF1FA no jj");
+  assert.equal(renderWidget({ type: "jjDescription" }, context), "no jj");
+  assert.equal(renderWidget({ type: "jjBookmarks" }, context), "\u{1F516} no jj");
+  assert.equal(renderWidget({ type: "jjRootDir" }, context), "no jj");
+  assert.equal(renderWidget({ type: "jjChanges" }, context), "(no jj)");
+  assert.equal(renderWidget({ type: "jjChangedFiles" }, context), "(no jj)");
+  assert.equal(renderWidget({ type: "jjStats" }, context), "(no jj)");
+  assert.equal(renderWidget({ type: "jjBookmarkCount" }, context), "(no jj)");
+  assert.equal(renderWidget({ type: "jjInsertions" }, context), "(no jj)");
+  assert.equal(renderWidget({ type: "jjDeletions" }, context), "(no jj)");
+  assert.equal(renderWidget({ type: "jjWorkspace", hideNoJj: true }, context), "");
+  assert.equal(renderWidget({ type: "jjChanges", metadata: { hideNoJj: "true" } }, context), "");
+});
+
 test("renders Git root dir IDE links from metadata", () => {
   const context = {
     config: {},
