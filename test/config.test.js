@@ -43,7 +43,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
         { type: "jj-workspace", metadata: { hideNoJj: "true" } },
         { type: "extra-usage-remaining", metadata: { hideIfDisabled: "true" } },
         { type: "skills", metadata: { mode: "list", listLimit: "2", hideWhenEmpty: "true" } },
-        { type: "block-timer", metadata: { display: "slider", invert: "true", compact: "true" } }
+        { type: "block-timer", metadata: { display: "slider", invert: "true", compact: "true" } },
+        { type: "compaction-counter", metadata: { format: "text-and-number", nerdFont: "true", hideZero: "true" } }
       ]
     ]
   });
@@ -119,4 +120,8 @@ test("converts ccstatusline settings into cxstatusline config", () => {
   assert.equal(config.lines[1][7].display, "slider");
   assert.equal(config.lines[1][7].invert, true);
   assert.equal(config.lines[1][7].compact, true);
+  assert.equal(config.lines[1][8].type, "compactions");
+  assert.equal(config.lines[1][8].format, "text-and-number");
+  assert.equal(config.lines[1][8].nerdFont, true);
+  assert.equal(config.lines[1][8].hideZero, true);
 });

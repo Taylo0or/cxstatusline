@@ -34,7 +34,7 @@ equivalent data or extension points.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and
   multi-line layouts.
 - `ccstatusline` kebab-case widget aliases for migrated widget lists, including
-  separator and flex-separator compatibility.
+  compaction-counter, separator, and flex-separator compatibility.
 - `ccstatusline` settings import for lines, minimalist mode, terminal width
   options, global formatting, widget merge/bold flags, Git and Link widget
   metadata, separators, Git cache TTL, Powerline options, common widget
@@ -69,9 +69,9 @@ equivalent data or extension points.
 - Session id/name, version, output style, vim mode, voice status,
   remote-control status, skills, account email, run state, last event, last
   tool, compaction count, duration, memory, and terminal width widgets, with
-  upstream-compatible format, raw/default label, Nerd Font, and hide-zero
-  controls where applicable, plus Skills mode/list-limit/hide-when-empty
-  metadata.
+  upstream-compatible format, raw/default label, Compaction Counter zero
+  display, Nerd Font, and hide-zero controls where applicable, plus Skills
+  mode/list-limit/hide-when-empty metadata.
 - Jujutsu root, active workspace, revision, description, bookmark list,
   bookmark count, changed files, insertion/deletion summary, combined stats,
   insertion, and deletion widgets, including upstream-compatible `no jj`

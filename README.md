@@ -29,7 +29,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   sandbox mode, session id/name, output style, vim/voice/remote-control status
   when present with upstream-compatible format and Nerd Font controls, skills,
   with mode/list-limit/hide-when-empty metadata, run state, last event, last
-  tool, compaction count with format/Nerd Font and hide-zero controls,
+  tool, compaction count with upstream-compatible default zero display,
+  format/Nerd Font, and hide-zero controls,
   duration, version, and terminal width with upstream-compatible raw/default
   labels, and best-effort token/context/cost metrics when
   Codex exposes them through hook payloads or transcript entries.
@@ -55,7 +56,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
   output.
 - `ccstatusline` widget-name aliases for common kebab-case types such as
   `git-branch`, `tokens-total`, `current-working-dir`, `git-pr`,
-  `weekly-sonnet-usage`, `separator`, and `flex-separator`.
+  `compaction-counter`, `weekly-sonnet-usage`, `separator`, and
+  `flex-separator`.
 - Jujutsu widgets for root, active workspace, revision, description,
   bookmarks, bookmark count, changed files, insertion/deletion summary,
   combined stats, insertions, deletions, and `hideNoJj` empty-state controls.

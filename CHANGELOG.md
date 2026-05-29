@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.47
+
+- Aligned Compaction Counter defaults with upstream `ccstatusline`: render
+  `icon-space-number` by default and show zero counts unless `hideZero` is set.
+- Preserved Compaction Counter format, Nerd Font, and hide-zero controls across
+  render, settings import, and the full-screen TUI.
+
 ## 0.2.46
 
 - Added upstream-compatible Block Timer `metadata.display` rendering for

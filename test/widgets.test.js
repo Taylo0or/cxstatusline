@@ -433,6 +433,18 @@ test("renders parity aliases for speed, usage, session, and optional metadata", 
   assert.equal(renderWidget({ type: "skills", metadata: { hideWhenEmpty: "true" } }, { ...context, state: { skills: {} } }), "");
   assert.equal(renderWidget({ type: "skills", metadata: { mode: "list", hideWhenEmpty: "true" } }, { ...context, state: { skills: { uniqueSkills: [] } } }), "");
   assert.equal(renderWidget({ type: "claudeAccountEmail" }, context), "dev@example.com");
+  assert.equal(renderWidget({ type: "compactions" }, { ...context, state: {} }), "\u21BB 0");
+  assert.equal(renderWidget({ type: "compactions" }, { ...context, state: { compactions: 0 } }), "\u21BB 0");
+  assert.equal(renderWidget({ type: "compactions" }, { ...context, state: { compactions: 2 } }), "\u21BB 2");
+  assert.equal(renderWidget({ type: "compactions", metadata: { format: "icon-number" } }, { ...context, state: { compactions: 2 } }), "\u21BB 2");
+  assert.equal(renderWidget({ type: "compactions", format: "text-and-number" }, {
+    ...context,
+    state: { compactions: 2 }
+  }), "Compactions: 2");
+  assert.equal(renderWidget({ type: "compactions", format: "number", nerdFont: true }, {
+    ...context,
+    state: { compactions: 2 }
+  }), "2");
   assert.equal(renderWidget({ type: "compactions", format: "icon-space-number", nerdFont: true }, {
     ...context,
     state: { compactions: 2 }
@@ -449,6 +461,7 @@ test("resolves ccstatusline kebab-case widget names", () => {
   assert.equal(resolveWidgetType("tokens-total"), "tokens");
   assert.equal(resolveWidgetType("git-pr"), "gitPullRequest");
   assert.equal(resolveWidgetType("worktree-original-branch"), "gitWorktreeOriginalBranch");
+  assert.equal(resolveWidgetType("compaction-counter"), "compactions");
   assert.equal(resolveWidgetType("weekly-sonnet-usage"), "weeklySonnetUsage");
   assert.equal(resolveWidgetType("flex-separator"), "spacer");
 });

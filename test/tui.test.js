@@ -157,10 +157,14 @@ test("TUI widget option helpers expose type-specific rows", () => {
   assert.equal(statusRows.find((row) => row.key === "format")?.value, "icon");
   assert.equal(statusRows.find((row) => row.key === "nerdFont")?.value, "on");
 
-  const compactionRows = buildWidgetOptionRows({ type: "compactions" }).map((row) => row.key);
+  const compactionOptionRows = buildWidgetOptionRows({ type: "compactions" });
+  const compactionRows = compactionOptionRows.map((row) => row.key);
   assert.ok(compactionRows.includes("format"));
   assert.ok(compactionRows.includes("nerdFont"));
   assert.ok(compactionRows.includes("hideZero"));
+  assert.equal(compactionOptionRows.find((row) => row.key === "format")?.value, "icon-space-number");
+  assert.equal(buildWidgetOptionRows({ type: "compactions", metadata: { format: "icon-number" } }).find((row) => row.key === "format")?.value, "icon-space-number");
+  assert.ok(!buildWidgetOptionRows({ type: "compactions", format: "number", nerdFont: true }).map((row) => row.key).includes("nerdFont"));
 });
 
 test("TUI widget option helpers apply common and specific settings", () => {
@@ -201,6 +205,11 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.deepEqual(applyWidgetOption({ type: "vimMode" }, "format"), { type: "vimMode", format: "icon-letter" });
   assert.deepEqual(applyWidgetOption({ type: "voiceStatus", metadata: { format: "icon" } }, "format"), { type: "voiceStatus", format: "icon-text" });
   assert.deepEqual(applyWidgetOption({ type: "voiceStatus", metadata: { nerdFont: "true" } }, "nerdFont"), { type: "voiceStatus" });
+  assert.deepEqual(applyWidgetOption({ type: "compactions" }, "format"), { type: "compactions", format: "text-and-number" });
+  assert.deepEqual(applyWidgetOption({ type: "compactions", metadata: { format: "text-and-number", nerdFont: "true" } }, "format"), { type: "compactions", format: "number" });
+  assert.deepEqual(applyWidgetOption({ type: "compactions", metadata: { format: "number" } }, "format"), { type: "compactions" });
+  assert.deepEqual(applyWidgetOption({ type: "compactions", metadata: { format: "icon-number" } }, "format"), { type: "compactions", format: "text-and-number" });
+  assert.deepEqual(applyWidgetOption({ type: "compactions", format: "number", nerdFont: true }, "nerdFont"), { type: "compactions", format: "number" });
   assert.deepEqual(applyWidgetOption({ type: "compactions" }, "hideZero"), { type: "compactions", hideZero: true });
 
   assert.deepEqual(applyWidgetOption({ type: "gitBranch", linkToGitHub: true }, "linkToRepo"), { type: "gitBranch" });
@@ -241,4 +250,5 @@ test("TUI widget option helpers apply common and specific settings", () => {
   assert.equal(describeWidgetOptions({ type: "extraUsageRemaining", hideIfDisabled: true }), "hide-if-disabled");
   assert.equal(describeWidgetOptions({ type: "skills", metadata: { listLimit: "2", hideWhenEmpty: "true" } }), "limit=2, hide-empty");
   assert.equal(describeWidgetOptions({ type: "compactions", nerdFont: true, hideZero: true }), "nerd-font, hide-zero");
+  assert.equal(describeWidgetOptions({ type: "compactions", format: "number", nerdFont: true }), "format=number");
 });

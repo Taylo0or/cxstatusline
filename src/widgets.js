@@ -35,6 +35,7 @@ const WIDGET_ALIASES = {
   "reset-timer": "blockResetTimer",
   "free-memory": "memory",
   "thinking-effort": "reasoning",
+  "compaction-counter": "compactions",
   "git-review": "gitPullRequest",
   "git-pr": "gitPullRequest",
   "git-pull-request": "gitPullRequest",
@@ -1153,13 +1154,17 @@ function statusState(value) {
 
 function formatCompactions(value, widget = {}) {
   const count = Number(value || 0);
-  if (!count && widgetFlag(widget, "hideZero")) return "";
-  if (!count && !value) return "";
-  const format = widgetFormat(widget, "number");
-  const icon = widgetFlag(widget, "nerdFont") ? COMPACTION_NERD_FONT_ICON : COMPACTION_ICON;
+  if (count === 0 && widgetFlag(widget, "hideZero")) return "";
+  const format = compactionFormat(widget);
+  const icon = format === "icon-space-number" && widgetFlag(widget, "nerdFont") ? COMPACTION_NERD_FONT_ICON : COMPACTION_ICON;
   if (format === "icon-space-number") return `${icon} ${count}`;
   if (format === "text-and-number") return `Compactions: ${count}`;
   return String(count);
+}
+
+function compactionFormat(widget) {
+  const format = widgetFormat(widget, "icon-space-number");
+  return ["icon-space-number", "text-and-number", "number"].includes(format) ? format : "icon-space-number";
 }
 
 function widgetFormat(widget, fallback) {
