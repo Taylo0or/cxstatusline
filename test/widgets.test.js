@@ -68,6 +68,34 @@ test("renders Git branch and remote widgets as repo links from metadata", () => 
   assert.equal(renderWidget({ type: "gitOriginOwnerRepo", ownerOnlyWhenFork: true }, context), "acme");
 });
 
+test("renders Git root dir IDE links from metadata", () => {
+  const context = {
+    config: {},
+    state: {},
+    git: {
+      isRepo: true,
+      root: "/Users/example/my repo#1",
+      rootName: "my repo#1"
+    },
+    codexConfig: {}
+  };
+
+  const vscode = renderWidget({ type: "gitRootDir", linkToIDE: "vscode" }, context);
+  assert.match(vscode, /\x1b]8;;vscode:\/\/file\/Users\/example\/my%20repo%231/);
+  assert.equal(stripAnsi(vscode), "my repo#1");
+
+  const cursor = renderWidget({ type: "gitRootDir", metadata: { linkToCursor: "true" } }, context);
+  assert.match(cursor, /\x1b]8;;cursor:\/\/file\/Users\/example\/my%20repo%231/);
+  assert.equal(stripAnsi(cursor), "my repo#1");
+
+  const windows = renderWidget({ type: "gitRootDir", linkToIDE: "cursor" }, {
+    ...context,
+    git: { isRepo: true, root: "C:/Work/my repo#1", rootName: "my repo#1" }
+  });
+  assert.match(windows, /\x1b]8;;cursor:\/\/file\/C:\/Work\/my%20repo%231/);
+  assert.equal(stripAnsi(windows), "my repo#1");
+});
+
 test("formats paths with home abbreviation, segments, and fish mode", () => {
   assert.equal(formatPath("/Users/luke/AlphaPay/ca-parent", { segments: 2, home: false }), "/.../AlphaPay/ca-parent");
   assert.equal(formatPath("/Users/luke/AlphaPay/ca-parent", { fish: true, home: false }), "/U/l/A/ca-parent");

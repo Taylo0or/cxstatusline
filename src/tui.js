@@ -14,6 +14,7 @@ const RESET = "\x1b[0m";
 const FLEX_MODES = ["full", "full-minus-40", "full-until-compact"];
 const MODES = ["powerline", "plain"];
 const MERGE_MODES = ["off", "merge", "no-padding"];
+const IDE_LINK_MODES = ["off", "vscode", "cursor"];
 const USED_REMAINING_MODES = ["used", "remaining"];
 const TIMER_MODES = ["duration", "timestamp", "both", "bar"];
 const BAR_STYLES = ["ascii", "blocks", "dots"];
@@ -191,6 +192,7 @@ export function describeWidgetOptions(widget) {
   if (item.timeout !== undefined) parts.push(`timeout=${item.timeout}ms`);
   if (item.preserveColors) parts.push("ansi");
   if (gitLinkEnabled(item, type)) parts.push("repo-link");
+  if (ideLinkMode(item)) parts.push(`link-${ideLinkMode(item)}`);
   if (metadataFlag(item, "ownerOnlyWhenFork")) parts.push("owner-only-fork");
   if (item.segments !== undefined) parts.push(`segments=${item.segments}`);
   if (item.fish) parts.push("fish");
@@ -227,6 +229,9 @@ export function buildWidgetOptionRows(widget) {
   }
   if (type === "gitBranch" || GIT_REMOTE_WIDGETS.has(type)) {
     rows.push({ key: "linkToRepo", label: "Repo link", value: BOOLEAN_TEXT.get(gitLinkEnabled(item, type)) });
+  }
+  if (type === "gitRootDir") {
+    rows.push({ key: "linkToIDE", label: "IDE link", value: ideLinkMode(item) || "off" });
   }
   if (type === "gitOriginOwnerRepo") {
     rows.push({ key: "ownerOnlyWhenFork", label: "Owner only when fork", value: BOOLEAN_TEXT.get(Boolean(metadataFlag(item, "ownerOnlyWhenFork"))) });
@@ -289,6 +294,7 @@ export function applyWidgetOption(widget, key, value = undefined) {
   if (key === "href") return value === "" ? deleteKey(deleteKey(item, "href"), "url") : { ...deleteKey(item, "url"), href: value };
   if (key === "text") return value === "" ? deleteKey(item, primaryValueKey(resolveWidgetType(item.type) || item.type)) : { ...item, [primaryValueKey(resolveWidgetType(item.type) || item.type)]: value };
   if (key === "linkToRepo") return toggleLinkToRepo(item);
+  if (key === "linkToIDE") return cycleIdeLink(item);
   if (key === "ownerOnlyWhenFork") return toggleOrDelete(item, "ownerOnlyWhenFork");
   if (key === "segments") return setNumericField(item, "segments", value);
   if (key === "home") return item.home === false ? deleteKey(item, "home") : { ...item, home: false };
@@ -1333,6 +1339,12 @@ function gitLinkEnabled(item, type = resolveWidgetType(item?.type) || item?.type
   return linkToRepo === true;
 }
 
+function ideLinkMode(item) {
+  const configured = metadataValue(item, "linkToIDE");
+  if (configured === "vscode" || configured === "cursor") return configured;
+  return metadataFlag(item, "linkToCursor") === true ? "cursor" : "";
+}
+
 function metadataFlag(item, key) {
   if (!item || typeof item !== "object") return null;
   if (item[key] !== undefined) return parseFlag(item[key]);
@@ -1340,6 +1352,13 @@ function metadataFlag(item, key) {
     return parseFlag(item.metadata[key]);
   }
   return null;
+}
+
+function metadataValue(item, key) {
+  if (!item || typeof item !== "object") return undefined;
+  if (item[key] !== undefined) return item[key];
+  if (item.metadata && typeof item.metadata === "object") return item.metadata[key];
+  return undefined;
 }
 
 function parseFlag(value) {
@@ -1360,6 +1379,16 @@ function toggleLinkToRepo(item) {
   delete next.linkToRepo;
   delete next.linkToGitHub;
   if (!enabled) next.linkToRepo = true;
+  return next;
+}
+
+function cycleIdeLink(item) {
+  const current = ideLinkMode(item) || "off";
+  const nextMode = nextValue(IDE_LINK_MODES, current);
+  const next = removeMetadataKeys({ ...item }, ["linkToIDE", "linkToCursor"]);
+  delete next.linkToIDE;
+  delete next.linkToCursor;
+  if (nextMode !== "off") next.linkToIDE = nextMode;
   return next;
 }
 

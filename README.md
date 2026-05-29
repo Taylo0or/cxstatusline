@@ -19,8 +19,8 @@ Codex does not currently expose Claude Code's `statusLine.command` protocol, so
 - Git widgets: branch, SHA, staged/unstaged/untracked/conflict counts,
   ahead/behind, insertions, deletions, origin owner/repo, upstream, worktree
   mode/branch, fork status, clickable Git branch and remote owner/repo links
-  for GitHub, GitLab, and compatible self-hosted remotes, and PR/MR metadata
-  through `gh`/`glab` when available.
+  for GitHub, GitLab, and compatible self-hosted remotes, IDE links for Git
+  root directories, and PR/MR metadata through `gh`/`glab` when available.
 - Codex/session widgets: model, reasoning effort, service tier, permission mode,
   sandbox mode, session id/name, output style, vim/voice/remote-control status
   when present, skills, run state, last event, last tool, compaction count,
@@ -242,7 +242,8 @@ Use `ccstatusline`-style Git link metadata:
 {
   "widgets": [
     { "type": "gitBranch", "linkToRepo": true },
-    { "type": "gitOriginOwnerRepo", "linkToRepo": true, "ownerOnlyWhenFork": true }
+    { "type": "gitOriginOwnerRepo", "linkToRepo": true, "ownerOnlyWhenFork": true },
+    { "type": "gitRootDir", "linkToIDE": "cursor" }
   ]
 }
 ```

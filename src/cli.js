@@ -402,7 +402,7 @@ Usage:
   cxstatusline themes
   cxstatusline bench [--iterations 500] [--max-avg-ms 5]
   cxstatusline update-check [--json]
-  cxstatusline self-update [--dry-run] [--tag v0.2.26]
+  cxstatusline self-update [--dry-run] [--tag vX.Y.Z]
   cxstatusline doctor
   cxstatusline reset
 

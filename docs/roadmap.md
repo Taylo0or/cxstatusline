@@ -16,7 +16,7 @@ while staying honest about Codex's current extension points.
 - Git branch, SHA, status, ahead/behind, and diff widgets.
 - Git origin owner/repo, upstream owner/repo, fork status, worktree, PR/MR
   detection, clickable branch widgets, clickable Git remote owner/repo widgets,
-  and `ownerOnlyWhenFork`.
+  Git root directory IDE links, and `ownerOnlyWhenFork`.
 - Rich GitHub/GitLab PR/MR state, review, branch, and diff-stat widgets.
 - Model, reasoning, service tier, permission, sandbox, session, event, run-state,
   session name, output style, vim mode, voice status, remote-control status,
@@ -47,7 +47,7 @@ while staying honest about Codex's current extension points.
 - Presets for compact, dense, Git, usage, no-font, right-aligned, and multi-line
   layouts.
 - Full-screen TUI configuration editor with live preview, widget picker, line
-  editor, widget-specific option editor including Git link toggles,
+  editor, widget-specific option editor including Git link and IDE-link toggles,
   per-widget color editor,
   preset/theme/mode selection, terminal width controls, global formatting
   controls, Powerline controls, install/update management, and save-time

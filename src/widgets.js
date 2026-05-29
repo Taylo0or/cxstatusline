@@ -67,7 +67,13 @@ export const widgetRegistry = {
   },
   gitRootDir: {
     description: "Git repository root directory name",
-    render: ({ git }) => git.rootName || ""
+    render: ({ git, widget }) => {
+      const text = rootDirName(git.root) || git.rootName || "";
+      if (!text) return "";
+      const mode = ideLinkMode(widget);
+      if (!mode || !git.root) return text;
+      return osc8(buildIdeFileUrl(git.root, mode), text);
+    }
   },
   cwd: {
     description: "Current working directory",
@@ -973,6 +979,14 @@ function fishPath(path) {
   return `${prefix}${parts.slice(0, -1).map((part) => part[0] || "").join("/")}/${parts.at(-1)}`;
 }
 
+function rootDirName(root) {
+  if (!root) return "";
+  const trimmed = String(root).replace(/[\\/]+$/, "");
+  const normalized = trimmed || String(root);
+  const parts = normalized.split(/[\\/]/).filter(Boolean);
+  return parts.at(-1) || normalized;
+}
+
 function renderRemoteValue(remote, text, widget) {
   if (!text) return "";
   if (!metadataFlag(widget, "linkToRepo")) return text;
@@ -1022,6 +1036,38 @@ function branchWebUrl(remote, branch) {
 
 function encodeGitRefForUrlPath(ref) {
   return String(ref || "")
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+}
+
+function ideLinkMode(widget) {
+  const configured = metadataValue(widget, "linkToIDE");
+  if (configured === "vscode" || configured === "cursor") return configured;
+  return metadataFlag(widget, "linkToCursor") === true ? "cursor" : "";
+}
+
+function metadataValue(widget, key) {
+  if (!widget || typeof widget !== "object") return undefined;
+  if (widget[key] !== undefined) return widget[key];
+  if (widget.metadata && typeof widget.metadata === "object") return widget.metadata[key];
+  return undefined;
+}
+
+function buildIdeFileUrl(path, mode) {
+  const normalizedPath = String(path || "").replace(/\\/g, "/");
+  const unc = normalizedPath.match(/^\/\/([^/]+)(\/.*)?$/);
+  if (unc) return `${mode}://file//${unc[1]}${encodeFilePathForUri(unc[2] || "/")}`;
+
+  const drive = normalizedPath.match(/^([A-Za-z]:)(\/.*)?$/);
+  if (drive) return `${mode}://file/${drive[1]}${encodeFilePathForUri(drive[2] || "/")}`;
+
+  return `${mode}://file${encodeFilePathForUri(normalizedPath)}`;
+}
+
+function encodeFilePathForUri(path) {
+  return String(path || "")
+    .replace(/\\/g, "/")
     .split("/")
     .map((part) => encodeURIComponent(part))
     .join("/");

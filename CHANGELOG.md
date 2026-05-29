@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.28
+
+- Added `linkToIDE` support for `gitRootDir`, rendering repository root names
+  as `vscode://file` or `cursor://file` OSC8 links.
+- Preserved legacy `linkToCursor` metadata for Git root directory links.
+- Exposed Git root IDE link mode cycling in the full-screen TUI widget options.
+
 ## 0.2.27
 
 - Added `linkToRepo` rendering for Git branch, origin owner/repo, and upstream
