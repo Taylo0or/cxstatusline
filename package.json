@@ -1,6 +1,6 @@
 {
   "name": "cxstatusline",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "A Codex-aware statusline renderer with hooks, Powerline themes, and native Codex footer configuration.",
   "type": "module",
   "bin": {
@@ -10,7 +10,8 @@
     "test": "node --test",
     "lint": "node --check bin/cxstatusline.js && node --check src/*.js && node --check test/*.js",
     "doctor": "node ./bin/cxstatusline.js doctor",
-    "render": "node ./bin/cxstatusline.js render"
+    "render": "node ./bin/cxstatusline.js render",
+    "bench:ci": "node ./scripts/bench-ci.js"
   },
   "keywords": [
     "codex",
@@ -38,6 +39,7 @@
   "files": [
     "bin",
     "docs",
+    "scripts",
     "src",
     "templates",
     "CHANGELOG.md",

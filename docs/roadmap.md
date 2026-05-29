@@ -38,14 +38,13 @@ while staying honest about Codex's current extension points.
 - Persistent Git cache with TTL and `.git/HEAD`/`.git/index` invalidation.
 - Width truncation and `CXSTATUSLINE_WIDTH`/`CCSTATUSLINE_WIDTH` overrides.
 - Doctor and reset commands.
-- Runtime benchmark command.
+- Runtime benchmark command and CI benchmark scenario suite.
 - GitHub Actions CI and release workflow.
 
 ## Next
 
 - Richer full-screen TUI configuration editor.
 - More complete Jujutsu diff and bookmark widgets.
-- Runtime benchmark suite with broader scenarios.
 - npm publish credentials setup.
 
 ## Waiting On Codex Support

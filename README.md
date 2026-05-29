@@ -245,6 +245,7 @@ matrix.
 ```sh
 npm test
 npm run lint
+npm run bench:ci
 node ./bin/cxstatusline.js doctor
 ```
 

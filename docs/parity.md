@@ -40,7 +40,7 @@ equivalent data or extension points.
 - Basic Jujutsu root, workspace, revision, description, bookmarks, change,
   insertion, and deletion widgets.
 - Hook/native/tmux/Starship install and uninstall flows.
-- Doctor, reset, and benchmark commands.
+- Doctor, reset, benchmark commands, and CI benchmark thresholds.
 - GitHub CI and release workflow, including optional npm publish when
   `NPM_TOKEN` is configured.
 

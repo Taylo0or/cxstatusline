@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.9
+
+- Added a `bench:ci` benchmark scenario suite covering compact, usage, Git, and
+  multi-line presets.
+- Added benchmark threshold enforcement to CI and release workflows.
+
 ## 0.2.8
 
 - Added `CCSTATUSLINE_WIDTH` as a compatibility alias for explicit render
