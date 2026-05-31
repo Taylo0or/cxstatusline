@@ -5,8 +5,10 @@ import { stdin as input, stdout as output } from "node:process";
 import { CODEX_NATIVE_ITEMS, DEFAULT_NATIVE_STATUS_LINE, PRESETS, THEMES } from "./constants.js";
 import { applyPreset, defaultConfigPath, importCcstatuslineConfig, initConfig, loadConfig, normalizeRefreshIntervalSeconds, saveConfig } from "./config.js";
 import { codexConfigPath, installNativeStatusLine, readCodexConfig, uninstallNativeStatusLine } from "./codexConfig.js";
+import { runDesktop } from "./desktop.js";
 import { getGitInfo } from "./git.js";
 import { hooksPath, installHooks, uninstallHooks } from "./install.js";
+import { renderIslandStatus, runIsland } from "./island.js";
 import { renderStatusLine } from "./render.js";
 import { listWidgets, resolveWidgetType } from "./widgets.js";
 import { loadState, readHookPayload, resetState, saveState, statePath, updateStateFromHook } from "./state.js";
@@ -30,6 +32,9 @@ export async function runCli(args) {
   if (command === "import" || command === "migrate") return importCommand(rest);
   if (command === "configure" || command === "config") return configureCommand(rest);
   if (command === "tui") return tuiCommand(rest);
+  if (command === "desktop" || command === "app") return desktopCommand(rest);
+  if (command === "island") return islandCommand(rest);
+  if (command === "island-status") return islandStatusCommand(rest);
   if (command === "widgets") return widgetsCommand();
   if (command === "presets") return presetsCommand();
   if (command === "native-items") return nativeItemsCommand();
@@ -170,6 +175,18 @@ async function configureCommand(args) {
 async function tuiCommand(args) {
   const { flags } = parseFlags(args);
   return configureTui(flags, loadConfig({ config: flags.config }));
+}
+
+function islandCommand(args) {
+  return runIsland(args);
+}
+
+function desktopCommand(args) {
+  return runDesktop(args);
+}
+
+async function islandStatusCommand(args) {
+  return renderIslandStatus(args);
 }
 
 async function configureTui(flags, config) {
@@ -414,6 +431,8 @@ Usage:
   cxstatusline import ccstatusline [--from path] [--dry-run]
   cxstatusline init [--force]
   cxstatusline tui [--config path]
+  cxstatusline desktop [--open] [--build-only] [--install] [--dmg [path]] [--rebuild] [--bundle-node=false]
+  cxstatusline island [--detach] [--stop] [--agent codex|claude|gemini|auto] [--preset name] [--refresh seconds] [--width columns]
   cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write] [--refresh-interval seconds]
   cxstatusline uninstall [hooks|native|tmux|starship]
   cxstatusline widgets
@@ -434,6 +453,12 @@ Examples:
   cxstatusline configure --widgets model,git-branch,tokens-total --separator ' :: ' --yes
   cxstatusline configure --tui
   cxstatusline tui
+  cxstatusline desktop --open
+  cxstatusline desktop --install --open
+  cxstatusline desktop --dmg
+  cxstatusline island --detach --preset compact
+  cxstatusline island --detach --agent auto --preset compact
+  cxstatusline island --stop
   cxstatusline configure --flex-mode full-until-compact --compact-threshold 70 --yes
   cxstatusline configure --refresh-interval 10 --yes
   cxstatusline configure --mode plain --default-padding ' ' --global-bold --override-fg cyan --yes

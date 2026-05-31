@@ -78,6 +78,6 @@ export function removeCxHooks(existing) {
   return output;
 }
 
-function isCxHook(hook) {
+export function isCxHook(hook) {
   return hook?.type === "command" && /\bcxstatusline(?:\.js)?\b/.test(String(hook.command || ""));
 }

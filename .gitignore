@@ -5,3 +5,5 @@ coverage/
 *.log
 tmp/
 .cxstatusline-state/
+dist/
+*.dmg

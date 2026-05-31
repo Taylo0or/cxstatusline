@@ -129,6 +129,45 @@ Use with any shell prompt:
 cxstatusline render --format plain
 ```
 
+Use a Vibe Island-style local macOS overlay:
+
+```sh
+cxstatusline island --detach --preset compact
+cxstatusline island --detach --agent auto --preset compact
+```
+
+The island is a native AppKit floating panel at the top center of the screen.
+It can show Codex, Claude Code, or Gemini CLI activity. Codex reads the same
+local hook state and transcript; Claude and Gemini use their local transcript
+files. Pass `--agent codex`, `--agent claude`, `--agent gemini`, or
+`--agent auto` to choose the most recently active local agent. The compact view
+shows the active prompt, model, project, and live status; click it to expand
+into a session card with token, context, usage-limit, and recent activity
+details. It also shows an authorization reminder when Codex hooks need review
+or Codex is waiting on a permission request. Use the `x` button to dismiss the
+current popup, or quit the island when no popup is active. You can also
+right-click for the quit menu, or stop the detached process from the shell:
+
+```sh
+cxstatusline island --stop
+```
+
+Open the local desktop configuration app:
+
+```sh
+cxstatusline desktop --open
+cxstatusline desktop --install --open
+cxstatusline desktop --dmg
+```
+
+The desktop app is a native macOS SwiftUI/AppKit control panel. `--install`
+copies it to `~/Applications/CxStatusline.app` with the local `cxstatusline`
+runtime and Node dependencies bundled in the app resources. `--dmg` creates
+`dist/CxStatusline-macos-<arch>.dmg` for customer installation. It can run a
+one-click setup for the compact statusline, install Codex hooks, configure
+Codex's native footer, import an existing `ccstatusline` config, open the config
+folder, and start or stop the island for `codex`, `claude`, `gemini`, or `auto`.
+
 Render a Claude-style status JSON payload from stdin, matching the
 `ccstatusline` command-backed renderer shape:
 
@@ -356,6 +395,8 @@ cxstatusline hook
 cxstatusline --hook
 cxstatusline configure [--preset name] [--theme name] [--mode name] [--widgets csv] [--flex-mode mode] [--tui]
 cxstatusline tui [--config path]
+cxstatusline desktop [--open] [--build-only] [--install] [--dmg [path]] [--rebuild] [--bundle-node=false]
+cxstatusline island [--detach] [--stop] [--agent codex|claude|gemini|auto] [--preset name] [--refresh seconds] [--width columns]
 cxstatusline import ccstatusline [--from path] [--dry-run]
 cxstatusline init [--force] [--preset default|compact|dense|git|usage|nofont|right|multiline]
 cxstatusline install [all|hooks|native|config|tmux|starship] [--dry-run] [--write] [--refresh-interval seconds]
